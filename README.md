@@ -1,29 +1,29 @@
 <p align="center">
-  <img src="https://github.com/yuhuanowo/Guizhong-V6/blob/master/assets/logo.png?raw=true" width = "100" height = "100"/>
+  <img src="https://github.com/yuhuanowo/Guizhong/blob/master/assets/logo.png?raw=true" width = "100" height = "100"/>
 </p>
 <h1 align="center">Guizhong</h1>
 <p align="center">Discord music bot with many useful commands and effects.</p>
 
 <p align="center">
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/actions">
-    <img alt="Tests Passing" src="https://github.com/yuhuanowo/Guizhong-V6/workflows/CodeQL/badge.svg" />
+  <a href="https://github.com/yuhuanowo/Guizhong/actions">
+    <img alt="Tests Passing" src="https://github.com/yuhuanowo/Guizhong/workflows/CodeQL/badge.svg" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/graphs/contributors">
-    <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/yuhuanowo/Guizhong-V6" />
+  <a href="https://github.com/yuhuanowo/Guizhong/graphs/contributors">
+    <img alt="GitHub Contributors" src="https://img.shields.io/github/contributors/yuhuanowo/Guizhong" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/issues">
-    <img alt="Issues" src="https://img.shields.io/github/issues/yuhuanowo/Guizhong-V6" />
+  <a href="https://github.com/yuhuanowo/Guizhong/issues">
+    <img alt="Issues" src="https://img.shields.io/github/issues/yuhuanowo/Guizhong" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/blob/master/LICENSE">
-    <img alt="Issues" src="https://img.shields.io/github/license/yuhuanowo/Guizhong-V6" />
+  <a href="https://github.com/yuhuanowo/Guizhong/blob/master/LICENSE">
+    <img alt="Issues" src="https://img.shields.io/github/license/yuhuanowo/Guizhong" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/pulls">
-    <img alt="Issues" src="https://img.shields.io/github/issues-pr-closed/yuhuanowo/Guizhong-V6" />
+  <a href="https://github.com/yuhuanowo/Guizhong/pulls">
+    <img alt="Issues" src="https://img.shields.io/github/issues-pr-closed/yuhuanowo/Guizhong" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6/commits">
-    <img alt="Issues" src="https://img.shields.io/github/last-commit/yuhuanowo/Guizhong-V6" />
+  <a href="https://github.com/yuhuanowo/Guizhong/commits">
+    <img alt="Issues" src="https://img.shields.io/github/last-commit/yuhuanowo/Guizhong" />
   </a>
-  <a href="https://github.com/yuhuanowo/Guizhong-V6"><img alt="Statistics Graphs" src="https://repobeats.axiom.co/api/embed/daaa6b474d3a96f43412e9a9511ee042283d4973.svg"></a>
+  <a href="https://github.com/yuhuanowo/Guizhong"><img alt="Statistics Graphs" src="https://repobeats.axiom.co/api/embed/ab7080243cf7b8ed4e30271afc121489272ff6c9.svg"></a>
 </p>
 
 <h2>About Guizhong</h2>
