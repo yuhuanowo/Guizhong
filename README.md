@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/yuhuanowo/Guizhong/blob/master/assets/logo.png?raw=true" width = "100" height = "100"/>
+  <img src="https://github.com/yuhuanowo/Guizhong/blob/main/assets/logo.png?raw=true" width = "100" height = "100"/>
 </p>
 <h1 align="center">Guizhong</h1>
 <p align="center">Discord music bot with many useful commands and effects.</p>
