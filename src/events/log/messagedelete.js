@@ -12,9 +12,10 @@ module.exports = {
         //if message is sent by bot, return
         if (message.author.bot) return;
 
-
+        
+        if (message.guild.id == "606104244101185558") {
         // Get the channel to send the log message to
-        const channel = message.guild.channels.cache.get("764845795111338026");;
+        const channel = message.guild.channels.cache.get("764845795111338026");
         // Create an embed for the log message
         const embed = new EmbedBuilder()
                 .setTitle("🗑️ Message Deleted")
@@ -25,7 +26,7 @@ module.exports = {
 
         // Send the log message to the channel
         channel.send({ embeds: [embed] });
-
+        }
         }
 }
 
