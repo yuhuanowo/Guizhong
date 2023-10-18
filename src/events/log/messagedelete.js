@@ -26,7 +26,7 @@ module.exports = {
                 .setColor(config.embedColour)
                 .setAuthor({ name: message.author.tag, iconURL: message.author.avatarURL() })
                 .setTimestamp()
-                .setFooter({ text: 'Message ID: ' + message.id + ' | Author ID: ' + message.author.id });
+                .setFooter({ text: 'Message ID: ' + message.id});
 
                 if (message.attachments.size > 0) { // Check if there are any attachments
                     embed.setImage(message.attachments.first().url);

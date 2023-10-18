@@ -13,6 +13,14 @@ module.exports = {
     async execute(interaction, client) {
         await interaction.deferReply(ephemeral = true);
 
+        //如果連結是youtube music 會轉成youtube
+        if (interaction.options.getString("query").includes("music.youtube.com")) {
+            const url = interaction.options.getString("query");
+            const newUrl = url.replace("music.youtube.com", "www.youtube.com");
+            interaction.options.getString("query", newUrl);
+        }
+
+
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
 
@@ -28,6 +36,7 @@ module.exports = {
             return await interaction.editReply({ embeds: [embed] });
         }
 
+        
         const query = interaction.options.getString("query");
 
         const player = Player.singleton(client);

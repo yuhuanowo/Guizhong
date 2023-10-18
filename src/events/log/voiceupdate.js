@@ -13,7 +13,7 @@ module.exports = {
             const channel = oldState.guild.channels.cache.get("764845795111338026");
             const embed = new EmbedBuilder()
                 .setTitle("🔊Voice State Update")
-                .setDescription(`**${oldState.member.user.tag}** 已加入 **${newState.channel.name}** 🎉`)
+                .setDescription(`**${oldState.member.user}** 已加入 **${newState.channel.name}** 🎉`)
                 .setAuthor({ name: oldState.member.user.tag, iconURL: oldState.member.user.displayAvatarURL() })
                 .setColor(config.embedColour)
                 .setTimestamp();
@@ -26,7 +26,7 @@ module.exports = {
             const channel = oldState.guild.channels.cache.get("764845795111338026");
             const embed = new EmbedBuilder()
                 .setTitle("🔊Voice State Update")
-                .setDescription(`**${oldState.member.user.tag}** 已離開 **${oldState.channel.name}** 😢`)
+                .setDescription(`**${oldState.member.user}** 已離開 **${oldState.channel.name}** 😢`)
                 .setAuthor({ name: oldState.member.user.tag, iconURL: oldState.member.user.displayAvatarURL() })
                 .setColor(config.embedColour)
                 .setTimestamp();
@@ -39,7 +39,7 @@ module.exports = {
             const channel = oldState.guild.channels.cache.get("764845795111338026");
             const embed = new EmbedBuilder()
                 .setTitle("🔊Voice State Update")
-                .setDescription(`**${oldState.member.user.tag}** 已從 **${oldState.channel.name}** 跑到 **${newState.channel.name}** 🔄`)
+                .setDescription(`**${oldState.member.user}** 已從 **${oldState.channel.name}** 跑到 **${newState.channel.name}** 🔄`)
                 .setAuthor({ name: oldState.member.user.tag, iconURL: oldState.member.user.displayAvatarURL() })
                 .setColor(config.embedColour)
                 .setTimestamp();
