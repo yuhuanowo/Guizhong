@@ -50,6 +50,15 @@ module.exports = {
                 });
             }
 
+            if (interaction.customId == `checkin_select_${interaction.user.id}`) {
+                //成功簽到
+                embed.setAuthor({ name: `${interaction.user.tag}` , iconURL: interaction.user.displayAvatarURL()});
+                embed.setColor(config.embedColour);
+                embed.setTitle(`${interaction.values[0]}!`);//簽到成功！
+                embed.setDescription(`${interaction.user} 已經成功完成每日任務了!`);//你已經成功簽到了！
+                return await interaction.reply({embeds: [embed]});
+            }
+
             if (interaction.values[0] == "help_category_general") {
                 embed.setAuthor({ name: "Help" });
                 embed.setTitle("General Commands");
