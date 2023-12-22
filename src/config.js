@@ -32,6 +32,7 @@ try {
         status: configFile.status ?? "music",
         youtubeapikey: configFile.youtubeapikey ?? "",
         googleapikey: configFile.googleapikey ?? "",
+        openaiapikey: configFile.openaiapikey ?? "",
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");
