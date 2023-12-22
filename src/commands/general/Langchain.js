@@ -10,8 +10,8 @@ const { tr } = require('date-fns/locale');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('llama')
-        .setDescription('Generate text using Llama 2 API')
+        .setName('對話')
+        .setDescription('Generate text using Langchain\'s ChatGLM3-6B')
         .addStringOption(option => option.setName('text').setDescription('Text to generate').setRequired(true)),
 
       
