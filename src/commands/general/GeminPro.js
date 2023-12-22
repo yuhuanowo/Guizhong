@@ -19,7 +19,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-pro",generationConfig});
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('GeminPro(單次)')
+        .setName('geminipro')
         .setDescription('Generate text using Google\'s gemini-pro AI')
         .addStringOption(option => option.setName('text').setDescription('Text to generate').setRequired(true)),
 

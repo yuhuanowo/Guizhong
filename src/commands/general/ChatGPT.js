@@ -10,7 +10,7 @@ const openaiapi = new openai(config.openaiapikey);
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('ChatGPT')
+        .setName('chatgpt')
         .setDescription('Generate text using OpenAI\'s ChatGPT')
         .addStringOption(option => option.setName('text').setDescription('Text to generate').setRequired(true)),
 
