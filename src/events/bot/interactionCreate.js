@@ -10,9 +10,9 @@ module.exports = {
             const command = client.commands.get(interaction.commandName);
             if (!command) return;
             try {
-                await command.execute(interaction, client); 
+                await command.execute(interaction, client);
             } catch (error) {
-                logger.error("An error occurred whilst attempting to execute a chat input command:");//嘗試執行聊天輸入命令時發生錯誤
+                logger.error("An error occurred whilst attempting to execute a chat input command:"); //嘗試執行聊天輸入命令時發生錯誤
                 logger.error(error);
             }
         } else if (interaction.isButton()) {
@@ -23,7 +23,7 @@ module.exports = {
                 try {
                     await button.execute(interaction, client);
                 } catch (error) {
-                    logger.error("An error occurred whilst attempting to execute a button command:");//嘗試執行按鈕命令時發生錯誤
+                    logger.error("An error occurred whilst attempting to execute a button command:"); //嘗試執行按鈕命令時發生錯誤
                     logger.error(error);
                 }
             } else {
@@ -32,7 +32,7 @@ module.exports = {
                 try {
                     await button.execute(interaction, client);
                 } catch (error) {
-                    logger.error("An error occurred whilst attempting to execute a button command:");//嘗試執行按鈕命令時發生錯誤
+                    logger.error("An error occurred whilst attempting to execute a button command:"); //嘗試執行按鈕命令時發生錯誤
                     logger.error(error);
                 }
             }
@@ -43,7 +43,7 @@ module.exports = {
             embed.setColor(config.embedColour);
 
             if (interaction.user.id != buttonOwner) {
-                embed.setDescription(`Only <@${buttonOwner}> can use this menu.`);//只有<@${buttonOwner}>可以使用此選單。
+                embed.setDescription(`Only <@${buttonOwner}> can use this menu.`); //只有<@${buttonOwner}>可以使用此選單。
                 return await interaction.reply({
                     embeds: [embed],
                     ephemeral: true,
@@ -52,11 +52,11 @@ module.exports = {
 
             if (interaction.customId == `checkin_select_${interaction.user.id}`) {
                 //成功簽到
-                embed.setAuthor({ name: `${interaction.user.tag}` , iconURL: interaction.user.displayAvatarURL()});
+                embed.setAuthor({ name: `${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL() });
                 embed.setColor(config.embedColour);
-                embed.setTitle(`${interaction.values[0]}!`);//簽到成功！
-                embed.setDescription(`${interaction.user} 已經成功完成每日任務了!`);//你已經成功簽到了！
-                return await interaction.reply({embeds: [embed]});
+                embed.setTitle(`${interaction.values[0]}!`); //簽到成功！
+                embed.setDescription(`${interaction.user} 已經成功完成每日任務了!`); //你已經成功簽到了！
+                return await interaction.reply({ embeds: [embed] });
             }
 
             if (interaction.values[0] == "help_category_general") {
@@ -80,7 +80,7 @@ module.exports = {
             try {
                 await command.autocompleteRun(interaction, client);
             } catch (error) {
-                logger.error("An error occurred whilst attempting to run autocomplete:");//嘗試執行自動完成時發生錯誤
+                logger.error("An error occurred whilst attempting to run autocomplete:"); //嘗試執行自動完成時發生錯誤
                 logger.error(error);
             }
         }

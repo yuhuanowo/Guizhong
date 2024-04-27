@@ -23,6 +23,6 @@ module.exports = {
 
         embed.setDescription(`<@${interaction.user.id}>: 成功 ${queue.node.isPaused() === true ? "暫停" : "重新撥放"} **${queue.currentTrack.title}**.`);
 
-        return await interaction.reply({ embeds: [embed] , ephemeral: true});
+        return await interaction.reply({ embeds: [embed], ephemeral: true });
     },
 };

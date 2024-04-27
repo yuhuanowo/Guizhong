@@ -8,7 +8,7 @@
 //     async execute(oldState, newState) {
 //         if (oldState.guild.id !== "606104244101185558") return; //for YuhuanStudio
 //         //如果使用者加入語音頻道
-//         if (!oldState.channel && newState.channel) 
+//         if (!oldState.channel && newState.channel)
 //         {
 //             const channel = oldState.guild.channels.cache.get("764845795111338026");
 //             const embed = new EmbedBuilder()
@@ -21,7 +21,7 @@
 //         }
 
 //         //if user leave voice channel
-//         if (oldState.channel && !newState.channel) 
+//         if (oldState.channel && !newState.channel)
 //         {
 //             const channel = oldState.guild.channels.cache.get("764845795111338026");
 //             const embed = new EmbedBuilder()
@@ -34,7 +34,7 @@
 //         }
 
 //         //if user switch voice channel
-//         if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id) 
+//         if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id)
 //         {
 //             const channel = oldState.guild.channels.cache.get("764845795111338026");
 //             const embed = new EmbedBuilder()
@@ -46,8 +46,6 @@
 //             channel.send({ embeds: [embed] });
 //         }
 
-
 //     }
 
-    
 // };

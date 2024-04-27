@@ -34,7 +34,8 @@ module.exports = {
                 embed.setDescription(res.lyrics.length > 4096 ? `[點擊這裡查看歌詞](${res.url})` : res.lyrics);
                 embed.setFooter({ text: "Courtesy of Genius" });
             })
-            .catch(() => {
+            .catch((err) => {
+                console.error(err);
                 embed.setDescription("找不到這首歌的任何歌詞❌");
             });
 

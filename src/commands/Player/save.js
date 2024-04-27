@@ -18,18 +18,12 @@ module.exports = {
         }
 
         const info = new EmbedBuilder();
-        info.setColor('F44336');
-        info.setTitle(`:arrow_forward: ${queue.currentTrack.title}`)
-        info.setURL(queue.currentTrack.url)
-        info.addFields(
-            { name: ':hourglass: 持續時間:', value: `\`${queue.currentTrack.duration}\``, inline: true },
-            { name: '歌曲作者:', value: `\`${queue.currentTrack.author}\``, inline: true },
-            { name: '觀看次數 :eyes:', value: `\`${Number(queue.currentTrack.views).toLocaleString()}\``, inline: true },
-            { name: '歌曲 URL:', value: `\`${queue.currentTrack.url}\`` }
-        )
-        info.setThumbnail(queue.currentTrack.thumbnail)
-        info.setFooter({text:`從伺服器-> ${interaction.member.guild.name}`, iconURL: interaction.member.guild.iconURL({ dynamic: false })})
-
+        info.setColor("F44336");
+        info.setTitle(`:arrow_forward: ${queue.currentTrack.title}`);
+        info.setURL(queue.currentTrack.url);
+        info.addFields({ name: ":hourglass: 持續時間:", value: `\`${queue.currentTrack.duration}\``, inline: true }, { name: "歌曲作者:", value: `\`${queue.currentTrack.author}\``, inline: true }, { name: "觀看次數 :eyes:", value: `\`${Number(queue.currentTrack.views).toLocaleString()}\``, inline: true }, { name: "歌曲 URL:", value: `\`${queue.currentTrack.url}\`` });
+        info.setThumbnail(queue.currentTrack.thumbnail);
+        info.setFooter({ text: `從伺服器-> ${interaction.member.guild.name}`, iconURL: interaction.member.guild.iconURL({ dynamic: false }) });
 
         try {
             await interaction.user.send({ embeds: [info] });

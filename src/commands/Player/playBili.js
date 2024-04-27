@@ -11,19 +11,12 @@ const qs = require("qs");
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("play")
+        .setName("playbili")
         .setDescription("撥放歌曲.")
         .setDMPermission(false)
         .addStringOption((option) => option.setName("query").setDescription("輸入曲目名稱、作者名或 URL.").setRequired(true).setAutocomplete(config.autocomplete)),
     async execute(interaction, client) {
         await interaction.deferReply((ephemeral = true));
-
-        //如果連結是youtube music 會轉成youtube
-        if (interaction.options.getString("query").includes("music.youtube.com")) {
-            const url = interaction.options.getString("query");
-            const newUrl = url.replace("music.youtube.com", "www.youtube.com");
-            interaction.options.getString("query", newUrl);
-        }
 
         //錯誤訊息embed
         const embed = new EmbedBuilder();
@@ -38,13 +31,99 @@ module.exports = {
             return await interaction.editReply({ embeds: [embed] });
         }
 
-        //如果連結是bilibili 提示改使用/playbili
+        //如果連結是bilibili
+        let finalValue;
+        let query;
         if (interaction.options.getString("query").includes("bilibili.com")) {
-            embed.setTitle("請使用 /playbili 播放bilibili音樂...再試一次 ? ❌");
+            {
+                await interaction.editReply("正在處理中...請稍後");
+                //分析bilibili url以取得bvid
+                const requesturl = interaction.options.getString("query");
+                //將video/後面的字串 /?前面的字串取出
+                const bvid = requesturl.split("video/")[1].split("/?")[0];
+                //將bvid放入api 以取得cid
+                let data = qs.stringify({
+                    bvid: bvid,
+                });
+
+                let cid;
+                let avid;
+                let bilibiliUrl;
+
+                let cidconfig = {
+                    method: "get",
+                    maxBodyLength: Infinity,
+                    url: "https://api.bilibili.com/x/web-interface/view?bvid=" + bvid,
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    data: data,
+                };
+
+                axios
+                    .request(cidconfig)
+                    .then((response) => {
+                        console.log(JSON.stringify(response.data.data.cid));
+                        console.log(JSON.stringify(response.data.data.aid));
+                        cid = JSON.stringify(response.data.data.cid);
+                        avid = JSON.stringify(response.data.data.aid);
+
+                        data = qs.stringify({
+                            avid: avid,
+                            cid: cid,
+                            qn: "6",
+                            fnval: "80",
+                            fnver: "0",
+                            fourk: "1",
+                        });
+                        let config = {
+                            method: "get",
+                            maxBodyLength: Infinity,
+                            url: "https://api.bilibili.com/x/player/playurl?avid=" + avid + "&cid=" + cid + "&qn=15&fnval=1&fnver=0&fourk=1",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            data: data,
+                        };
+                        axios
+                            .request(config)
+                            .then((response) => {
+                                console.log(JSON.stringify(response.data.data.durl[0].url));
+                                bilibiliUrl = JSON.stringify(response.data.data.durl[0].url);
+                                //push to outside variable
+                                interaction.options.getString("query", bilibiliUrl);
+                                finalValue = bilibiliUrl;
+                            })
+                            .catch((error) => {
+                                console.log(error);
+                            });
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                    });
+            }
+
+            //wait 1s
+            await new Promise((r) => setTimeout(r, 2000));
+            //restart the function
+            // if (finalValue.includes("https://upos-sz-mirroraliov.bilivideo.com"))
+            // {
+            //     error = "bilibili url error";
+
+            //     return await interaction.editReply("取得不佳的bilibili cdn 再試一次 (bilibili的問題) ❌");
+            // }
+            //將finalvalue 前後的"去除
+            finalValue = finalValue.replace(/"/g, "");
+            logger.info(finalValue);
+            query = finalValue;
+        } else {
+            //如果連結不是bilibili
+            //error ->請使用/play而不是/playbili
+            const embed = new EmbedBuilder();
+            embed.setColor(config.embedColour);
+            embed.setTitle("連結非來自 bilibili 請使用/play 再試一次 ? ❌");
             return await interaction.editReply({ embeds: [embed] });
         }
-
-        query = interaction.options.getString("query");
 
         const player = Player.singleton(client);
         let queue = player.nodes.get(interaction.guild.id);
@@ -114,6 +193,8 @@ module.exports = {
         const query = interaction.options.getString("query", true);
         const resultsYouTube = await player.search(query, { searchEngine: QueryType.YOUTUBE });
         const resultsSpotify = await player.search(query, { searchEngine: QueryType.SPOTIFY_SEARCH });
+        //AttachmentExtractor
+        const resultsAttachment = await player.search("E:/music.mp3", { searchEngine: QueryType.FILE });
 
         const tracksYouTube = resultsYouTube.tracks.slice(0, 5).map((t) => ({
             name: `YouTube: ${`${t.title} - ${t.author} (${t.duration})`.length > 75 ? `${`${t.title} - ${t.author}`.substring(0, 75)}... (${t.duration})` : `${t.title} - ${t.author} (${t.duration})`}`,
@@ -125,10 +206,16 @@ module.exports = {
             value: t.url,
         }));
 
+        const tracksAttachment = resultsAttachment.tracks.slice(0, 5).map((t) => ({
+            name: `Attachment: ${`${t.title} - ${t.author} (${t.duration})`.length > 75 ? `${`${t.title} - ${t.author}`.substring(0, 75)}... (${t.duration})` : `${t.title} - ${t.author} (${t.duration})`}`,
+            value: t.url,
+        }));
+
         const tracks = [];
 
         tracksYouTube.forEach((t) => tracks.push({ name: t.name, value: t.value }));
         tracksSpotify.forEach((t) => tracks.push({ name: t.name, value: t.value }));
+        tracksAttachment.forEach((t) => tracks.push({ name: t.name, value: t.value }));
 
         return interaction.respond(tracks);
     },

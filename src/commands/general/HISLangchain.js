@@ -1,11 +1,10 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
-const config = require("../../config");
 const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const logger = require("../../utils/logger");
 const axios = require("axios");
-const { tr } = require("date-fns/locale");
+const { tr, da, te } = require("date-fns/locale");
 
 //如果langchainhistory.json存在就讀取
 const langchainhistory = JSON.parse(fs.readFileSync("./src/JSON/langchainhistory.json"));
@@ -13,7 +12,7 @@ console.log(langchainhistory);
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("對話")
+        .setName("對話2test")
         .setDescription("Generate text using Langchain's ChatGLM3-6B")
         .addStringOption((option) => option.setName("text").setDescription("Text to generate").setRequired(true)),
 
@@ -24,27 +23,35 @@ module.exports = {
         reply.setColor("#3399ff");
         await interaction.reply({ embeds: [reply] });
 
+        //從新讀取langchainhistory.json
+        const langchainhistory = JSON.parse(fs.readFileSync("./src/JSON/langchainhistory.json"));
+        console.log(langchainhistory);
+
         let data = JSON.stringify({
-            model: "chatglm3-6b",
-            messages: [
+            query: prompt,
+            conversation_id: "None",
+            history_len: -1,
+            history: [
                 {
                     role: "user",
-                    content: prompt,
+                    content: langchainhistory[0].content,
+                },
+                {
+                    role: "assistant",
+                    content: langchainhistory[1].content,
                 },
             ],
+            stream: false,
+            model_name: "chatglm3-6b",
             temperature: 0.7,
-            n: 1,
-            max_tokens: 4096,
-            stop: [],
-            stream: true,
-            presence_penalty: 0,
-            frequency_penalty: 0,
+            max_tokens: 2048,
+            prompt_name: "default",
         });
 
         let config = {
             method: "post",
             maxBodyLength: Infinity,
-            url: "http://127.0.0.1:7861/chat/fastchat",
+            url: "http://127.0.0.1:7861/chat/chat",
             headers: {
                 accept: "application/json",
                 "Content-Type": "application/json",
@@ -55,12 +62,30 @@ module.exports = {
         axios
             .request(config)
             .then((response) => {
-                console.log(JSON.stringify(response.data));
                 const text = JSON.stringify(response.data);
+                //只接收"text" 之後的內容 並刪除後面的message_id
+                let text5 = text.replace(/."text":/g, "");
+                let text6 = text5.replace(/,"message_id".*/g, "");
                 //將回傳的json轉換成文字並刪除""
-                let text1 = text.replace(/"/g, "");
+                let text1 = text6.replace(/"/g, "");
                 //如果文本出現\n就刪除 並使用正確的換行
                 let text2 = text1.replace(/\\n/g, "\n");
+                console.log(text2);
+
+                let langchainhistory = [
+                    {
+                        role: "user",
+                        content: prompt,
+                    },
+                    {
+                        role: "assistant",
+                        content: text2,
+                    },
+                ];
+                //save langchainhistory
+                fs.writeFileSync("./src/JSON/langchainhistory.json", JSON.stringify(langchainhistory));
+                console.log(langchainhistory);
+
                 //回應生成完成
                 const embed = new EmbedBuilder();
                 embed.setTitle("AI Text Generation");

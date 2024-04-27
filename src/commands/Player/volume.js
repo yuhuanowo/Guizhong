@@ -40,7 +40,7 @@ module.exports = {
             const success = queue.node.setVolume(vol);
             success ? embed.setTitle(`音量已修改為 **${vol}/${maxVolume}%** 🔊.`) : embed.setTitle(`出了些問題... 再試一次 ? ❌`);
         }
- 
+
         return await interaction.reply({ embeds: [embed] });
     },
 };

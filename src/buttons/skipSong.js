@@ -22,7 +22,7 @@ module.exports = {
 
         queue.node.skip();
 
-        let rawdata = fs.readFileSync("src/data.json");
+        let rawdata = fs.readFileSync("src/JSON/data.json");
         var data = JSON.parse(rawdata);
 
         data["songs-skipped"] += 1;
@@ -30,8 +30,8 @@ module.exports = {
         embed.setDescription(`<@${interaction.user.id}>: 歌曲 **[${queue.currentTrack.title}](${queue.currentTrack.url})** 已跳過 ✅`);
 
         let newdata = JSON.stringify(data);
-        fs.writeFileSync("src/data.json", newdata);
+        fs.writeFileSync("src/JSON/data.json", newdata);
 
-        return await interaction.reply({ embeds: [embed] ,ephemeral: true});
+        return await interaction.reply({ embeds: [embed], ephemeral: true });
     },
 };

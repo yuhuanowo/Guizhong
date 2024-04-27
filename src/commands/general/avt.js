@@ -1,19 +1,15 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
-const config = require("../../config");
 const fs = require("fs");
 const { Configuration, OpenAIApi } = require("openai");
 const logger = require("../../utils/logger");
 const axios = require("axios");
 const { tr } = require("date-fns/locale");
-
-//如果langchainhistory.json存在就讀取
-const langchainhistory = JSON.parse(fs.readFileSync("./src/JSON/langchainhistory.json"));
-console.log(langchainhistory);
+const qs = require("qs");
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName("對話")
+        .setName("avt")
         .setDescription("Generate text using Langchain's ChatGLM3-6B")
         .addStringOption((option) => option.setName("text").setDescription("Text to generate").setRequired(true)),
 
@@ -24,30 +20,16 @@ module.exports = {
         reply.setColor("#3399ff");
         await interaction.reply({ embeds: [reply] });
 
-        let data = JSON.stringify({
-            model: "chatglm3-6b",
-            messages: [
-                {
-                    role: "user",
-                    content: prompt,
-                },
-            ],
-            temperature: 0.7,
-            n: 1,
-            max_tokens: 4096,
-            stop: [],
-            stream: true,
-            presence_penalty: 0,
-            frequency_penalty: 0,
+        let data = qs.stringify({
+            human_input: prompt,
         });
 
         let config = {
             method: "post",
             maxBodyLength: Infinity,
-            url: "http://127.0.0.1:7861/chat/fastchat",
+            url: "http://192.168.50.97:2222/send_message",
             headers: {
-                accept: "application/json",
-                "Content-Type": "application/json",
+                "Content-Type": "application/x-www-form-urlencoded",
             },
             data: data,
         };

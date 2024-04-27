@@ -5,7 +5,7 @@ const config = require("../../config");
 
 module.exports = {
     data: new SlashCommandBuilder().setName("nowplaying").setDescription("View information about the current track.").setDMPermission(false),
-    async execute(interaction,client) {
+    async execute(interaction, client) {
         const player = Player.singleton();
         const queue = player.nodes.get(interaction.guild.id);
 
@@ -19,24 +19,22 @@ module.exports = {
 
         const track = queue.currentTrack;
 
-        const methods = ['disabled', 'track', 'queue'];
+        const methods = ["disabled", "track", "queue"];
 
         const timestamp = track.duration;
 
-        const trackDuration = timestamp.progress == 'Infinity' ? 'infinity (live)' : track.duration;
+        const trackDuration = timestamp.progress == "Infinity" ? "infinity (live)" : track.duration;
 
         const progress = queue.node.createProgressBar();
-        
 
-        embed.setAuthor({ name: track.title,  iconURL: client.user.displayAvatarURL({ size: 1024, dynamic: true })})
-        embed.setThumbnail(track.thumbnail)
-        embed.setDescription(`音量 **${queue.node.volume}**%\n持續時間 **${trackDuration}**\n撥放效果 **${queue.filters.ffmpeg.filters.length > 0 ? queue.filters.ffmpeg.filters.join(", ") : "無"}**\n撥放進度 ${progress}\n循環模式 **${queue.repeatMode === 0 ? "關閉" : queue.repeatMode === 1 ? "單曲循環" : "隊列循環"}**\n撥放用戶: ${track.requestedBy}`)
-        embed.setFooter({ text: '可愛的歸終 ❤️', iconURL: interaction.member.avatarURL({ dynamic: true })})
-        embed.setColor('Green')
-        embed.setTimestamp()
+        embed.setAuthor({ name: track.title, iconURL: client.user.displayAvatarURL({ size: 1024, dynamic: true }) });
+        embed.setThumbnail(track.thumbnail);
+        embed.setDescription(`音量 **${queue.node.volume}**%\n持續時間 **${trackDuration}**\n撥放效果 **${queue.filters.ffmpeg.filters.length > 0 ? queue.filters.ffmpeg.filters.join(", ") : "無"}**\n撥放進度 ${progress}\n循環模式 **${queue.repeatMode === 0 ? "關閉" : queue.repeatMode === 1 ? "單曲循環" : "隊列循環"}**\n撥放用戶: ${track.requestedBy}`);
+        embed.setFooter({ text: "可愛的歸終 ❤️", iconURL: interaction.member.avatarURL({ dynamic: true }) });
+        embed.setColor("Green");
+        embed.setTimestamp();
 
-
-        const row = new ActionRowBuilder().addComponents(
+        const row1 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`back_song-${interaction.user.id}`)
                 .setEmoji(config.backEmoji.length <= 3 ? { name: config.backEmoji.trim() } : { id: config.backEmoji.trim() })
@@ -59,6 +57,17 @@ module.exports = {
                 .setStyle(ButtonStyle.Secondary)
         );
 
-        return await interaction.reply({ embeds: [embed], components: [row] });
+        const row2 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`autoplay-${interaction.user.id}`)
+                .setEmoji(config.autoplayEmoji.length <= 3 ? { name: config.autoplayEmoji.trim() } : { id: config.autoplayEmoji.trim() })
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId(`shuffle_song-${interaction.user.id}`)
+                .setEmoji(config.shuffleEmoji.length <= 3 ? { name: config.shuffleEmoji.trim() } : { id: config.shuffleEmoji.trim() })
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+        await interaction.reply({ embeds: [embed], components: [row1, row2] });
     },
 };

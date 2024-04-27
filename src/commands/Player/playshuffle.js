@@ -88,12 +88,12 @@ module.exports = {
             return await interaction.followUp({ embeds: [embed] });
         }
 
-        const data = fs.readFileSync("src/data.json");
+        const data = fs.readFileSync("src/JSON/data.json");
         const parsed = JSON.parse(data);
 
         parsed["queues-shuffled"] += 1;
 
-        fs.writeFileSync("src/data.json", JSON.stringify(parsed));
+        fs.writeFileSync("src/JSON/data.json", JSON.stringify(parsed));
 
         embed.setTitle(`**${res.tracks.length} 首歌** 從撥放清單--> ${res.playlist.type} **[${res.playlist.title}](${res.playlist.url})** 已加載到歌曲隊列中✅`);
 

@@ -1,8 +1,7 @@
 config.yml
-/src/data.json
 node_modules
 .DS_Store
 /logs
 desktop.ini
-checkin.json
-checkYTtemp.json
+/src/JSON
+.synologyWorkingDirectory

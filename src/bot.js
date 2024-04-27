@@ -7,8 +7,7 @@ const HttpsProxyAgent = require("https-proxy-agent");
 const fs = require("node:fs");
 const logger = require("./utils/logger");
 const config = require("./config");
-const {IntentsBitField } = require('discord.js');
-
+const { IntentsBitField } = require("discord.js");
 
 process.on("unhandledRejection", (reason) => {
     logger.error("An unhandled rejection occurred in the main process:");
@@ -38,9 +37,9 @@ if (!fs.existsSync("config.yml")) {
     process.exit(1);
 }
 
-if (!fs.existsSync("src/data.json")) {
+if (!fs.existsSync("src/JSON/data.json")) {
     logger.warn("Unable to find data.json file. Creating a new one with default values.");
-    fs.writeFileSync("src/data.json", JSON.stringify({ "songs-played": 0, "queues-shuffled": 0, "songs-skipped": 0 }));
+    fs.writeFileSync("src/JSON/data.json", JSON.stringify({ "songs-played": 0, "queues-shuffled": 0, "songs-skipped": 0 }));
 }
 
 let proxy = null;
@@ -51,7 +50,7 @@ if (config.enableProxy) {
     agent = HttpsProxyAgent(proxy);
 }
 
-const client = new Client({ intents: [GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessageTyping,GatewayIntentBits.MessageContent,GatewayIntentBits.DirectMessages,GatewayIntentBits.DirectMessageReactions,GatewayIntentBits.GuildVoiceStates,GatewayIntentBits.DirectMessageTyping,GatewayIntentBits.GuildPresences,GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessageTyping, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.DirectMessageTyping, GatewayIntentBits.GuildPresences, GatewayIntentBits.MessageContent] });
 const player = new Player(client, { autoRegisterExtractor: false, ytdlOptions: { requestOptions: { agent, headers: { cookie: config.useYouTubeCookie ? config.youtubeCookie : null } } } });
 player.extractors.register(YouTubeExtractor);
 player.extractors.register(SpotifyExtractor);
@@ -66,15 +65,25 @@ client.buttons = new Collection();
 
 const functions = fs.readdirSync("./src/functions").filter((file) => file.endsWith(".js"));
 
-
-
-
-
 (async () => {
     logger.info("Initialising Guizhong...");
     for (var file of functions) {
         require(`./functions/${file}`)(client);
     }
+
+    //初始化langchainhistory.json成空白
+    const langchainhistory = [
+        {
+            role: "user",
+            content: "",
+        },
+        {
+            role: "assistant",
+            content: "",
+        },
+    ];
+    fs.writeFileSync("./src/JSON/langchainhistory.json", JSON.stringify(langchainhistory));
+
     client.handleCommands();
     client.handleEvents();
     client.handleButtons();

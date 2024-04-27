@@ -36,29 +36,40 @@ module.exports = {
 
         embed.setDescription(`**當前曲目:** [${queue.currentTrack.title}](${queue.currentTrack.url}) by **${queue.currentTrack.author}**\n${progress}\n\n${tracks.slice(0, 5).join("\n")}\n\n${nextSongs}`);
 
-        const row = new ActionRowBuilder().addComponents(
+        const row1 = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId(`back_song`)
+                .setCustomId(`back_song-${interaction.user.id}`)
                 .setEmoji(config.backEmoji.length <= 3 ? { name: config.backEmoji.trim() } : { id: config.backEmoji.trim() })
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
-                .setCustomId(`pause_song`)
+                .setCustomId(`pause_song-${interaction.user.id}`)
                 .setEmoji(config.pauseEmoji.length <= 3 ? { name: config.pauseEmoji.trim() } : { id: config.pauseEmoji.trim() })
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
-                .setCustomId(`skip_song`)
+                .setCustomId(`skip_song-${interaction.user.id}`)
                 .setEmoji(config.pauseEmoji.length <= 3 ? { name: config.skipEmoji.trim() } : { id: config.skipEmoji.trim() })
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
-                .setCustomId(`stop`)
+                .setCustomId(`stop-${interaction.user.id}`)
                 .setEmoji(config.stopEmoji.length <= 3 ? { name: config.stopEmoji.trim() } : { id: config.stopEmoji.trim() })
                 .setStyle(ButtonStyle.Secondary),
             new ButtonBuilder()
-                .setCustomId(`song_lyrics`)
+                .setCustomId(`song_lyrics-${interaction.user.id}`)
                 .setEmoji(config.lyricsEmoji.length <= 3 ? { name: config.lyricsEmoji.trim() } : { id: config.lyricsEmoji.trim() })
                 .setStyle(ButtonStyle.Secondary)
         );
 
-        return await interaction.reply({ embeds: [embed], components: [row] });
+        const row2 = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`autoplay-${interaction.user.id}`)
+                .setEmoji(config.autoplayEmoji.length <= 3 ? { name: config.autoplayEmoji.trim() } : { id: config.autoplayEmoji.trim() })
+                .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId(`shuffle_song-${interaction.user.id}`)
+                .setEmoji(config.shuffleEmoji.length <= 3 ? { name: config.shuffleEmoji.trim() } : { id: config.shuffleEmoji.trim() })
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+        await interaction.reply({ embeds: [embed], components: [row1, row2] });
     },
 };

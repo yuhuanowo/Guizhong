@@ -1,11 +1,10 @@
-const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
-const config = require("../../config");
+const config = require("../config");
 const fs = require("fs");
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("shuffle").setDescription("隨機播放歌曲").setDMPermission(false),
+    name: "shuffle_song",
     async execute(interaction) {
         const player = Player.singleton();
         const queue = player.nodes.get(interaction.guild.id);

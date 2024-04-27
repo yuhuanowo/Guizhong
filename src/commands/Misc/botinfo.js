@@ -7,22 +7,10 @@ module.exports = {
     async execute(interaction) {
         const embed = new EmbedBuilder();
         embed.setDescription("歸終是一個開源的音樂機器人，使用 [discord.js](https://discord.js.org)");
-        embed.addFields(
-            { name: "作者", value: "yuhuan1125", inline: true },
-            { name: "版本", value: "v1.0.0", inline: true },
-            { name: "伺服器", value: "https://discord.gg/", inline: true },
-            { name: "GitHub", value: "https://github.com/", inline: true },
-            { name: "支持", value: "https://discord.gg/", inline: true },
-            { name: "開源", value: "MIT", inline: true }
-        );
+        embed.addFields({ name: "作者", value: "YuhuanStudio", inline: true }, { name: "版本", value: "v1.0.0", inline: true }, { name: "伺服器", value: "https://discord.gg/GfUY7ynvXN", inline: true }, { name: "GitHub", value: "https://github.com/yuhuanowo/Guizhong", inline: true }, { name: "支持", value: "https://github.com/yuhuanowo/Guizhong", inline: true }, { name: "開源", value: "MIT", inline: true });
         embed.setColor(config.embedColour);
 
-        const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("GitHub").setURL("https://github.com"),
-            new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Contributors").setURL("https://github.com/"),
-            new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Support").setURL("https://github.com/"),
-            new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Report Issue").setURL("https://github.com/")
-        );
+        const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("GitHub").setURL("https://github.com/yuhuanowo/Guizhong"), new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Contributors").setURL("https://github.com/yuhuanowo/Guizhong"), new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Support").setURL("https://github.com/yuhuanowo/Guizhong"), new ButtonBuilder().setStyle(ButtonStyle.Link).setLabel("Report Issue").setURL("https://github.com/yuhuanowo/Guizhong"));
 
         return await interaction.reply({ embeds: [embed], components: [row] });
     },

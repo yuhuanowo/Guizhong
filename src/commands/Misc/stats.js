@@ -6,7 +6,7 @@ const fs = require("fs");
 module.exports = {
     data: new SlashCommandBuilder().setName("stats").setDescription("顯示統計數據."),
     async execute(interaction, client) {
-        let rawdata = fs.readFileSync("src/data.json");
+        let rawdata = fs.readFileSync("src/JSON/data.json");
         var data = JSON.parse(rawdata);
 
         const embed = new EmbedBuilder();

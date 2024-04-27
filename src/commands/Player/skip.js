@@ -20,17 +20,17 @@ module.exports = {
 
         queue.node.skip();
 
-        let rawdata = fs.readFileSync("src/data.json");
+        let rawdata = fs.readFileSync("src/JSON/data.json");
         var data = JSON.parse(rawdata);
 
         data["songs-skipped"] += 1;
 
         const success = queue.node.skip();
 
-        embed.setTitle(success?`當前音樂 **${queue.currentTrack.title}** 已跳過✅`:"出了些問題... 再試一次 ? ❌");
+        embed.setTitle(success ? `當前音樂 **${queue.currentTrack.title}** 已跳過✅` : "出了些問題... 再試一次 ? ❌");
 
         let newdata = JSON.stringify(data);
-        fs.writeFileSync("src/data.json", newdata);
+        fs.writeFileSync("src/JSON/data.json", newdata);
 
         return await interaction.reply({ embeds: [embed] });
     },
