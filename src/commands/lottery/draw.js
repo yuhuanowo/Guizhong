@@ -58,7 +58,7 @@ module.exports = {
             ticketPool.push(...ticketArray);
         });
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 11; i++) {
             let winnerId;
             let winnerTicket;
 
@@ -76,7 +76,7 @@ module.exports = {
         }
 
         // 獎項金額
-        const prizeMoney = [1000, 500, 250];
+        const prizeMoney = [1000, 500, 300, 100, 100, 100, 100, 100, 100, 100, 100];
 
         const embed = new EmbedBuilder().setTitle("抽獎結果").setDescription("恭喜以下用戶獲得獎品：").setColor("#FFD700");
 

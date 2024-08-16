@@ -2,12 +2,16 @@ process.env["DP_FORCE_YTDL_MOD"] = "play-dl";
 
 const { Player } = require("discord-player");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
-const { YouTubeExtractor, SpotifyExtractor, SoundCloudExtractor, AppleMusicExtractor, VimeoExtractor, AttachmentExtractor, ReverbnationExtractor } = require("@discord-player/extractor");
+const { SpotifyExtractor, SoundCloudExtractor, AppleMusicExtractor, VimeoExtractor, AttachmentExtractor, ReverbnationExtractor } = require("@discord-player/extractor");
+const  { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei");
 const HttpsProxyAgent = require("https-proxy-agent");
 const fs = require("node:fs");
 const logger = require("./utils/logger");
 const config = require("./config");
 const { IntentsBitField } = require("discord.js");
+const yaml = require("js-yaml");
+const path = require("path");
+const configFile = yaml.load(fs.readFileSync(path.join(__dirname, "..", "config.yml")));
 
 process.on("unhandledRejection", (reason) => {
     logger.error("An unhandled rejection occurred in the main process:");
@@ -52,8 +56,26 @@ if (config.enableProxy) {
 
 const client = new Client({ intents: [GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessageTyping, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages, GatewayIntentBits.DirectMessageReactions, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.DirectMessageTyping, GatewayIntentBits.GuildPresences, GatewayIntentBits.MessageContent] });
 const player = new Player(client, { autoRegisterExtractor: false, ytdlOptions: { requestOptions: { agent, headers: { cookie: config.useYouTubeCookie ? config.youtubeCookie : null } } } });
-player.extractors.register(YouTubeExtractor);
-player.extractors.register(SpotifyExtractor);
+//player.extractors.register(YouTubeExtractor);
+const oauthTokens = configFile.oauthTokens || {};
+player.extractors.register(YoutubeiExtractor, {
+    authentication: oauthTokens
+})
+
+// player.extractors.register(YoutubeiExtractor,{
+//     authentication: {
+//         access_token: configFile.YT_ACCESS_TOKEN || '',
+//         refresh_token: configFile.YT_REFRESH_TOKEN || '',
+//         scope: "https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/youtubepartner https://www.googleapis.com/auth/youtube",
+//         token_type: 'Bearer',
+//         expires_in : 3599,
+//     }
+// });
+
+player.extractors.register(SpotifyExtractor, {
+    createStream: createYoutubeiStream
+});
+//player.extractors.register(SpotifyExtractor);
 player.extractors.register(SoundCloudExtractor);
 player.extractors.register(AppleMusicExtractor);
 player.extractors.register(VimeoExtractor);

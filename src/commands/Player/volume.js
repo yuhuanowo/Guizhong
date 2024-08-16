@@ -30,7 +30,7 @@ module.exports = {
                 return await interaction.reply({ embeds: [embed] });
             }
 
-            const maxVolume = 1000;
+            const maxVolume = 100;
 
             if (vol < 0 || vol > maxVolume) {
                 embed.setTitle(`您指定的數字無效。請輸入 **0 和 ${maxVolume} 之間的數字**.`);

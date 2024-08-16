@@ -5,7 +5,7 @@ const config = require("../../config");
 const fs = require("fs");
 
 // 設定 JSON 文件的路徑
-const checkinPath = "src/checkin.json";
+const checkinPath = "src/JSON/checkin.json";
 
 // 讀取已訂閱的頻道列表
 function loadcheckin() {
