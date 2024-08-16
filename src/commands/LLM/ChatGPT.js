@@ -25,7 +25,7 @@ module.exports = {
 
         // Define the base URL and API key
         const base_url = "http://localhost:25566/v1";
-        const api_key = "not-needed";
+        const api_key = config.openaiapikey;
 
         // Define the data to be sent in the request body
         const requestData = {
