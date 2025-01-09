@@ -2,3 +2,11 @@
 emojis
 node_modules
 logs
+config.yml
+node_modules
+.DS_Store
+/logs
+desktop.ini
+/src/JSON
+.synologyWorkingDirectory
+chatlog.db
