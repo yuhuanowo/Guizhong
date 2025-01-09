@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 const { Player, QueueRepeatMode } = require("discord-player");
 const config = require("../../config");
+const { useMainPlayer } = require("discord-player");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -10,7 +11,7 @@ module.exports = {
         .setDMPermission(false)
         .addStringOption((option) => option.setName("mode").setDescription("循環模式").setRequired(true).addChoices({ name: "off", value: "off" }, { name: "queue", value: "queue" }, { name: "track", value: "track" }, { name: "autoplay", value: "autoplay" })),
     async execute(interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
         const mode = interaction.options.getString("mode");
 

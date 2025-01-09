@@ -30,7 +30,7 @@ module.exports = {
 
         const query = interaction.options.getString("query");
 
-        const player = Player.singleton(client);
+        const player =useMainPlayer(client);
         let queue = player.nodes.get(interaction.guild.id);
 
         if (!queue) {

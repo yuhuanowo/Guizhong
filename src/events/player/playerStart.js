@@ -4,11 +4,12 @@ const config = require("../../config");
 const fs = require("node:fs");
 const { Player } = require("discord-player");
 const { get } = require("node:http");
+const { useMainPlayer } = require("discord-player");
 
 module.exports = {
     name: "playerStart",
     async execute(queue, track, client, interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
 
         const data = fs.readFileSync("src/JSON/data.json");
         var parsed = JSON.parse(data);

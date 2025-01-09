@@ -7,7 +7,7 @@ const fs = require("fs");
 module.exports = {
     data: new SlashCommandBuilder().setName("skip").setDescription("跳過當前歌曲").setDMPermission(false),
     async execute(interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

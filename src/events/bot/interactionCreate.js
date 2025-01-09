@@ -78,7 +78,9 @@ module.exports = {
             const command = client.commands.get(interaction.commandName);
             if (!command) return;
             try {
-                await command.autocompleteRun(interaction, client);
+                if (typeof command.autocompleteRun === 'function') {
+                    await command.autocompleteRun(interaction, client);
+                }
             } catch (error) {
                 logger.error("An error occurred whilst attempting to run autocomplete:"); //嘗試執行自動完成時發生錯誤
                 logger.error(error);

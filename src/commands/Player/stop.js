@@ -6,7 +6,7 @@ const config = require("../../config");
 module.exports = {
     data: new SlashCommandBuilder().setName("stop").setDescription("停止播放歌曲").setDMPermission(false),
     async execute(interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

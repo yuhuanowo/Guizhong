@@ -165,7 +165,7 @@ module.exports = {
         }
         //設定機器人狀態
         //client.user.setActivity(`/help | ${client.guilds.cache.size} servers`, { type: ActivityType.Listening });
-        client.user.setActivity(`v1.0 update!`, { type: ActivityType.Listening });
+        client.user.setActivity(`Use /chat to converse with the most advanced AI.`);
 
         //檢查是否有新影片或直播 10mins檢查一次
         //setInterval(checkForNewContent, 6000);

@@ -46,7 +46,7 @@ module.exports = {
 
         query = interaction.options.getString("query");
 
-        const player = Player.singleton(client);
+        const player =useMainPlayer(client);
         let queue = player.nodes.get(interaction.guild.id);
 
         if (!queue) {
@@ -99,8 +99,17 @@ module.exports = {
 
             if (!res.playlist) {
                 embed.setTitle(`已加載 **${res.tracks[0].title}** by **${res.tracks[0].author}** 到隊列.`);
+                //等待時間後刪除訊息
+                setTimeout(() => {
+                    interaction.deleteReply();
+                }, 10000);
+
             } else {
                 embed.setTitle(`已加載 **${res.tracks[0].title}** by **${res.tracks[0].author}** 到隊列`);
+                //等待時間後刪除訊息
+                setTimeout(() => {
+                    interaction.deleteReply();
+                }, 10000);
             }
         } catch (err) {
             logger.error(err);

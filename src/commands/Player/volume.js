@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
 const config = require("../../config");
+const { useMainPlayer } = require("discord-player");
 
 /**
  * 關於音量的指令
@@ -14,7 +15,7 @@ module.exports = {
         .setDMPermission(false)
         .addIntegerOption((option) => option.setName("volume").setDescription("設置音樂的音量.").setRequired(true)),
     async execute(interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

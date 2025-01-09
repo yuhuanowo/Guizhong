@@ -2,11 +2,12 @@ const { SlashCommandBuilder } = require("@discordjs/builders");
 const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
 const config = require("../../config");
+const { useMainPlayer } = require("discord-player");
 
 module.exports = {
     data: new SlashCommandBuilder().setName("pause").setDescription("暫停曲目").setDMPermission(false),
     async execute(interaction) {
-        const player = Player.singleton();
+        const player =useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

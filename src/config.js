@@ -34,6 +34,8 @@ try {
         youtubeapikey: configFile.youtubeapikey ?? "",
         googleapikey: configFile.googleapikey ?? "",
         openaiapikey: configFile.openaiapikey ?? "",
+        githubToken: configFile.githubToken ?? "",
+        oauthTokens: configFile.oauthTokens ?? {},
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");
