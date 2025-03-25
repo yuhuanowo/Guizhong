@@ -24,7 +24,7 @@ const path = "./src/JSON/chatgptusage.json";
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("chat")
+    .setName("aichat")
     .setDescription("與ChatGPT進行對話")
     .addStringOption((option) =>
       option
