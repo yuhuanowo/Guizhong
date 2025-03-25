@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If a security vulnerability is discovered within this project, please create a GitHub issue and/or email **security@techy.lol**. GitHub issues are preferred, but if the vulnerability is serious or poses a serious threat to users of the project, please disclose the vulnerability privately via email.
+If a security vulnerability is discovered within this project, please create a GitHub issue and/or email **huhu11256@gmail.com**. GitHub issues are preferred, but if the vulnerability is serious or poses a serious threat to users of the project, please disclose the vulnerability privately via email.
 
 When reporting a vulnerability, please go into as much detail as possible about how to reproduce the vulnerability, and try to indicate a severity if possible.
 
