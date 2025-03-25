@@ -7,3 +7,5 @@ desktop.ini
 .synologyWorkingDirectory
 chatlog.db
 start.bat
+src/commands/LLM/
+recordings

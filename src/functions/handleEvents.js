@@ -21,7 +21,7 @@ module.exports = (client) => {
         const playerEventsPath = path.join(__dirname, "../events/player");
         const playerEventFiles = fs.readdirSync(playerEventsPath).filter((file) => file.endsWith(".js"));
 
-        const player =useMainPlayer();
+        const player = useMainPlayer();
 
         for (const file of playerEventFiles) {
             const filePath = path.join(playerEventsPath, file);

@@ -7,7 +7,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder().setName("nowplaying").setDescription("View information about the current track.").setDMPermission(false),
     async execute(interaction, client) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();
@@ -18,7 +18,6 @@ module.exports = {
             return await interaction.reply({ embeds: [embed] });
         }
 
-            
         const track = queue.currentTrack;
 
         const methods = ["disabled", "track", "queue"];
@@ -79,21 +78,21 @@ module.exports = {
         //         clearInterval(interval);
         //         return;
         //     }
-        
+
         //     const track = queue.currentTrack;
-        
+
         //     // 直接检查track.duration是否表示直播流
         //     const trackDuration = track.duration === "Infinity" ? "infinity (live)" : track.duration;
-        
+
         //     const progress = queue.node.createProgressBar();
-        
+
         //     embed.setAuthor({ name: track.title, iconURL: client.user.displayAvatarURL({ size: 1024, dynamic: true }) });
         //     embed.setThumbnail(track.thumbnail);
         //     embed.setDescription(`音量 **${queue.node.volume}**%\n持續時間 **${trackDuration}**\n撥放效果 **${queue.filters.ffmpeg.filters.length > 0 ? queue.filters.ffmpeg.filters.join(", ") : "無"}**\n撥放進度 \n${progress}\n循環模式 **${queue.repeatMode === 0 ? "關閉" : queue.repeatMode === 1 ? "單曲循環" : "隊列循環"}**\n撥放用戶: ${track.requestedBy}`);
         //     embed.setFooter({ text: "可愛的歸終 ❤️", iconURL: interaction.member.avatarURL({ dynamic: true }) });
         //     embed.setColor("Green");
         //     embed.setTimestamp();
-        
+
         //     try {
         //         await interaction.editReply({ embeds: [embed] });
         //     } catch (error) {
@@ -101,5 +100,5 @@ module.exports = {
         //         clearInterval(interval); // Optionally stop the interval on error
         //     }
         // }, 10000);
-    }
+    },
 };

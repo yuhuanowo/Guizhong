@@ -125,7 +125,7 @@ module.exports = {
             return await interaction.editReply({ embeds: [embed] });
         }
 
-        const player =useMainPlayer(client);
+        const player = useMainPlayer(client);
         let queue = player.nodes.get(interaction.guild.id);
 
         if (!queue) {

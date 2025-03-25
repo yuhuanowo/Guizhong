@@ -2,7 +2,7 @@
   <img src="https://github.com/yuhuanowo/Guizhong/blob/main/assets/logo.png?raw=true" width = "100" height = "100"/>
 </p>
 <h1 align="center">Guizhong</h1>
-<p align="center">Discord music bot with many useful commands and effects.</p>
+<p align="center">A feature-rich Discord bot with music, AI integration, lottery, and more.</p>
 
 <p align="center">
   <a href="https://github.com/yuhuanowo/Guizhong/actions">
@@ -15,56 +15,178 @@
     <img alt="Issues" src="https://img.shields.io/github/issues/yuhuanowo/Guizhong" />
   </a>
   <a href="https://github.com/yuhuanowo/Guizhong/blob/master/LICENSE">
-    <img alt="Issues" src="https://img.shields.io/github/license/yuhuanowo/Guizhong" />
+    <img alt="License" src="https://img.shields.io/github/license/yuhuanowo/Guizhong" />
   </a>
   <a href="https://github.com/yuhuanowo/Guizhong/pulls">
-    <img alt="Issues" src="https://img.shields.io/github/issues-pr-closed/yuhuanowo/Guizhong" />
+    <img alt="Pull Requests" src="https://img.shields.io/github/issues-pr-closed/yuhuanowo/Guizhong" />
   </a>
   <a href="https://github.com/yuhuanowo/Guizhong/commits">
-    <img alt="Issues" src="https://img.shields.io/github/last-commit/yuhuanowo/Guizhong" />
+    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/yuhuanowo/Guizhong" />
   </a>
   <a href="https://github.com/yuhuanowo/Guizhong"><img alt="Statistics Graphs" src="https://repobeats.axiom.co/api/embed/ab7080243cf7b8ed4e30271afc121489272ff6c9.svg"></a>
 </p>
 
-<h2>About Guizhong</h2>
-Guizhong was primarily developed because the best music bots shut down, and most alternatives had core features locked behind a paywall. Guizhong started as a bot that was just used in a server with some friends, and then became a project that I released publicly for anyone to use and maintain.
-
-<h2>Features</h2>
-Guizhong is a feature-rich Discord music bot. It offers a clean look, easy to use commands, and active development. Check out the list below for a full list of features:
-<br>
-<br>
-<ul>
-<li>Easy installation</li>
-<li>Multi-server support</li>
-<li>Song lyrics integration</li>
-<li>Volume controller</li>
-<li>Full player control with pausing, seeking, and volume control</li>
-<li>Queue support with skipping, returning to the previous song, viewing queued songs, queue shuffling, queue clearing, adding songs to the end of the queue, or the next position in the queue</li>
-<li>Listening statistics that allow you to see how many songs you've listened to, how many songs you've skipped, and how many times you've shuffled the queue</li>
-<li>An easy to reference help menu</li>
-<li>Saving songs right to your direct messages for you to refer back to later</li>
-<li>10+ effects to spice up your music</li>
-<li>Search autocomplete</li>
-<li>Support for YouTube, Spotify, SoundCloud, Apple Music, Vimeo and Reverbnation</li>
-</ul>
-
-<!-- <h2>Screenshots</h2>
 <p align="center">
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/1.png" width="500px" />
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/2.png" width="500px" />
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/3.png" width="500px" />
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/4.png" width="500px" />
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/5.png" width="500px" />
-<img src="https://raw.githubusercontent.com/NerdyTechy/Guizhong/master/assets/screenshots/6.png" width="500px" />
+  <a href="docs/README_ZH-CN.md">简体中文</a> |
+  <a href="docs/README_ZH-TW.md">繁體中文</a> |
+  <a href="README.md">English</a>
+</p>
+
+## 📋 Table of Contents
+- [About Guizhong](#about-guizhong)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Commands](#commands)
+- [Contributing](#contributing)
+- [API Documentation](#api-documentation)
+- [Roadmap](#roadmap)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+
+## 🤖 About Guizhong
+Guizhong is a powerful, multifunctional Discord bot developed to enhance user experience on Discord servers. Originally created to provide free music services when many premium bots appeared on the market, Guizhong has evolved into a comprehensive bot offering various features including music playback, AI integration, lottery systems, daily check-ins, and more.
+
+The name "Guizhong" is inspired by a character from Genshin Impact, embodying intelligence and helpfulness - qualities we strive to achieve with this bot.
+
+## ✨ Features
+Guizhong comes packed with a variety of features:
+
+### Music System
+- Multi-platform support (YouTube, Spotify, SoundCloud, Apple Music, Vimeo, etc.)
+- Complete playback controls (play, pause, skip, queue management)
+- Volume control and audio effects
+- Lyrics integration
+- Music history tracking
+- Search with autocomplete
+
+### AI Integration
+- Multiple AI models support
+- Chat capabilities
+- Text generation
+- History tracking for conversations
+- Real-time voice conversation
+- Online search
+- Image generation
+
+### Economy & Engagement
+- Lottery system
+- Daily check-in system
+- Server engagement tools
+
+### Administration
+- User management tools
+- Server configuration
+- Customizable commands
+
+<!-- ## 🖼️ Screenshots
+<p align="center">
+  <img src="assets/screenshots/music_player.png" width="400" alt="Music Player" />
+  <img src="assets/screenshots/ai_chat.png" width="400" alt="AI Chat" />
+  <img src="assets/screenshots/lottery.png" width="400" alt="Lottery System" />
 </p> -->
 
-<h2>Installation</h2>
-For a detailed installation guide, check out our <a href="">Installation wiki page</a>.
+## 📥 Installation
+Follow these steps to get Guizhong up and running:
 
-## Genius
+### Prerequisites
+- Node.js (v16.x or higher)
+- npm (v7.x or higher)
+- Discord bot token
+- (Optional) API keys for various services (Genius, OpenAI, etc.)
 
-Guizhong utilises Genius' API to find lyrics for songs. A Genius API key isn't required to use the bot, but will make the lyrics features far more reliable. Obtaining one is free, and can be done so <a href="https://genius.com/api-clients">here</a>.
+### Quick Start
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yuhuanowo/Guizhong.git
+   cd Guizhong
+   ```
 
-## Hosting
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Want to host this bot online? Any hosting company that provides Discord bot hosting will work, but I highly recommend <a href="https://techy.lol/revivenode">Revivenode</a> (Affiliate Link).
+3. Create configuration:
+   ```bash
+   cp config.example.yml config.yml
+   ```
+
+4. Edit the `config.yml` file with your bot token and other settings.
+
+5. Start the bot:
+   ```bash
+   npm start
+   ```
+
+For detailed installation instructions, check our Installation Guide:
+- [English](docs/installation.md)
+- [简体中文](docs/installation.zh-CN.md)
+- [繁體中文](docs/installation.zh-TW.md)
+
+## ⚙️ Configuration
+Guizhong can be configured through the `config.yml` file. Here are some key configuration options:
+
+- `token`: Your Discord bot token
+- `prefix`: Command prefix for text commands
+- `embedColour`: Default color for embeds
+- `geniusApiKey`: (Optional) API key for Genius lyrics service
+- `youtubeapikey`: (Optional) YouTube API key for enhanced YouTube functionalities
+- `openaiApiKey`: (Optional) OpenAI API key for AI functionalities
+
+For a complete configuration guide, check our Configuration Documentation:
+- [English](docs/configuration.md)
+- [简体中文](docs/configuration.zh-CN.md)
+- [繁體中文](docs/configuration.zh-TW.md)
+
+## 🎮 Usage
+After installation and configuration, invite the bot to your server using the OAuth2 URL generated from the Discord Developer Portal.
+
+### Basic Commands
+- `/play [song name or URL]` - Play a song
+- `/pause` - Pause the current song
+- `/skip` - Skip to the next song
+- `/queue` - View the current song queue
+- `/help` - Display the help menu
+
+For a complete list of commands, use the `/help` command or check our Commands Documentation:
+- [English](docs/commands.md)
+- [简体中文](docs/commands.zh-CN.md)
+- [繁體中文](docs/commands.zh-TW.md)
+
+## 🤝 Contributing
+Contributions are welcome! Please check our Contributing Guidelines:
+- [English](CONTRIBUTING.md)
+- [简体中文](CONTRIBUTING_ZH-CN.md)
+- [繁體中文](CONTRIBUTING_ZH-TW.md)
+
+## 📚 API Documentation
+API documentation for developers is available in:
+- [English](docs/api.md)
+- [简体中文](docs/api/index.zh-CN.md)
+- [繁體中文](docs/api/index.zh-TW.md)
+
+## 🗺️ Roadmap
+Check our [TODO.md](TODO.md) file for planned features and improvements.
+
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgements
+- All contributors who have helped this project
+- [discord.js](https://discord.js.org) for the Discord API wrapper
+- [discord-player](https://discord-player.js.org) for the music player
+- Other libraries and services that made this bot possible
+
+---
+
+<p align="center">
+  Made with ❤️ by YuhuanStudio
+  <br>
+  <a href="https://discord.gg/GfUY7ynvXN">Join Our Discord</a> | 
+  <a href="https://github.com/yuhuanowo/Guizhong">GitHub Repository</a> | 
+  <a href="https://www.yuhuanstudio.eu.org/">YuhuanStudio Official Website</a>
+  <br>
+</p>

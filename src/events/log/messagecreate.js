@@ -1,44 +1,103 @@
-const { EmbedBuilder, Colors } = require("discord.js");
+const { EmbedBuilder, Colors, AllowedMentionsTypes } = require("discord.js");
 const config = require("../../config");
+const chatCommand = require("../../commands/LLM/Chat");
+const mongoose = require("mongoose");
+const ChatLog = mongoose.model("ChatLog");
 const logger = require("../../utils/logger");
 
-//when message is sent in guild
 module.exports = {
     name: "messageCreate",
     once: false,
     async execute(message, interaction, client) {
-        //if message is sent by bot, return
         if (message.author.bot) return;
-        logger.info(`[${message.guild.name}] ${message.author.tag} : ${message.content}`);
 
-        // if (message.guild.id === "606104244101185558") {
-        //     const channel = message.guild.channels.cache.get("764845795111338026"); // Get the channel from ID
-        //     if (!channel) return logger.error(`Channel not found: CHANNEL_ID`); // Check if the channel exists
-        //     const embed = new EmbedBuilder()
-        //         .setTitle("🗑️ Message Deleted")
-        //         .setDescription(`[${message.author.tag}] : ${message.content}`)
-        //         .setColor(config.embedColour)
-        //         .setAuthor( { name: message.author.tag, iconURL: message.author.avatarURL })
-        //         .setTimestamp();
+        if (message.reference && message.reference.messageId) {
+            const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+            if (repliedMessage.author.bot) {
+                const interactionId = repliedMessage.id;
 
-        //     channel.send({ embeds: [embed] }); // Send the message to the channel
-        // }
+                try {
+                    const row = await ChatLog.findOne({ interaction_id: interactionId });
 
-        if (message.guild.id !== "606104244101185558") return; //for YuhuanStudio
-        //if message content is "羽幻是拉拉隊長 (每日任務1/1)"
-        if (
-            message.content === "羽幻是拉拉隊長 (每日任務1/1)" ||
-            message.content === "羽幻是拉拉隊長 (每日任務2/1)" ||
-            message.content === "羽幻 sooo rich(每日任務1/1)" ||
-            message.content === "羽幻是老拉拉隊長 (每日任務1/1)" ||
-            message.content === "羽幻是拉拉隊長" ||
-            // any message content with "隊長" in it
-            message.content.includes("隊長") ||
-            message.content.includes("每日任務")
-        ) {
-            //delete message
-            if (message.author.id !== "475820152261443585") {
-                await message.delete();
+                    if (row) {
+                        // 建立回覆選項
+                        const messageOptions = {
+                            embeds: [
+                                new EmbedBuilder()
+                                    .setTitle("正在生成中...")
+                                    .setColor("#3399ff")
+                            ],
+                            // 新增: 引用原始訊息
+                            reply: {
+                                messageReference: message.id,
+                                failIfNotExists: false,
+                                AllowedMentionsTypes: [AllowedMentionsTypes.USER] // 只提及原始訊息的作者 (避免重複提及)
+                            }
+                        };
+
+                        // 傳送帶有引用的訊息
+                        let sentMessage = await message.channel.send(messageOptions);
+                        
+                        const interaction = {
+                            options: {
+                                getString: (name) => {
+                                    if (name === "text") return message.content;
+                                    if (name === "history") return interactionId;
+                                    return null;
+                                },
+                                getAttachment: () => null,
+                                getBoolean: () => false,
+                            },
+                            user: message.author,
+                            reply: async (response) => {
+                                if (response.embeds && response.embeds[0]) {
+                                    await sentMessage.edit({
+                                        embeds: [response.embeds[0]],
+                                        reply: {
+                                            messageReference: message.id,
+                                            failIfNotExists: false,
+                                            AllowedMentionsTypes: [AllowedMentionsTypes.USER]
+                                        }
+                                    });
+                                } else {
+                                    await sentMessage.edit({
+                                        content: "無內容",
+                                        reply: {
+                                            messageReference: message.id,
+                                            failIfNotExists: false,
+                                            AllowedMentionsTypes: [AllowedMentionsTypes.USER]
+                                        }
+                                    });
+                                }
+                            },
+                            editReply: async (response) => {
+                                if (response.embeds && response.embeds[0]) {
+                                    await sentMessage.edit({
+                                        embeds: [response.embeds[0]],
+                                        reply: {
+                                            messageReference: message.id,
+                                            failIfNotExists: false,
+                                            AllowedMentionsTypes: [AllowedMentionsTypes.USER]
+                                        }
+                                    });
+                                } else {
+                                    await sentMessage.edit({
+                                        content: "無內容",
+                                        reply: {
+                                            messageReference: message.id,
+                                            failIfNotExists: false,
+                                            AllowedMentionsTypes: [AllowedMentionsTypes.USER]
+                                        }
+                                    });
+                                }
+                            },
+                        };
+
+                        await chatCommand.execute(interaction, sentMessage.id);
+                    }
+                } catch (err) {
+                    console.error("Database error:", err);
+                }
             }
         }
     },

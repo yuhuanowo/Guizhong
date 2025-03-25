@@ -15,7 +15,7 @@ module.exports = {
         .setDMPermission(false)
         .addIntegerOption((option) => option.setName("volume").setDescription("設置音樂的音量.").setRequired(true)),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

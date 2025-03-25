@@ -11,7 +11,7 @@ module.exports = {
         .setDMPermission(false)
         .addStringOption((option) => option.setName("mode").setDescription("循環模式").setRequired(true).addChoices({ name: "off", value: "off" }, { name: "queue", value: "queue" }, { name: "track", value: "track" }, { name: "autoplay", value: "autoplay" })),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
         const mode = interaction.options.getString("mode");
 

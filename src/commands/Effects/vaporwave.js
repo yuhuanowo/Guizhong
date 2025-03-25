@@ -7,7 +7,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder().setName("vaporwave").setDescription("Applies the vaporwave effect to the current music.").setDMPermission(false),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

@@ -8,7 +8,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder().setName("shuffle").setDescription("隨機播放歌曲").setDMPermission(false),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

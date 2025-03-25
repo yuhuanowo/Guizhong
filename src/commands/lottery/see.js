@@ -48,7 +48,6 @@ module.exports = {
             return;
         }
 
-
         const embed = new EmbedBuilder().setTitle("所有彩票").setDescription("所有已購買的彩票：").setColor("#FFD700");
 
         for (let id in tickets) {
@@ -59,6 +58,5 @@ module.exports = {
         }
 
         await interaction.reply({ embeds: [embed] });
-
-    }
+    },
 };

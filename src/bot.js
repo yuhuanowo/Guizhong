@@ -3,7 +3,7 @@ process.env["DP_FORCE_YTDL_MOD"] = "play-dl";
 const { Player } = require("discord-player");
 const { Client, Collection, GatewayIntentBits } = require("discord.js");
 const { SpotifyExtractor, SoundCloudExtractor, AppleMusicExtractor, VimeoExtractor, AttachmentExtractor, ReverbnationExtractor } = require("@discord-player/extractor");
-const  { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei");
+const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei");
 const HttpsProxyAgent = require("https-proxy-agent");
 const fs = require("node:fs");
 const logger = require("./utils/logger");
@@ -59,8 +59,8 @@ const player = new Player(client, { autoRegisterExtractor: false, ytdlOptions: {
 //player.extractors.register(YouTubeExtractor);
 const oauthTokens = configFile.oauthTokens || {};
 player.extractors.register(YoutubeiExtractor, {
-    authentication: oauthTokens
-})
+    //authentication: oauthTokens
+});
 
 // player.extractors.register(YoutubeiExtractor,{
 //     authentication: {
@@ -73,7 +73,7 @@ player.extractors.register(YoutubeiExtractor, {
 // });
 
 player.extractors.register(SpotifyExtractor, {
-    createStream: createYoutubeiStream
+    createStream: createYoutubeiStream,
 });
 //player.extractors.register(SpotifyExtractor);
 player.extractors.register(SoundCloudExtractor);

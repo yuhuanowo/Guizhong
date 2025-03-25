@@ -7,7 +7,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder().setName("clear").setDescription("清除隊列中的所有音樂").setDMPermission(false),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

@@ -7,7 +7,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     data: new SlashCommandBuilder().setName("queue").setDescription("查看隊列中的歌曲").setDMPermission(false),
     async execute(interaction, client) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

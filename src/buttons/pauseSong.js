@@ -6,7 +6,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     name: "pause_song",
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();
@@ -35,6 +35,5 @@ module.exports = {
             }, 5000);
         }
         return await interaction.reply({ embeds: [embed], ephemeral: false });
-
     },
 };

@@ -16,7 +16,7 @@ module.exports = {
         .setDMPermission(false)
         .addStringOption((option) => option.setName("query").setDescription("輸入曲目名稱、作者名或 URL.").setRequired(true).setAutocomplete(config.autocomplete)),
     async execute(interaction, client) {
-        await interaction.deferReply((ephemeral = true));
+        await interaction.deferReply();
 
         //如果連結是youtube music 會轉成youtube
         if (interaction.options.getString("query").includes("music.youtube.com")) {
@@ -46,7 +46,7 @@ module.exports = {
 
         query = interaction.options.getString("query");
 
-        const player =useMainPlayer(client);
+        const player = useMainPlayer(client);
         let queue = player.nodes.get(interaction.guild.id);
 
         if (!queue) {
@@ -103,7 +103,6 @@ module.exports = {
                 setTimeout(() => {
                     interaction.deleteReply();
                 }, 10000);
-
             } else {
                 embed.setTitle(`已加載 **${res.tracks[0].title}** by **${res.tracks[0].author}** 到隊列`);
                 //等待時間後刪除訊息

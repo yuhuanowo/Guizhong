@@ -9,7 +9,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     name: "playerStart",
     async execute(queue, track, client, interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
 
         const data = fs.readFileSync("src/JSON/data.json");
         var parsed = JSON.parse(data);

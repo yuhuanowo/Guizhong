@@ -12,7 +12,7 @@ module.exports = {
         .addIntegerOption((option) => option.setName("minutes").setDescription("跳過的分鐘數.").setRequired(true))
         .addIntegerOption((option) => option.setName("seconds").setDescription("跳過的秒數.").setRequired(true)),
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();

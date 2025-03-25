@@ -6,7 +6,7 @@ const { useMainPlayer } = require("discord-player");
 module.exports = {
     name: "song_lyrics",
     async execute(interaction) {
-        const player =useMainPlayer();
+        const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
 
         const embed = new EmbedBuilder();
