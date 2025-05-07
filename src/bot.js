@@ -86,25 +86,45 @@ client.commands = new Collection();
 client.buttons = new Collection();
 
 const functions = fs.readdirSync("./src/functions").filter((file) => file.endsWith(".js"));
+const mongoose = require("mongoose");
 
 (async () => {
     logger.info("Initialising Guizhong...");
+    
+    // 連接到 MongoDB 資料庫
+    try {
+        await mongoose.connect(config.mongoURI || "mongodb://localhost:27017/bot");
+        logger.success("Successfully connected to MongoDB database");
+        
+        // 載入所有模型文件
+        const modelsPath = path.join(__dirname, "models");
+        if (fs.existsSync(modelsPath)) {
+            const modelFiles = fs.readdirSync(modelsPath).filter(file => file.endsWith(".js"));
+            modelFiles.forEach(file => {
+                require(path.join(modelsPath, file));
+                logger.info(`Loaded model: ${file}`);
+            });
+        }
+    } catch (err) {
+        logger.error("Failed to connect to MongoDB database:", err);
+    }
+    
     for (var file of functions) {
         require(`./functions/${file}`)(client);
     }
 
-    //初始化langchainhistory.json成空白
-    const langchainhistory = [
-        {
-            role: "user",
-            content: "",
-        },
-        {
-            role: "assistant",
-            content: "",
-        },
-    ];
-    fs.writeFileSync("./src/JSON/langchainhistory.json", JSON.stringify(langchainhistory));
+    // //初始化langchainhistory.json成空白
+    // const langchainhistory = [
+    //     {
+    //         role: "user",
+    //         content: "",
+    //     },
+    //     {
+    //         role: "assistant",
+    //         content: "",
+    //     },
+    // ];
+    // fs.writeFileSync("./src/JSON/langchainhistory.json", JSON.stringify(langchainhistory));
 
     client.handleCommands();
     client.handleEvents();

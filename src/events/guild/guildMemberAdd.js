@@ -1,25 +1,55 @@
-//when a new member joins the server
-const { EmbedBuilder, Colors } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const config = require("../../config");
 const logger = require("../../utils/logger");
+const mongoose = require("mongoose");
+const LogChannel = mongoose.model("LogChannel");
 
 module.exports = {
     name: "guildMemberAdd",
     once: false,
     async execute(member, client) {
-        //if message is sent by bot, return
+        // 忽略机器人
         if (member.user.bot) return;
-        logger.info(`[${member.guild.name}] ${member.user.tag} has joined the server`);
-        // //send message to #welcome channel
-        // const channel = member.guild.channels.cache.get("606104244101185561"); // Get the channel from ID
-        // if (!channel) return logger.error(`Channel not found: CHANNEL_ID`); // Check if the channel exists
-        // const embed = new EmbedBuilder()
-        //     .setTitle("👋 Welcome to YuhuanStudio!")
-        //     .setDescription(`Welcome to YuhuanStudio, ${member.user.tag}! Please read the rules in <#606104244101185562> and enjoy your stay!`)
-        //     .setColor(config.embedColour)
-        //     .setAuthor( { name: member.user.tag, iconURL: member.user.avatarURL })
-        //     .setTimestamp();
-
-        // channel.send({ embeds: [embed] }); // Send the message to the channel
+        
+        try {
+            // 记录基本信息
+            logger.info(`[${member.guild.name}] ${member.user.tag} 加入了服务器`);
+            
+            // 检查该服务器是否有日志设置
+            const logSettings = await LogChannel.findOne({ 
+                guildId: member.guild.id,
+                "logTypes.member": true
+            });
+            
+            // 如果找到日志设置并且成员日志已启用
+            if (logSettings) {
+                // 获取日志频道
+                const channel = member.guild.channels.cache.get(logSettings.channelId);
+                if (!channel) return;
+                
+                // 计算账号创建时间
+                const creationDate = Math.floor(member.user.createdTimestamp / 1000);
+                
+                // 创建嵌入式消息
+                const embed = new EmbedBuilder()
+                    .setTitle("👋 新成员加入")
+                    .setDescription(`${member.user} (${member.user.tag}) 加入了服务器`)
+                    .addFields(
+                        { name: "🆔 用户ID", value: member.user.id, inline: true },
+                        { name: "📆 账号创建日期", value: `<t:${creationDate}:F>\n(<t:${creationDate}:R>)`, inline: true },
+                        { name: "👤 当前服务器成员数", value: `${member.guild.memberCount}`, inline: true }
+                    )
+                    .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
+                    .setColor("#4CAF50") // 绿色表示加入
+                    .setTimestamp();
+                
+                // 发送日志消息
+                channel.send({ embeds: [embed] }).catch(err => {
+                    logger.error(`无法发送成员加入日志: ${err.message}`);
+                });
+            }
+        } catch (error) {
+            logger.error(`处理成员加入日志时出错: ${error}`);
+        }
     },
 };
