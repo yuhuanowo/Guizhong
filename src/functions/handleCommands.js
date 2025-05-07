@@ -1,6 +1,7 @@
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord.js");
 const fs = require("node:fs");
+const path = require("node:path");
 const logger = require("../utils/logger");
 const config = require("../config");
 
@@ -14,9 +15,13 @@ module.exports = (client) => {
         const commandFolders = fs.readdirSync("src/commands");
 
         for (var folder of commandFolders) {
-            const commandFiles = fs.readdirSync(`src/commands/${folder}`);
+            const commandFiles = fs.readdirSync(`src/commands/${folder}`).filter(file => file.endsWith('.js'));
             for (const file of commandFiles) {
                 const command = require(`../commands/${folder}/${file}`);
+                if (!command.data || !command.data.name) {
+                    logger.error(`Command file ${file} is missing "data" or "name" property.`);
+                    continue; // 跳过无效的命令文件
+                }
                 client.commands.set(command.data.name, command);
                 client.commandArray.push(command.data.toJSON());
             }
