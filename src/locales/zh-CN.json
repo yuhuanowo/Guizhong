@@ -670,7 +670,13 @@
       "stop": "停止",
       "lyrics": "歌词",
       "autoplay": "自动播放",
-      "shuffle": "随机播放"
+      "shuffle": "随机播放",
+      "viewHistory": {
+        "noHistory": "没有可用的聊天历史",
+        "selectPlaceholder": "选择要查看的对话",
+        "historyListTitle": "聊天历史记录",
+        "selectRecord": "请选择要查看的记录"
+      }
     },
     "channelEmpty": "由于 {duration} 不活动，音乐已停止",
     "queue": {

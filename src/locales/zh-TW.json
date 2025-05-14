@@ -677,7 +677,13 @@
       "stop": "停止",
       "lyrics": "歌詞",
       "autoplay": "自動播放",
-      "shuffle": "隨機播放"
+      "shuffle": "隨機播放",
+      "viewHistory": {
+        "noHistory": "沒有可用的聊天歷史",
+        "selectPlaceholder": "選擇要查看的對話",
+        "historyListTitle": "聊天歷史記錄",
+        "selectRecord": "請選擇要查看的記錄"
+      }
     },
     "channelEmpty": "由於 {duration} 不活動，音樂已停止",
     "queue": {

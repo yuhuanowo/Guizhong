@@ -718,7 +718,13 @@
       "stop": "Stop",
       "lyrics": "Lyrics",
       "autoplay": "Autoplay",
-      "shuffle": "Shuffle"
+      "shuffle": "Shuffle",
+      "viewHistory": {
+        "noHistory": "No chat history available",
+        "selectPlaceholder": "Select a conversation to view",
+        "historyListTitle": "Chat History",
+        "selectRecord": "Please select a record to view"
+      }
     },
     "channelEmpty": "Music stopped due to {duration} inactivity",
     "queue": {
