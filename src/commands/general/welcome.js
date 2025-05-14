@@ -4,47 +4,82 @@ const fs = require("fs");
 const path = require("path");
 const logger = require("../../utils/logger");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("welcome")
-        .setDescription("設置新成員加入通知 (同時開啟離開通知)")
+        .setNameLocalizations({
+            "zh-CN": "welcome",
+            "zh-TW": "welcome"
+        })
+        .setDescription("Setup new member welcome notifications (also enables leave notifications)")
+        .setDescriptionLocalizations({
+            "zh-CN": "设置新成员加入通知 (同时开启离开通知)",
+            "zh-TW": "設置新成員加入通知 (同時開啟離開通知)"
+        })
         .addSubcommand(subcommand =>
             subcommand
                 .setName("setup")
-                .setDescription("設置歡迎新成員的頻道和訊息")
+                .setDescription("Setup welcome message for new members")
+                .setDescriptionLocalizations({
+                    "zh-CN": "设置欢迎新成员的频道和消息",
+                    "zh-TW": "設置歡迎新成員的頻道和訊息"
+                })
                 .addChannelOption(option =>
                     option.setName("channel")
-                        .setDescription("選擇要發送歡迎訊息的頻道")
+                        .setDescription("Choose the channel for welcome messages")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "选择要发送欢迎消息的频道",
+                            "zh-TW": "選擇要發送歡迎訊息的頻道"
+                        })
                         .setRequired(true)
                 )
                 .addStringOption(option =>
                     option.setName("message")
-                        .setDescription("自定義歡迎訊息 將顯示成 @{user}, {你的自訂訊息} [隨意設置後即可查看可用的佔位符]")
+                        .setDescription("Custom welcome message that will show as @{user}, {your custom message}")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "自定义欢迎消息 将显示成 @{user}, {你的自定消息} [随意设置后即可查看可用的占位符]",
+                            "zh-TW": "自定義歡迎訊息 將顯示成 @{user}, {你的自訂訊息} [隨意設置後即可查看可用的佔位符]"
+                        })
                         .setRequired(false)
                 )
                 .addStringOption(option =>
                     option.setName("banner")
-                        .setDescription("歡迎橫幅圖片URL (建議尺寸: 1024x250)")
+                        .setDescription("Welcome banner image URL (recommended size: 1024x250)")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "欢迎横幅图片URL (建议尺寸: 1024x250)",
+                            "zh-TW": "歡迎橫幅圖片URL (建議尺寸: 1024x250)"
+                        })
                         .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("preview")
-                .setDescription("預覽當前的歡迎訊息")
+                .setDescription("Preview current welcome message")
+                .setDescriptionLocalizations({
+                    "zh-CN": "预览当前的欢迎消息",
+                    "zh-TW": "預覽當前的歡迎訊息"
+                })
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("disable")
-                .setDescription("停用歡迎訊息")
+                .setDescription("Disable welcome messages")
+                .setDescriptionLocalizations({
+                    "zh-CN": "停用欢迎消息",
+                    "zh-TW": "停用歡迎訊息"
+                })
         )
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
     
     async execute(interaction) {
         const subcommand = interaction.options.getSubcommand();
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
         
-        // 讀取歡迎設置
+        // 读取欢迎设置
         const welcomeConfigPath = path.join(__dirname, "../../JSON/welcome.json");
         let welcomeConfig = { channels: {} };
         
@@ -53,7 +88,7 @@ module.exports = {
                 welcomeConfig = JSON.parse(fs.readFileSync(welcomeConfigPath, "utf8"));
             }
         } catch (error) {
-            logger.error(`讀取歡迎配置時發生錯誤: ${error.message}`);
+            logger.error(`${i18n.getString("commands.welcome.errorReadingConfig", language)}: ${error.message}`);
         }
         
         if (subcommand === "setup") {
@@ -62,15 +97,18 @@ module.exports = {
             const welcomeBanner = interaction.options.getString("banner");
             
             if (!customMessage) {
-                customMessage = "👋 歡迎 {user.mention} 加入 {server}！";
+                customMessage = i18n.getString("commands.welcome.defaultMessage", language);
             }
             
-            // 驗證橫幅URL (如果提供)
+            // 验证横幅URL (如果提供)
             if (welcomeBanner && !isValidUrl(welcomeBanner)) {
-                return interaction.reply({ content: "❌ 提供的橫幅URL無效。請確保它是一個有效的圖片URL。", ephemeral: true });
+                return interaction.reply({ 
+                    content: i18n.getString("commands.welcome.invalidBannerUrl", language), 
+                    ephemeral: true 
+                });
             }
             
-            // 保存設置
+            // 保存设置
             welcomeConfig.channels[interaction.guild.id] = {
                 channelId: channel.id,
                 message: customMessage,
@@ -81,45 +119,57 @@ module.exports = {
                 fs.writeFileSync(welcomeConfigPath, JSON.stringify(welcomeConfig, null, 4));
                 
                 const embed = new EmbedBuilder()
-                    .setTitle("✅ 歡迎訊息已設置")
-                    .setDescription(`歡迎訊息將在 <#${channel.id}> 頻道顯示`)
+                    .setTitle(i18n.getString("commands.welcome.setupSuccess.title", language))
+                    .setDescription(i18n.getString("commands.welcome.setupSuccess.description", language, { channelId: channel.id }))
                     .addFields(
-                        { name: "自定義訊息", value: customMessage },
                         { 
-                            name: "可用的佔位符", 
-                            value: "`{user.mention}` - 提及用戶\n`{user.tag}` - 用戶名稱與標籤\n`{user.name}` - 僅用戶名稱\n`{server}` - 伺服器名稱\n`{memberCount}` - 成員總數"
+                            name: i18n.getString("commands.welcome.customMessage", language), 
+                            value: customMessage 
+                        },
+                        { 
+                            name: i18n.getString("commands.welcome.availablePlaceholders", language), 
+                            value: i18n.getString("commands.welcome.placeholdersList", language)
                         }
                     )
                     .setColor(config.embedColour)
                     .setTimestamp();
                 
                 if (welcomeBanner) {
-                    embed.addFields({ name: "歡迎橫幅", value: welcomeBanner });
+                    embed.addFields({ 
+                        name: i18n.getString("commands.welcome.welcomeBanner", language), 
+                        value: welcomeBanner 
+                    });
                     embed.setImage(welcomeBanner);
                 }
                 
-                await interaction.reply({ embeds: [embed],ephemeral: true });
-                logger.info(`[${interaction.guild.name}] ${interaction.user.tag} 設置了歡迎訊息在 #${channel.name} 頻道`);
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+                logger.info(`[${interaction.guild.name}] ${interaction.user.tag} ${i18n.getString("commands.welcome.logSetup", language, { channelName: channel.name })}`);
             } catch (error) {
-                logger.error(`保存歡迎配置時發生錯誤: ${error.message}`);
-                await interaction.reply({ content: "❌ 設置歡迎訊息時發生錯誤，請稍後再試。", ephemeral: true });
+                logger.error(`${i18n.getString("commands.welcome.errorSavingConfig", language)}: ${error.message}`);
+                await interaction.reply({ 
+                    content: i18n.getString("commands.welcome.errorSetup", language), 
+                    ephemeral: true 
+                });
             }
         } else if (subcommand === "preview") {
-            // 預覽當前設置的歡迎訊息
+            // 预览当前设置的欢迎消息
             const guildConfig = welcomeConfig.channels[interaction.guild.id];
             
             if (!guildConfig) {
-                return interaction.reply({ content: "⚠️ 此伺服器尚未設置歡迎訊息。", ephemeral: true });
+                return interaction.reply({ 
+                    content: i18n.getString("commands.welcome.notConfigured", language), 
+                    ephemeral: true 
+                });
             }
             
             try {
-                // 尋找規則頻道
+                // 寻找规则频道
                 const rulesChannel = interaction.guild.channels.cache.find(ch => 
-                    ch.name.toLowerCase().includes('規則') || 
+                    ch.name.toLowerCase().includes(i18n.getString("commands.welcome.rulesChannelName", language).toLowerCase()) || 
                     ch.name.toLowerCase().includes('rules'));
                 
-                // 處理歡迎訊息預覽
-                const welcomeMessage = guildConfig.message || "👋 歡迎 {user.mention} 加入 {server}！";
+                // 处理欢迎消息预览
+                const welcomeMessage = guildConfig.message || i18n.getString("commands.welcome.defaultMessage", language);
                 const processedMessage = welcomeMessage
                     .replace("{user.mention}", interaction.user.toString())
                     .replace("{user.tag}", interaction.user.tag)
@@ -127,59 +177,63 @@ module.exports = {
                     .replace("{server}", interaction.guild.name)
                     .replace("{memberCount}", interaction.guild.memberCount);
                 
-                // 創建歡迎嵌入預覽
+                // 创建欢迎嵌入预览
                 const embed = new EmbedBuilder()
-                    .setTitle(`🌟 歡迎加入 ${interaction.guild.name} 🌟`)
+                    .setTitle(i18n.getString("commands.welcome.previewEmbed.title", language, { serverName: interaction.guild.name }))
                     .setColor(config.embedColour)
                     .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 512 }))
                     .setImage(guildConfig.welcomeBanner || interaction.guild.bannerURL({ size: 1024 }) || null)
                     .addFields(
                         { 
-                            name: '📊 伺服器資訊', 
-                            value: `> 🧑‍🤝‍🧑 您是第 **${interaction.guild.memberCount}** 位成員\n> 📅 伺服器創建於 <t:${Math.floor(interaction.guild.createdTimestamp / 1000)}:R>` 
+                            name: i18n.getString("commands.welcome.previewEmbed.serverInfo", language), 
+                            value: i18n.getString("commands.welcome.previewEmbed.serverInfoValue", language, {
+                                memberCount: interaction.guild.memberCount,
+                                createdTimestamp: Math.floor(interaction.guild.createdTimestamp / 1000)
+                            })
                         },
                         { 
-                            name: '🔍 新手指南', 
-                            value: [
-                                `> 🔰 請在頻道列表頂部的 **「頻道與身份組」** 選擇您感興趣的身份組，解鎖對應頻道`,
-                                `> 📜 請在 ${rulesChannel ? `<#${rulesChannel.id}>` : '#規則'} 查看伺服器必讀規則`,
-                                `> 💡 點擊身份組名稱可以切換獲取/移除該身份組`,
-                                `> ❓ 有任何問題，請隨時聯繫管理員`
-                            ].join('\n')
+                            name: i18n.getString("commands.welcome.previewEmbed.guide", language), 
+                            value: i18n.getString("commands.welcome.previewEmbed.guideValue", language, {
+                                rulesChannel: rulesChannel ? `<#${rulesChannel.id}>` : i18n.getString("commands.welcome.defaultRulesChannel", language)
+                            })
                         },
                         {
-                            name: '🎮 如何開始？',
-                            value: [
-                                `> 1️⃣ 查看伺服器規則`,
-                                `> 2️⃣ 前往頻道列表上方「頻道與身份組」區域，選擇您感興趣的身份組`,
-                                `> 3️⃣ 解鎖並探索各個主題頻道`,
-                                `> 4️⃣ 開始與社群互動！`
-                            ].join('\n')
+                            name: i18n.getString("commands.welcome.previewEmbed.howToStart", language),
+                            value: i18n.getString("commands.welcome.previewEmbed.howToStartValue", language)
                         }
                     )
                     .setFooter({ 
-                        text: `加入時間 • ${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`,
+                        text: i18n.getString("commands.welcome.previewEmbed.footer", language, {
+                            time: new Date().toLocaleString(language === 'en' ? 'en-US' : 'zh-TW', { 
+                                timeZone: 'Asia/Taipei' 
+                            })
+                        }),
                         iconURL: interaction.guild.iconURL({ dynamic: true }) 
                     });
                 
-                // 設置預覽說明
+                // 设置预览说明
                 const previewEmbed = new EmbedBuilder()
-                    .setTitle("📝 歡迎訊息預覽")
-                    .setDescription(`以下是新成員加入時將顯示的訊息預覽\n發送頻道: <#${guildConfig.channelId}>`)
+                    .setTitle(i18n.getString("commands.welcome.previewExplanation.title", language))
+                    .setDescription(i18n.getString("commands.welcome.previewExplanation.description", language, {
+                        channelId: guildConfig.channelId
+                    }))
                     .setColor(config.embedColour);
                 
                 await interaction.reply({ 
                     embeds: [previewEmbed, embed],
                     content: `${interaction.user}, ${processedMessage}`,
-                    ephemeral: true // 僅對用戶可見                    
+                    ephemeral: true // 仅对用户可见                    
                 });
                 
             } catch (error) {
-                logger.error(`預覽歡迎訊息時發生錯誤: ${error.message}`);
-                await interaction.reply({ content: "❌ 預覽歡迎訊息時發生錯誤，請稍後再試。", ephemeral: true });
+                logger.error(`${i18n.getString("commands.welcome.errorPreview", language)}: ${error.message}`);
+                await interaction.reply({ 
+                    content: i18n.getString("commands.welcome.errorPreviewMessage", language), 
+                    ephemeral: true 
+                });
             }
         } else if (subcommand === "disable") {
-            // 停用歡迎訊息
+            // 停用欢迎消息
             if (welcomeConfig.channels[interaction.guild.id]) {
                 delete welcomeConfig.channels[interaction.guild.id];
                 
@@ -187,25 +241,31 @@ module.exports = {
                     fs.writeFileSync(welcomeConfigPath, JSON.stringify(welcomeConfig, null, 4));
                     
                     const embed = new EmbedBuilder()
-                        .setTitle("✅ 歡迎訊息已停用")
-                        .setDescription("此伺服器的歡迎訊息功能已停用")
+                        .setTitle(i18n.getString("commands.welcome.disableSuccess.title", language))
+                        .setDescription(i18n.getString("commands.welcome.disableSuccess.description", language))
                         .setColor(config.embedColour)
                         .setTimestamp();
                     
-                    await interaction.reply({ embeds: [embed],ephemeral: true });
-                    logger.info(`[${interaction.guild.name}] ${interaction.user.tag} 停用了歡迎訊息`);
+                    await interaction.reply({ embeds: [embed], ephemeral: true });
+                    logger.info(`[${interaction.guild.name}] ${interaction.user.tag} ${i18n.getString("commands.welcome.logDisabled", language)}`);
                 } catch (error) {
-                    logger.error(`停用歡迎配置時發生錯誤: ${error.message}`);
-                    await interaction.reply({ content: "❌ 停用歡迎訊息時發生錯誤，請稍後再試。", ephemeral: true });
+                    logger.error(`${i18n.getString("commands.welcome.errorDisabling", language)}: ${error.message}`);
+                    await interaction.reply({ 
+                        content: i18n.getString("commands.welcome.errorDisableMessage", language), 
+                        ephemeral: true 
+                    });
                 }
             } else {
-                await interaction.reply({ content: "⚠️ 此伺服器尚未設置歡迎訊息。", ephemeral: true });
+                await interaction.reply({ 
+                    content: i18n.getString("commands.welcome.notConfigured", language), 
+                    ephemeral: true 
+                });
             }
         }
     }
 };
 
-// 驗證URL是否有效
+// 验证URL是否有效
 function isValidUrl(string) {
     try {
         new URL(string);

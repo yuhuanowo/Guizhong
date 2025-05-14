@@ -61,10 +61,17 @@ function createListeningStream(receiver, user) {
   };
 }
 
-module.exports = {
-  data: new SlashCommandBuilder()
+module.exports = {  data: new SlashCommandBuilder()
     .setName("record")
-    .setDescription("開始語音錄製")
+        .setNameLocalizations({
+            "zh-CN": "record",
+            "zh-TW": "record"
+        })
+    .setDescription("Record voice channel audio")
+        .setDescriptionLocalizations({
+            "zh-CN": "开始语音录制",
+            "zh-TW": "開始語音錄製"
+        })
     .addSubcommand(subcommand =>
       subcommand
         .setName("start")

@@ -3,23 +3,37 @@ const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
 const config = require("../../config");
 const { useMainPlayer } = require("discord-player");
+const i18n = require("../../utils/i18n");
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("clear").setDescription("清除隊列中的所有音樂").setDMPermission(false),
+    data: new SlashCommandBuilder()
+        .setName("clear")
+        .setNameLocalizations({
+            "zh-CN": "clear",
+            "zh-TW": "clear"
+        })
+        .setDescription("Clear all songs in the queue")
+        .setDescriptionLocalizations({
+            "zh-CN": "清除队列中的所有音乐",
+            "zh-TW": "清除隊列中的所有音樂"
+        })
+        .setDMPermission(false),
     async execute(interaction) {
         const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
 
         if (!queue || !queue.isPlaying()) {
-            embed.setTitle("當前沒有播放音樂... 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("common.notPlaying", language));
         } else if (!queue.tracks.toArray()[0]) {
-            embed.setTitle("隊列中沒有任何其他曲目，使用 **/stop**停止當前曲目❌");
+            embed.setTitle(i18n.getString("commands.clear.noOtherTracks", language));
         } else {
             queue.tracks.clear();
-            embed.setTitle("隊列剛剛被清除 🗑️.");
+            embed.setTitle(i18n.getString("commands.clear.success", language));
         }
 
         return await interaction.reply({ embeds: [embed] });

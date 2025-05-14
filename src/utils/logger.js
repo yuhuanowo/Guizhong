@@ -1,8 +1,17 @@
 const chalk = require("chalk");
 const fs = require("node:fs");
 const { format } = require("date-fns");
+const config = require("../config");
+
+// 检查是否为 YouTubeJS 错误
+function isYoutubeJSError(str) {
+    // 将任何输入转换为字符串
+    const strMessage = String(str);
+    return strMessage.includes('[YOUTUBEJS]');
+}
 
 async function info(str) {
+
     if (!fs.existsSync("logs")) {
         fs.mkdirSync("logs");
     }
@@ -13,6 +22,8 @@ async function info(str) {
 }
 
 async function warn(str) {
+    if (isYoutubeJSError(str)) return; // 如果是 YouTubeJS 错误且配置为忽略，则不记录
+    
     if (!fs.existsSync("logs")) {
         fs.mkdirSync("logs");
     }
@@ -23,6 +34,8 @@ async function warn(str) {
 }
 
 async function error(str) {
+    if (isYoutubeJSError(str)) return; // 如果是 YouTubeJS 错误且配置为忽略，则不记录
+    
     if (!fs.existsSync("logs")) {
         fs.mkdirSync("logs");
     }
@@ -33,6 +46,7 @@ async function error(str) {
 }
 
 async function success(str) {
+    
     if (!fs.existsSync("logs")) {
         fs.mkdirSync("logs");
     }

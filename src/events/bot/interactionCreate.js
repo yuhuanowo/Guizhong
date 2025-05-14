@@ -1,5 +1,6 @@
 const logger = require("../../utils/logger");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
 const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database("./chatlog.db");
 const { 

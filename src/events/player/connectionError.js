@@ -1,6 +1,7 @@
 const { EmbedBuilder } = require("discord.js");
 const logger = require("../../utils/logger");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
 
 module.exports = {
     name: "playerError",
@@ -14,8 +15,20 @@ module.exports = {
             () => {};
         }
 
+        // 获取服务器语言
+        const guildId = queue.metadata?.client?.guild?.id;
+        const language = guildId ? i18n.getServerLanguage(guildId) : i18n.supportedLanguages[0];
+
         const errEmbed = new EmbedBuilder();
-        errEmbed.setDescription("嘗試執行此操作時發生玩家錯誤.");
+        errEmbed.setDescription(i18n.getString("player.errors.playerErrorDescription", language));
+        //詳細信息
+        errEmbed.addFields([
+            {
+                name: i18n.getString("player.errors.errorLabel", language),
+                value: `\`\`\`${error.message}\`\`\``,
+            },
+        ]);
+        errEmbed.setTitle(i18n.getString("player.errors.playerErrorTitle", language));
         errEmbed.setColor(config.embedColour);
 
         queue.metadata.channel.send({ embeds: [errEmbed] });

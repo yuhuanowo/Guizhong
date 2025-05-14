@@ -1,4 +1,5 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
+const i18n = require("../../utils/i18n");
 const { EmbedBuilder } = require("discord.js");
 const config = require("../../config");
 const fs = require("fs");
@@ -29,14 +30,24 @@ function savecheckin(checkin) {
 }
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("checkin").setDescription("每日簽到"),
+    data: new SlashCommandBuilder().setName("checkin")
+        .setNameLocalizations({
+            "zh-CN": "checkin",
+            "zh-TW": "checkin"
+        }).setDescription("Check in daily")
+        .setDescriptionLocalizations({
+            "zh-CN": "进行每日签到",
+            "zh-TW": "進行每日簽到"
+        }),
 
     async execute(interaction = CommandInteraction) {
         // 讀取簽到資料
         const checkin = loadcheckin();
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         //創建一個新的Embed，並提供下拉式選單以供選擇
-        const embed = new StringSelectMenuBuilder().setPlaceholder("請選擇").setCustomId(`checkin_select_${interaction.user.id}`);
+        const embed = new StringSelectMenuBuilder().setPlaceholder(i18n.getString("commands.checkin.placeholder", language)).setCustomId(`checkin_select_${interaction.user.id}`);
 
         // 逐一加入選項 (只增加當前群組的每日簽到內容) (checkin.push({guild: interaction.guildId,checkincontent: checkincontent});)
         for (let i = 0; i < checkin.length; i++) {

@@ -4,13 +4,14 @@ const config = require("../../config");
 const fs = require("node:fs");
 const path = require("node:path");
 const logger = require("../../utils/logger");
+const i18n = require("../../utils/i18n");
 
-// 預設頻道前綴 - 精美統一版本
+// 预设频道前缀 - 精美统一版本
 const CHANNEL_PREFIX = "┖私人┃ ";
 // 配置文件路径
 const CONFIG_FILE_PATH = path.join(__dirname, "../../JSON/voiceChannelConfig.json");
 
-// 讀取語音頻道配置
+// 读取语音频道配置
 function loadVoiceChannelConfig() {
     try {
         if (fs.existsSync(CONFIG_FILE_PATH)) {
@@ -18,22 +19,22 @@ function loadVoiceChannelConfig() {
             return JSON.parse(data);
         }
     } catch (error) {
-        logger.error(`無法讀取語音頻道配置：${error.message}`);
+        logger.error(`无法读取语音频道配置：${error.message}`);
     }
     
-    // 默認配置
+    // 默认配置
     return {
         enabled: false,
         serverConfigs: {}
     };
 }
 
-// 保存語音頻道配置
+// 保存语音频道配置
 function saveVoiceChannelConfig(configData) {
     try {
         fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify(configData, null, 2), "utf8");
     } catch (error) {
-        logger.error(`無法保存語音頻道配置：${error.message}`);
+        logger.error(`无法保存语音频道配置：${error.message}`);
         throw error;
     }
 }
@@ -41,28 +42,53 @@ function saveVoiceChannelConfig(configData) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("voicechannel")
-        .setDescription("管理自動創建私人語音頻道功能")
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) // 僅限管理頻道權限
+        .setNameLocalizations({
+            "zh-CN": "voicechannel",
+            "zh-TW": "voicechannel"
+        })
+        .setDescription("Manage auto-created private voice channels")
+        .setDescriptionLocalizations({
+            "zh-CN": "管理自动创建私人语音频道功能",
+            "zh-TW": "管理自動創建私人語音頻道功能"
+        })
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels) // 仅限管理频道权限
         .addSubcommand(subcommand => 
             subcommand
                 .setName("set")
-                .setDescription("設置自動創建私人語音頻道的源頻道")
+                .setDescription("Set up the auto-creation of private voice channels")
+                .setDescriptionLocalizations({
+                    "zh-CN": "设置自动创建私人语音频道",
+                    "zh-TW": "設置自動創建私人語音頻道"
+                })
                 .addChannelOption(option => 
                     option
                         .setName("channel")
-                        .setDescription("選擇一個語音頻道作為源頻道")
+                        .setDescription("Select the source voice channel")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "选择源语音频道",
+                            "zh-TW": "選擇源語音頻道"
+                        })
+                        .addChannelTypes(2) // 2 = GUILD_VOICE
                         .setRequired(true)
                 )
                 .addStringOption(option =>
                     option
                         .setName("template")
-                        .setDescription("設置頻道名稱模板，可用變數: {username}, {count}")
+                        .setDescription("Set the channel name template, variables: {username}, {count}")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "设置频道名称模板，变量：{username}、{count}",
+                            "zh-TW": "設置頻道名稱模板，變數：{username}、{count}"
+                        })
                         .setRequired(false)
                 )
                 .addIntegerOption(option =>
                     option
                         .setName("userlimit")
-                        .setDescription("設置新創建頻道的默認人數上限 (0表示無限制)")
+                        .setDescription("Set the default user limit for the new channel (0 means no limit)")
+                        .setDescriptionLocalizations({
+                            "zh-CN": "设置新频道的默认用户限制（0表示无限制）",
+                            "zh-TW": "設置新頻道的默認用戶限制（0表示無限制）"
+                        })
                         .setRequired(false)
                         .setMinValue(0)
                         .setMaxValue(99)
@@ -71,18 +97,28 @@ module.exports = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName("disable")
-                .setDescription("禁用自動創建私人語音頻道功能")
+                .setDescription("Disable the auto-creation of private voice channels")
+                .setDescriptionLocalizations({
+                    "zh-CN": "禁用自动创建私人语音频道功能",
+                    "zh-TW": "禁用自動創建私人語音頻道功能"
+                })
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName("status")
-                .setDescription("檢查自動創建私人語音頻道功能的當前狀態")
-        ),    
+                .setDescription("Check the status of the auto-creation of private voice channels")
+                .setDescriptionLocalizations({
+                    "zh-CN": "检查自动创建私人语音频道功能的当前状态",
+                    "zh-TW": "檢查自動創建私人語音頻道功能的當前狀態"
+                })
+        ),
     async execute(interaction) {
-        // 只允許有管理頻道權限的用戶使用此命令
+        // 只允许有管理频道权限的用户使用此命令
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
         if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels)) {
             return interaction.reply({
-                content: "您沒有權限使用此命令。需要管理頻道權限。",
+                content: i18n.getString("commands.voicechannel.noPermission", language),
                 ephemeral: true
             });
         }
@@ -90,9 +126,8 @@ module.exports = {
         const subcommand = interaction.options.getSubcommand();
 
         try {
-            // 讀取當前配置
+            // 读取当前配置
             const voiceConfig = loadVoiceChannelConfig();
-            const guildId = interaction.guild.id;
             const embed = new EmbedBuilder().setColor(config.embedColour);
 
             switch (subcommand) {
@@ -101,15 +136,15 @@ module.exports = {
                     const template = interaction.options.getString("template") || "{username}";
                     const userLimit = interaction.options.getInteger("userlimit") || 0;
                 
-                    // 檢查是否是語音頻道
+                    // 检查是否是语音频道
                     if (channel.type !== 2) {
                         return interaction.reply({
-                            content: "請選擇一個語音頻道。",
+                            content: i18n.getString("commands.voicechannel.notVoiceChannel", language),
                             ephemeral: true
                         });
                     }
                 
-                    // 啟用功能並設置源頻道
+                    // 启用功能并设置源频道
                     voiceConfig.enabled = true;
                     voiceConfig.serverConfigs[guildId] = {
                         sourceChannelId: channel.id,
@@ -118,36 +153,38 @@ module.exports = {
                         defaultUserLimit: userLimit
                     };
                 
-                    // 儲存配置
+                    // 储存配置
                     saveVoiceChannelConfig(voiceConfig);
                 
                     embed
-                        .setTitle("✅ 自動創建私人語音頻道功能已設置")
-                        .setDescription(`已將 ${channel.name} 設置為源頻道。當用戶加入此頻道時，將自動創建私人語音頻道。`)
+                        .setTitle(i18n.getString("commands.voicechannel.setupSuccess.title", language))
+                        .setDescription(i18n.getString("commands.voicechannel.setupSuccess.description", language, { channelName: channel.name }))
                         .addFields(
-                            { name: "頻道樣式", value: `${CHANNEL_PREFIX}${template}`, inline: true },
-                            { name: "默認人數上限", value: userLimit > 0 ? userLimit.toString() : "無限制", inline: true }
+                            { name: i18n.getString("commands.voicechannel.channelStyle", language), value: `${CHANNEL_PREFIX}${template}`, inline: true },
+                            { name: i18n.getString("commands.voicechannel.defaultUserLimit", language), 
+                              value: userLimit > 0 ? userLimit.toString() : i18n.getString("commands.voicechannel.noLimit", language), 
+                              inline: true }
                         );
                                     
                     return interaction.reply({ embeds: [embed], ephemeral: true });
                     
                 case "disable":
-                    // 如果該伺服器有配置，刪除它
+                    // 如果该服务器有配置，删除它
                     if (voiceConfig.serverConfigs[guildId]) {
                         delete voiceConfig.serverConfigs[guildId];
                     }
 
-                    // 如果沒有伺服器配置了，禁用整個功能
+                    // 如果没有服务器配置了，禁用整个功能
                     if (Object.keys(voiceConfig.serverConfigs).length === 0) {
                         voiceConfig.enabled = false;
                     }
 
-                    // 儲存配置
+                    // 储存配置
                     saveVoiceChannelConfig(voiceConfig);
 
                     embed
-                        .setTitle("❌ 自動創建私人語音頻道功能已禁用")
-                        .setDescription("此伺服器的自動創建私人語音頻道功能已禁用。");
+                        .setTitle(i18n.getString("commands.voicechannel.disableSuccess.title", language))
+                        .setDescription(i18n.getString("commands.voicechannel.disableSuccess.description", language));
                                         
                     return interaction.reply({ embeds: [embed], ephemeral: true });
 
@@ -156,28 +193,36 @@ module.exports = {
                     
                     if (!serverConfig) {
                         embed
-                            .setTitle("📊 自動創建私人語音頻道功能狀態")
-                            .setDescription("此伺服器未啟用自動創建私人語音頻道功能。");
+                            .setTitle(i18n.getString("commands.voicechannel.status.title", language))
+                            .setDescription(i18n.getString("commands.voicechannel.status.disabled", language));
                     } else {
                         const sourceChannel = interaction.guild.channels.cache.get(serverConfig.sourceChannelId);
                         const template = serverConfig.nameTemplate || "{username}";
                         
                         embed
-                            .setTitle("📊 自動創建私人語音頻道功能狀態")
-                            .setDescription("此伺服器已啟用自動創建私人語音頻道功能。")
+                            .setTitle(i18n.getString("commands.voicechannel.status.title", language))
+                            .setDescription(i18n.getString("commands.voicechannel.status.enabled", language))
                             .addFields(
-                                { name: "源頻道", value: sourceChannel ? sourceChannel.name : "未找到頻道（可能已被刪除）", inline: true },
-                                { name: "頻道樣式", value: `${CHANNEL_PREFIX}${template}`, inline: true },
-                                { name: "默認人數上限", value: serverConfig.defaultUserLimit > 0 ? serverConfig.defaultUserLimit.toString() : "無限制", inline: true }
+                                { name: i18n.getString("commands.voicechannel.sourceChannel", language), 
+                                  value: sourceChannel ? sourceChannel.name : i18n.getString("commands.voicechannel.channelNotFound", language), 
+                                  inline: true },
+                                { name: i18n.getString("commands.voicechannel.channelStyle", language), 
+                                  value: `${CHANNEL_PREFIX}${template}`, 
+                                  inline: true },
+                                { name: i18n.getString("commands.voicechannel.defaultUserLimit", language), 
+                                  value: serverConfig.defaultUserLimit > 0 ? 
+                                    serverConfig.defaultUserLimit.toString() : 
+                                    i18n.getString("commands.voicechannel.noLimit", language), 
+                                  inline: true }
                             );
                     }
                     
                     return interaction.reply({ embeds: [embed], ephemeral: true });
             }
         } catch (error) {
-            logger.error(`設置自動創建私人語音頻道功能時出錯：${error.message}`);
+            logger.error(`设置自动创建私人语音频道功能时出错：${error.message}`);
             return interaction.reply({
-                content: `設置自動創建私人語音頻道功能時出錯：${error.message}`,
+                content: i18n.getString("commands.voicechannel.error", language, { errorMessage: error.message }),
                 ephemeral: true
             });
         }

@@ -2,6 +2,7 @@
  */
 /** */
 const { SlashCommandBuilder } = require("@discordjs/builders");
+const i18n = require("../../utils/i18n");
 const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
 const config = require("../../config");
@@ -65,8 +66,21 @@ async function subscribeToChannel(channelId) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("subscribe")
+        .setNameLocalizations({
+            "zh-CN": "subscribe",
+            "zh-TW": "subscribe"
+        })
         .setDescription("(由於api問題現在只可訂閱)訂閱youtube頻道")
-        .addStringOption((option) => option.setName("channel_id").setDescription("輸入youtube頻道ID").setRequired(true)),
+        .setDescriptionLocalizations({
+            "zh-CN": "(由於api問題現在只可訂閱)訂閱youtube頻道",
+            "zh-TW": "(由於api問題現在只可訂閱)訂閱youtube頻道"
+        })
+        .addStringOption((option) => option.setName("channel_id")
+                .setDescription("輸入youtube頻道ID")
+                .setDescriptionLocalizations({
+                    "zh-CN": "频道ID",
+                    "zh-TW": "頻道ID"
+                }).setRequired(true)),
 
     //如果在對應的公會中，找不到輸入的頻道ID，則會在該公會中新增此頻道ID，並儲存到 subscriptions.json 中，並回覆訊息。
     //如果在對應的公會中，找到輸入的頻道ID，則會回覆訊息。

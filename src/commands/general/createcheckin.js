@@ -1,5 +1,6 @@
 /** */
 const { SlashCommandBuilder } = require("@discordjs/builders");
+const i18n = require("../../utils/i18n");
 const { EmbedBuilder } = require("discord.js");
 const config = require("../../config");
 const fs = require("fs");
@@ -31,12 +32,30 @@ function savecheckin(checkin) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("createcheckin")
-        .setDescription("創建每日簽到(管理員專用)")
-        .addStringOption((option) => option.setName("簽到內容").setDescription("輸入簽到內容").setRequired(true)),
+        .setNameLocalizations({
+            "zh-CN": "createcheckin",
+            "zh-TW": "createcheckin"
+        })
+        .setDescription("Create a daily check-in (Admin only)")
+        .setDescriptionLocalizations({
+            "zh-CN": "创建每日签到(管理员专用)",
+            "zh-TW": "創建每日簽到(管理員專用)"
+        })
+        .addStringOption((option) => option.setName("checkincontent")
+                .setNameLocalizations({
+                    "zh-CN": "簽到內容",
+                    "zh-TW": "簽到內容"
+                })
+                .setDescription("Set the check-in content")
+                .setDescriptionLocalizations({
+                    "zh-CN": "设置签到内容",
+                    "zh-TW": "設置簽到內容"
+                }).setRequired(true)),
 
     async execute(interaction = CommandInteraction) {
-        const checkincontent = interaction.options.getString("簽到內容");
+        const checkincontent = interaction.options.getString("checkincontent");
         const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         //讀取已存在的簽到列表
         const checkin = loadcheckin();
@@ -45,7 +64,7 @@ module.exports = {
             //如果在對應的公會中，找到輸入的頻道ID，則會回覆訊息。
             if (checkin[i].guild === interaction.guildId && checkin[i].checkincontent === checkincontent) {
                 find = true;
-                await interaction.reply("已經有簽到了");
+                await interaction.reply(i18n.getString("commands.general.checkin.alreadyExists", language));
                 break;
             }
         }
@@ -58,7 +77,7 @@ module.exports = {
             });
             //儲存資料
             savecheckin(checkin);
-            await interaction.reply("創建成功");
+            await interaction.reply(i18n.getString("commands.general.checkin.createSuccess", language));
         }
     },
 };

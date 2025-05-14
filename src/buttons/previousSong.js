@@ -2,12 +2,15 @@ const { EmbedBuilder } = require("discord.js");
 const { Player } = require("discord-player");
 const config = require("../config");
 const { useMainPlayer } = require("discord-player");
+const i18n = require("../utils/i18n");
 
 module.exports = {
     name: "back_song",
     async execute(interaction) {
         const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
@@ -17,7 +20,7 @@ module.exports = {
         }, 5000);
 
         if (!queue || !queue.isPlaying()) {
-            embed.setDescription("當前沒有播放音樂... 再試一次 ? ❌");
+            embed.setDescription(i18n.getString("common.notPlaying", language));
             return await interaction.reply({
                 embeds: [embed],
                 ephemeral: true,
@@ -25,7 +28,7 @@ module.exports = {
         }
 
         if (!queue.history.tracks.toArray()[0]) {
-            embed.setDescription("在這首曲目之前沒有播放任何音樂...再試一次 ? ❌");
+            embed.setDescription(i18n.getString("player.previousError", language));
             return await interaction.reply({
                 embeds: [embed],
                 ephemeral: true,
@@ -33,7 +36,9 @@ module.exports = {
         }
 
         await queue.history.back();
-        embed.setDescription(`<@${interaction.user.id}>: 播放上一首曲目 ✅.`);
+        embed.setDescription(i18n.getString("player.previousSuccess", language, {
+            user: `<@${interaction.user.id}>`
+        }));
 
         return await interaction.reply({ embeds: [embed] });
     },

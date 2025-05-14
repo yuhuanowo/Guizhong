@@ -4,15 +4,35 @@ const { Player } = require("discord-player");
 const fs = require("node:fs");
 const logger = require("../../utils/logger");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
+const { useMainPlayer } = require("discord-player");
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("playshuffle")
-        .setDescription("循環撥放歌曲清單")
+        .setNameLocalizations({
+            "zh-CN": "playshuffle",
+            "zh-TW": "playshuffle"
+        })
+        .setDescription("Shuffle play a playlist")
+        .setDescriptionLocalizations({
+            "zh-CN": "循环播放歌曲清单",
+            "zh-TW": "循環撥放歌曲清單"
+        })
         .setDMPermission(false)
-        .addStringOption((option) => option.setName("playlist").setDescription("輸入撥放清單URL.").setRequired(true)),
+        .addStringOption((option) => 
+            option.setName("playlist")
+                .setDescription("Enter playlist URL.")
+                .setDescriptionLocalizations({
+                    "zh-CN": "输入播放清单URL.",
+                    "zh-TW": "輸入撥放清單URL."
+                })
+                .setRequired(true)),
     async execute(interaction, client) {
         await interaction.deferReply();
+        
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
@@ -20,12 +40,12 @@ module.exports = {
         const channel = interaction.member.voice.channel;
 
         if (!channel) {
-            embed.setTitle("您不在語音頻道中...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playshuffle.notInVoiceChannel", language));
             return await interaction.editReply({ embeds: [embed] });
         }
 
         if (interaction.guild.members.me.voice.channelId && interaction.member.voice.channelId !== interaction.guild.members.me.voice.channelId) {
-            embed.setTitle("我無法在該語音頻道中播放音樂...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playshuffle.cantPlayInChannel", language));
             return await interaction.editReply({ embeds: [embed] });
         }
 
@@ -55,13 +75,13 @@ module.exports = {
         });
 
         if (!res) {
-            embed.setTitle(`找不到具有該名稱的播放列表 **${query}**...再試一次 ? ❌`);
+            embed.setTitle(i18n.getString("commands.playshuffle.playlistNotFound", language, { query: query }));
             await queue.delete();
             return await interaction.editReply({ embeds: [embed] });
         }
 
         if (!res.playlist) {
-            embed.setTitle("指定的查詢似乎不是播放列表...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playshuffle.notPlaylist", language));
             await queue.delete();
             return await interaction.editReply({ embeds: [embed] });
         }
@@ -70,7 +90,7 @@ module.exports = {
             if (!queue.connection) await queue.connect(interaction.member.voice.channel);
         } catch (err) {
             if (queue) queue.delete();
-            embed.setTitle("我無法加入該語音頻道...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playshuffle.cantJoin", language));
             return await interaction.editReply({ embeds: [embed] });
         }
 
@@ -79,12 +99,12 @@ module.exports = {
             await queue.tracks.shuffle();
             if (!queue.isPlaying()) await queue.node.play(queue.tracks[0]);
         } catch (err) {
-            logger.error("嘗試播放此媒體時發生錯誤:");
+            logger.error(i18n.getString("commands.playshuffle.error", language));
             logger.error(err);
 
             await queue.delete();
 
-            embed.setTitle("該媒體目前似乎無法使用...再試一次 ? ❌.");
+            embed.setTitle(i18n.getString("commands.playshuffle.mediaUnavailable", language));
             return await interaction.followUp({ embeds: [embed] });
         }
 
@@ -95,7 +115,12 @@ module.exports = {
 
         fs.writeFileSync("src/JSON/data.json", JSON.stringify(parsed));
 
-        embed.setTitle(`**${res.tracks.length} 首歌** 從撥放清單--> ${res.playlist.type} **[${res.playlist.title}](${res.playlist.url})** 已加載到歌曲隊列中✅`);
+        embed.setTitle(i18n.getString("commands.playshuffle.success", language, { 
+            trackCount: res.tracks.length,
+            playlistType: res.playlist.type,
+            playlistTitle: res.playlist.title,
+            playlistUrl: res.playlist.url
+        }));
 
         return await interaction.editReply({ embeds: [embed] });
     },

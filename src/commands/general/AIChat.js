@@ -22,14 +22,25 @@ const logger = require("../../utils/logger.js");
 const OpenAI = require("openai");
 const path = "./src/JSON/chatgptusage.json";
 
-module.exports = {
-  data: new SlashCommandBuilder()
+module.exports = {  data: new SlashCommandBuilder()
     .setName("aichat")
-    .setDescription("與AI進行對話")
+    .setDescription("Chat with AI")
+    .setNameLocalizations({
+      "zh-CN": "aichat",
+      "zh-TW": "aichat"
+    })
+    .setDescriptionLocalizations({
+      "zh-CN": "与AI进行对话",
+      "zh-TW": "與AI進行對話"
+    })
     .addStringOption((option) =>
       option
         .setName("model")
-        .setDescription("選擇模型")
+        .setDescription("Select a model")
+        .setDescriptionLocalizations({
+            "zh-CN": "选择模型",
+            "zh-TW": "選擇模型"
+        })
         .setRequired(true)
         .addChoices(
           { name: "gpt4o", value: "gpt-4o" },
@@ -38,22 +49,39 @@ module.exports = {
           { name: "o1-mini", value: "o1-mini" }
         )
     )
-    .addStringOption((option) =>
-      option.setName("text").setDescription("輸入內容").setRequired(true)
+    .addStringOption((option) => option.setName("text")
+                .setDescription("輸入內容")
+                .setDescriptionLocalizations({
+                    "zh-CN": "输入内容",
+                    "zh-TW": "輸入內容"
+                }).setRequired(true)
     )
 
     .addStringOption((option) =>
       option
         .setName("history")
-        .setDescription("選擇過去的對話紀錄")
+        .setDescription("Select previous conversation history")
+        .setDescriptionLocalizations({
+            "zh-CN": "选择过去的对话记录",
+            "zh-TW": "選擇過去的對話紀錄"
+        })
         .setAutocomplete(true)
     )
     
     .addAttachmentOption((option) =>
-      option.setName("image").setDescription("上傳圖片")
+      option.setName("image")
+            .setDescription("Upload an image for analysis")
+            .setDescriptionLocalizations({
+                "zh-CN": "上传图像进行分析",
+                "zh-TW": "上傳圖像進行分析"
+            })
     )
-    .addAttachmentOption((option) =>
-      option.setName("audio").setDescription("上傳音訊")
+    .addAttachmentOption((option) => option.setName("audio")
+                .setDescription("Upload audio for analysis")
+                .setDescriptionLocalizations({
+                    "zh-CN": "上传音频进行分析",
+                    "zh-TW": "上傳音頻進行分析"
+                })
     ),
 
   async autocompleteRun(interaction) {

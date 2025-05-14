@@ -4,23 +4,34 @@ const { Player } = require("discord-player");
 const config = require("../../config");
 const fs = require("fs");
 const { useMainPlayer } = require("discord-player");
+const i18n = require("../../utils/i18n");
 
 module.exports = {
-    data: new SlashCommandBuilder().setName("shuffle").setDescription("隨機播放歌曲").setDMPermission(false),
+    data: new SlashCommandBuilder().setName("shuffle")
+        .setNameLocalizations({
+            "zh-CN": "shuffle",
+            "zh-TW": "shuffle"
+        }).setDescription("Shuffle the songs")
+        .setDescriptionLocalizations({
+            "zh-CN": "随机播放歌曲",
+            "zh-TW": "隨機播放歌曲"
+        }).setDMPermission(false),
     async execute(interaction) {
         const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
 
         if (!queue || !queue.isPlaying()) {
-            embed.setTitle("當前沒有播放音樂... 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("common.notPlaying", language));
             return await interaction.reply({ embeds: [embed] });
         }
 
         if (!queue.tracks.toArray()[0]) {
-            embed.setTitle("列隊中沒有兩首以上的音樂... 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.shuffle.notEnoughSongs", language));
             return await interaction.reply({ embeds: [embed] });
         }
 
@@ -34,7 +45,7 @@ module.exports = {
         let newdata = JSON.stringify(data);
         fs.writeFileSync("src/JSON/data.json", newdata);
 
-        embed.setTitle(queue.tracks.length === 1 ? `隊列已打亂 **${queue.tracks.toArray().length} 首歌! ✅**!` : `隊列已打亂 **${queue.tracks.toArray().length} 首歌! ✅**!`);
+        embed.setTitle(i18n.getString("commands.shuffle.success", language, { count: queue.tracks.toArray().length }));
         return await interaction.reply({ embeds: [embed] });
     },
 };

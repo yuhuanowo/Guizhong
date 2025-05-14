@@ -36,6 +36,7 @@ try {
         openaiapikey: configFile.openaiapikey ?? "",
         githubToken: configFile.githubToken ?? "",
         oauthTokens: configFile.oauthTokens ?? {},
+        showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");

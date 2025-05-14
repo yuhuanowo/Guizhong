@@ -3,12 +3,15 @@ const { Player } = require("discord-player");
 const config = require("../config");
 const fs = require("fs");
 const { useMainPlayer } = require("discord-player");
+const i18n = require("../utils/i18n");
 
 module.exports = {
     name: "shuffle_song",
     async execute(interaction) {
         const player = useMainPlayer();
         const queue = player.nodes.get(interaction.guild.id);
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
@@ -18,12 +21,12 @@ module.exports = {
         }, 5000);
 
         if (!queue || !queue.isPlaying()) {
-            embed.setTitle("當前沒有播放音樂... 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.autoplay.notPlaying", language));
             return await interaction.reply({ embeds: [embed] });
         }
 
         if (!queue.tracks.toArray()[0]) {
-            embed.setTitle("列隊中沒有兩首以上的音樂... 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("player.queue.notEnoughSongs", language));
             return await interaction.reply({ embeds: [embed] });
         }
 
@@ -37,7 +40,12 @@ module.exports = {
         let newdata = JSON.stringify(data);
         fs.writeFileSync("src/JSON/data.json", newdata);
 
-        embed.setTitle(queue.tracks.length === 1 ? `隊列已打亂 **${queue.tracks.toArray().length} 首歌! ✅**!` : `隊列已打亂 **${queue.tracks.toArray().length} 首歌! ✅**!`);
+        // 使用本地化字符串
+        const shuffledMessage = i18n.getString("player.queue.shuffled", language, {
+            count: queue.tracks.toArray().length
+        });
+        
+        embed.setTitle(shuffledMessage);
         return await interaction.reply({ embeds: [embed] });
     },
 };

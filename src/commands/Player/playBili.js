@@ -3,6 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 const { Player, useMainPlayer, QueryType } = require("discord-player");
 const logger = require("../../utils/logger");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
 const ffmpeg = require("fluent-ffmpeg");
 ffmpeg.setFfmpegPath("C:/Program Files (x86)/ffmpeg/bin/ffmpeg.exe");
 ffmpeg.setFfprobePath("C:/Program Files (x86)/ffmpeg/bin/ffprobe.exe");
@@ -12,22 +13,41 @@ const qs = require("qs");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("playbili")
-        .setDescription("撥放歌曲.")
+        .setNameLocalizations({
+            "zh-CN": "playbili",
+            "zh-TW": "playbili"
+        })
+        .setDescription("Play a song from Bilibili")
+        .setDescriptionLocalizations({
+            "zh-CN": "从Bilibili播放歌曲.",
+            "zh-TW": "從Bilibili撥放歌曲."
+        })
         .setDMPermission(false)
-        .addStringOption((option) => option.setName("query").setDescription("輸入曲目名稱、作者名或 URL.").setRequired(true).setAutocomplete(config.autocomplete)),
+        .addStringOption((option) => 
+            option.setName("query")
+                .setDescription("Enter the track name, artist or URL.")
+                .setDescriptionLocalizations({
+                    "zh-CN": "输入曲目名称、作者名或 URL.",
+                    "zh-TW": "輸入曲目名稱、作者名或 URL."
+                })
+                .setRequired(true)
+                .setAutocomplete(config.autocomplete)),
     async execute(interaction, client) {
         await interaction.deferReply((ephemeral = true));
+        
+        const guildId = interaction.guild.id;
+        const language = i18n.getServerLanguage(guildId);
 
         //錯誤訊息embed
         const embed = new EmbedBuilder();
         embed.setColor(config.embedColour);
         const channel = interaction.member.voice.channel;
         if (!channel) {
-            embed.setTitle("您不在語音頻道中...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playbili.notInVoiceChannel", language));
             return await interaction.editReply({ embeds: [embed] });
         }
         if (interaction.guild.members.me.voice.channelId && interaction.member.voice.channelId !== interaction.guild.members.me.voice.channelId) {
-            embed.setTitle("我無法在該語音頻道中播放音樂...再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playbili.cantPlayInChannel", language));
             return await interaction.editReply({ embeds: [embed] });
         }
 
@@ -36,7 +56,7 @@ module.exports = {
         let query;
         if (interaction.options.getString("query").includes("bilibili.com")) {
             {
-                await interaction.editReply("正在處理中...請稍後");
+                await interaction.editReply(i18n.getString("commands.playbili.processing", language));
                 //分析bilibili url以取得bvid
                 const requesturl = interaction.options.getString("query");
                 //將video/後面的字串 /?前面的字串取出
@@ -121,7 +141,7 @@ module.exports = {
             //error ->請使用/play而不是/playbili
             const embed = new EmbedBuilder();
             embed.setColor(config.embedColour);
-            embed.setTitle("連結非來自 bilibili 請使用/play 再試一次 ? ❌");
+            embed.setTitle(i18n.getString("commands.playbili.invalidUrl", language));
             return await interaction.editReply({ embeds: [embed] });
         }
 
@@ -151,7 +171,7 @@ module.exports = {
 
             if (!res || !res.tracks || res.tracks.length === 0) {
                 if (queue) queue.delete();
-                embed.setTitle(`找不到具有該名稱的播放列表 **${query}**...再試一次 ? ❌`);
+                embed.setTitle(i18n.getString("commands.playbili.notFound", language, { query: query }));
                 return await interaction.editReply({ embeds: [embed] });
             }
 
@@ -159,7 +179,7 @@ module.exports = {
                 if (!queue.connection) await queue.connect(interaction.member.voice.channel);
             } catch (err) {
                 if (queue) queue.delete();
-                embed.setTitle("我無法加入該語音頻道...再試一次 ? ❌");
+                embed.setTitle(i18n.getString("commands.playbili.cantJoin", language));
                 return await interaction.editReply({ embeds: [embed] });
             }
 
@@ -167,23 +187,23 @@ module.exports = {
                 res.playlist ? queue.addTrack(res.tracks) : queue.addTrack(res.tracks[0]);
                 if (!queue.isPlaying()) await queue.node.play(queue.tracks[0]);
             } catch (err) {
-                logger.error("嘗試播放此媒體時發生錯誤:");
+                logger.error(i18n.getString("commands.playbili.error", language));
                 logger.error(err);
 
                 await queue.delete();
 
-                embed.setTitle("該媒體目前似乎無法使用...再試一次 ? ❌");
+                embed.setTitle(i18n.getString("commands.playbili.mediaUnavailable", language));
                 return await interaction.followUp({ embeds: [embed], ephemeral: true });
             }
 
             if (!res.playlist) {
-                embed.setTitle(`已加載 **${res.tracks[0].title}** by **${res.tracks[0].author}** 到隊列.`);
+                embed.setTitle(i18n.getString("commands.playbili.addedToQueue", language, { title: `${res.tracks[0].title} by ${res.tracks[0].author}` }));
             } else {
-                embed.setTitle(`已加載 **${res.tracks[0].title}** by **${res.tracks[0].author}** 到隊列`);
+                embed.setTitle(i18n.getString("commands.playbili.addedToQueue", language, { title: `${res.tracks[0].title} by ${res.tracks[0].author}` }));
             }
         } catch (err) {
             logger.error(err);
-            return interaction.editReply({ content: "嘗試播放此媒體時發生錯誤...再試一次 ? ❌" });
+            return interaction.editReply({ content: i18n.getString("commands.playbili.error", language) });
         }
 
         return await interaction.editReply({ embeds: [embed], ephemeral: true });

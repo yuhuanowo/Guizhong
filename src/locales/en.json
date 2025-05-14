@@ -1,0 +1,741 @@
+{
+  "language": {
+    "name": "English",
+    "native": "English",
+    "changed": "✅ Server language has been set to **English**.",
+    "description": "Set the bot's language",
+    "current": "Current language: **English**",
+    "select": "Select a language"
+  },
+  "commands": {
+    "autoplay": {
+      "notPlaying": "No music is currently playing... Try again? ❌",
+      "disabled": "Autoplay is **disabled** ❌",
+      "enabled": "Autoplay is **enabled** ✅"
+    },
+    "nowplaying": {
+      "name": "nowplaying",
+      "description": "Display the currently playing track",
+      "options": {}
+    },
+    "play": {
+      "name": "play",
+      "description": "Play a song or add it to the queue.",
+      "queryDescription": "Type a song name, artist, or URL.",
+      "notInVoiceChannel": "You must join a voice channel to play music. Try again? ❌",
+      "cantPlayInChannel": "I can't play music in that voice channel. Try again? ❌",
+      "useBiliCommand": "Please use /playbili to play Bilibili music. Try again? ❌",
+      "options": {
+        "query": "Type a song name, artist, or URL."
+      },
+      "notFound": "No playlist found for **{query}**. Try again? ❌",
+      "playlistNotFound": "No playlist found for **{query}**. Try again? ❌",
+      "cantJoin": "I can't join that voice channel. Try again? ❌",
+      "mediaUnavailable": "This media is currently unavailable. Try again? ❌",
+      "trackAdded": "**{title}** by **{author}** added to the queue.",
+      "error": "An error occurred while trying to play this track. Try again? ❌"
+    },
+    "playbili": {
+      "name": "playbili",
+      "description": "Play a song from Bilibili.",
+      "options": {
+        "query": "Enter track name, artist, or URL."
+      },
+      "notInVoiceChannel": "You are not in a voice channel... Try again? ❌",
+      "cantPlayInChannel": "I can't play music in that voice channel... Try again? ❌",
+      "processing": "Processing... please wait",
+      "invalidUrl": "Invalid Bilibili URL. Please provide a valid Bilibili video URL... Try again? ❌",
+      "playlistNotSupported": "You can only add a single track with the **/playbili** command",
+      "cantJoin": "I can't join that voice channel... Try again? ❌",
+      "mediaUnavailable": "This media is currently unavailable... Try again? ❌",
+      "addedToQueue": "**{title}** has been added to the queue ✅",
+      "error": "An error occurred while trying to play this media... Try again? ❌",
+      "notFound": "No playlist found for **{query}**... Try again? ❌"
+    },
+    "playnext": {
+      "name": "playnext",
+      "description": "Add a song to the top of the queue",
+      "options": {
+        "query": "Enter track name, artist, or URL."
+      },
+      "notFound": "No playlist found for **{query}**... Try again? ❌",
+      "playlistNotSupported": "You can only add a single track with **/playnext**. Use **/play** to add all tracks to the end of the queue.",
+      "cantJoin": "I can't join that voice channel... Try again? ❌",
+      "addedToQueue": "**{title}** has been added to the top of the queue ✅",
+      "error": "An error occurred while trying to play this media, please try again later... ❌"
+    },
+    "playshuffle": {
+      "name": "playshuffle",
+      "description": "Shuffle and play a playlist",
+      "options": {
+        "playlist": "Enter playlist URL."
+      },
+      "notInVoiceChannel": "You are not in a voice channel... Try again? ❌",
+      "cantPlayInChannel": "I can't play music in that voice channel... Try again? ❌",
+      "playlistNotFound": "No playlist found for **{query}**... Try again? ❌",
+      "notPlaylist": "The specified query does not appear to be a playlist... Try again? ❌",
+      "cantJoin": "I can't join that voice channel... Try again? ❌",
+      "error": "An error occurred while trying to play this media... Try again? ❌",
+      "mediaUnavailable": "This media is currently unavailable... Try again? ❌",
+      "success": "**{trackCount} songs** from playlist --> {playlistType} **[{playlistTitle}]({playlistUrl})** have been added to the queue ✅"
+    },
+    "save": {
+      "name": "save",
+      "description": "Save the current track! I'll DM you the details!",
+      "notPlaying": "No music is currently playing... Try again? ❌",
+      "dmField1": ":hourglass: Duration:",
+      "dmField2": "Song Author:",
+      "dmField3": "Views :eyes:",
+      "dmField4": "Song URL:",
+      "dmFooter": "From server -> {serverName}",
+      "dmError": "Unable to send you a private message... Please try again? ❌",
+      "dmSuccess": "I've sent you the song details via DM ✅",
+      "options": {
+        "name": "Playlist name"
+      }
+    },    "botinfo": {
+      "name": "botinfo",
+      "description": "Show detailed information about Guizhong bot",
+      "title": "Guizhong Bot Information",
+      "author": "Author",
+      "version": "Version",
+      "server": "Server",
+      "support": "Support",
+      "opensource": "Open Source",
+      "uptime": "Uptime",
+      "created": "Created on",
+      "technicalInfo": "Technical Information",
+      "footer": "Currently serving in {serverCount} servers",
+      "supportButton": "Support",
+      "reportButton": "Report Issue"
+    },
+    "welcome": {
+      "errorReadingConfig": "Error reading welcome configuration",
+      "errorSavingConfig": "Error saving welcome configuration",
+      "defaultMessage": "👋 Welcome {user.mention} to {server}!",
+      "invalidBannerUrl": "❌ The provided banner URL is invalid. Please ensure it is a valid image URL.",
+      "setupSuccess": {
+        "title": "✅ Welcome Message Setup",
+        "description": "Welcome messages will be displayed in <#{channelId}>"
+      },
+      "customMessage": "Custom Message",
+      "availablePlaceholders": "Available Placeholders",
+      "placeholdersList": "`{user.mention}` - Mention user\n`{user.tag}` - Username with tag\n`{user.name}` - Only username\n`{server}` - Server name\n`{memberCount}` - Total member count",
+      "welcomeBanner": "Welcome Banner",
+      "logSetup": "set up welcome messages in channel #{channelName}",
+      "errorSetup": "❌ An error occurred while setting up welcome messages. Please try again later.",
+      "notConfigured": "⚠️ This server has not set up welcome messages yet.",
+      "rulesChannelName": "rules",
+      "defaultRulesChannel": "#rules",
+      "previewEmbed": {
+        "title": "🌟 Welcome to {serverName} 🌟",
+        "serverInfo": "📊 Server Information",
+        "serverInfoValue": "> 🧑‍🤝‍🧑 You are member number **{memberCount}**\n> 📅 Server created <t:{createdTimestamp}:R>",
+        "guide": "🔍 Newcomer Guide",
+        "guideValue": "> 🔰 Please select roles you're interested in from the **\"Channels & Roles\"** section at the top of the channel list\n> 📜 Please check the server rules at {rulesChannel}\n> 💡 Click on a role name to toggle getting/removing that role\n> ❓ If you have any questions, feel free to contact an admin",
+        "howToStart": "🎮 How to Get Started?",
+        "howToStartValue": "> 1️⃣ Check the server rules\n> 2️⃣ Go to the \"Channels & Roles\" section at the top of the channel list and select roles you're interested in\n> 3️⃣ Unlock and explore the various topic channels\n> 4️⃣ Start interacting with the community!",
+        "footer": "Joined at • {time}"
+      },
+      "previewExplanation": {
+        "title": "📝 Welcome Message Preview",
+        "description": "Below is a preview of the message that will be shown when a new member joins\nChannel: <#{channelId}>"
+      },
+      "disableSuccess": {
+        "title": "✅ Welcome Messages Disabled",
+        "description": "Welcome message feature has been disabled for this server"
+      },
+      "logDisabled": "disabled welcome messages",
+      "errorDisabling": "Error disabling welcome configuration",
+      "errorPreview": "Error previewing welcome message",
+      "errorPreviewMessage": "❌ An error occurred while previewing the welcome message. Please try again later.",
+      "errorDisableMessage": "❌ An error occurred while disabling welcome messages. Please try again later."
+    },
+    "general": {
+      "logSettings": {
+        "messageLog": "Message Log",
+        "voiceLog": "Voice Log",
+        "memberLog": "Member Log",
+        "serverLog": "Server Log",
+        "enabled": "✅ Enabled",
+        "disabled": "❌ Disabled",
+        "settingConfig": "{user} configured logging in server {server} ({id})"
+      }
+    },
+    "effects": {
+      "8d": {
+        "description": "Apply 8D effect to the current music.",
+        "enabled": "**8D** filter is now enabled.",
+        "disabled": "**8D** filter is now disabled."
+      },
+      "bassboost": {
+        "description": "Apply bass boost effect to the current music.",
+        "enabled": "**Bass Boost** filter is now enabled.",
+        "disabled": "**Bass Boost** filter is now disabled."
+      },
+      "chorus": {
+        "description": "Apply chorus effect to the current music.",
+        "enabled": "**Chorus** filter is now enabled.",
+        "disabled": "**Chorus** filter is now disabled."
+      },
+      "compressor": {
+        "description": "Apply compressor effect to the current music.",
+        "enabled": "**Compressor** filter is now enabled.",
+        "disabled": "**Compressor** filter is now disabled."
+      },
+      "expander": {
+        "description": "Apply expander effect to the current music.",
+        "enabled": "**Expander** filter is now enabled.",
+        "disabled": "**Expander** filter is now disabled."
+      },
+      "flanger": {
+        "description": "Apply flanger effect to the current music.",
+        "enabled": "**Flanger** filter is now enabled.",
+        "disabled": "**Flanger** filter is now disabled."
+      },  
+      "nightcore": {
+        "description": "Apply nightcore effect to the current music.",
+        "enabled": "**Nightcore** filter is now enabled.",
+        "disabled": "**Nightcore** filter is now disabled."
+      },
+      "normalizer": {
+        "description": "Apply equalizer effect to the current music.",
+        "enabled": "**Equalizer** filter is now enabled.",
+        "disabled": "**Equalizer** filter is now disabled."
+      },
+      "phaser": {
+        "description": "Apply phaser effect to the current music.",
+        "enabled": "**Phaser** filter is now enabled.",
+        "disabled": "**Phaser** filter is now disabled."
+      },
+      "reverse": {
+        "description": "Apply reverse effect to the current music.",
+        "enabled": "**Reverse** filter is now enabled.",
+        "disabled": "**Reverse** filter is now disabled."
+      },
+      "surround": {
+        "description": "Apply surround effect to the current music.",
+        "enabled": "**Surround** filter is now enabled.",
+        "disabled": "**Surround** filter is now disabled."
+      },
+      "vaporwave": {
+        "description": "Apply vaporwave effect to the current music.",
+        "enabled": "**Vaporwave** filter is now enabled.",
+        "disabled": "**Vaporwave** filter is now disabled."
+      }
+    },
+    "stop": {
+      "name": "stop",
+      "description": "Stop playing music",
+      "success": "Music stopped. See you next time! ✅"
+    },
+    "skip": {
+      "name": "skip",
+      "description": "Skip the current song",
+      "success": "Current song **{title}** has been skipped ✅",
+      "error": "Something went wrong... Try again? ❌"
+    },
+    "pause": {
+      "name": "pause",
+      "description": "Pause the current song",
+      "success": "Successfully {action} **{title}**."
+    },
+    "resume": {
+      "name": "resume",
+      "description": "Resume playing music",
+      "alreadyPlaying": "This song is already playing... Try again? ❌",
+      "success": "Current song **{title}** has resumed ✅"
+    },
+    "queue": {
+      "name": "queue",
+      "description": "View the songs in the queue",
+      "title": "Song Queue - {guildName}",
+      "nowPlaying": "**Now Playing:** [{title}]({url}) by **{author}**",
+      "trackItem": "`{position}` [{title}]({url}) by **{author}** (requested by <@{requesterId}>)",
+      "andMore": "and **{count}** more songs in the queue."
+    },
+    "back": {
+      "name": "back",
+      "description": "Go back to the previous song",
+      "noPreviousSong": "No music was played before this track... Try again? ❌",
+      "success": "Playing the previous track ✅"
+    },
+    "clear": {
+      "name": "clear",
+      "description": "Clear all music from the queue",
+      "noOtherTracks": "There are no other tracks in the queue. Use **/stop** to stop the current track ❌",
+      "success": "The queue has just been cleared 🗑️."
+    },
+    "volume": {
+      "name": "volume",
+      "description": "Adjust the current music volume.",
+      "alreadyAtVolume": "The volume is already set to your desired level... Try again? ❌",
+      "invalidNumber": "The number you specified is invalid. Please enter a number between **0 and {maxVolume}**.",
+      "success": "Volume changed to **{volume}**% 🔊",
+      "options": {
+        "volume": "Set the music volume.",
+        "percentage": "Volume percentage (0-100)"
+      }
+    },
+    "loop": {
+      "name": "loop",
+      "description": "Change the current loop mode or enable autoplay.",
+      "off": "Loop is now **disabled** ✅",
+      "queue": "**Queue** will now repeat infinitely ✅",
+      "track": "**Track** will now repeat infinitely ✅",
+      "autoplay": "Queue will now **autoplay** ✅",
+      "options": {
+        "mode": "Loop mode"
+      }
+    },
+    "language": {
+      "name": "language",
+      "description": "Change the bot language for this server",
+      "success": "Language changed to **{language}** ✅",
+      "options": {
+        "language": "Select language"
+      }
+    },
+    "seek": {
+      "name": "seek",
+      "description": "Seek forward or backward in the song",
+      "success": "Current song time set to **{minutes}{minuteText} {seconds}{secondText}** ✅",
+      "options": {
+        "minutes": "Number of minutes to skip.",
+        "seconds": "Number of seconds to skip.",
+        "time": "Time to jump to (e.g. 1:30)"
+      }
+    },
+    "shuffle": {
+      "name": "shuffle",
+      "description": "Shuffle the songs",
+      "notEnoughSongs": "There are not enough songs in the queue (need at least 2)... Try again? ❌",
+      "success": "Queue shuffled **{count} songs! ✅**!"
+    },
+    "8d": {
+      "name": "8d",
+      "description": "Apply 8D effect to the current song"
+    },
+    "bassboost": {
+      "name": "bassboost",
+      "description": "Enhance bass effect"
+    },
+    "chorus": {
+      "name": "chorus",
+      "description": "Apply chorus effect"
+    },
+    "compressor": {
+      "name": "compressor",
+      "description": "Apply compressor effect"
+    },
+    "expander": {
+      "name": "expander",
+      "description": "Apply expander effect"
+    },
+    "flanger": {
+      "name": "flanger",
+      "description": "Apply flanger effect"
+    },
+    "nightcore": {
+      "name": "nightcore",
+      "description": "Apply nightcore effect"
+    },
+    "normalizer": {
+      "name": "normalizer",
+      "description": "Toggle volume normalization"
+    },
+    "phaser": {
+      "name": "phaser",
+      "description": "Apply phaser effect"
+    },
+    "reverse": {
+      "name": "reverse",
+      "description": "Apply reverse effect"
+    },
+    "surround": {
+      "name": "surround",
+      "description": "Apply surround effect"
+    },
+    "vaporwave": {
+      "name": "vaporwave",
+      "description": "Apply vaporwave effect"
+    },
+    "aichat": {
+      "name": "aichat",
+      "description": "Chat with the AI bot",
+      "options": {
+        "model": "Select AI model",
+        "text": "Chat content",
+        "history": "Use chat history",
+        "image": "Upload image (optional)",
+        "audio": "Upload audio (optional)"
+      }
+    },
+    "chatgpt": {
+      "name": "chatgpt",
+      "description": "Chat with ChatGPT",
+      "options": {
+        "model": "Select model version",
+        "text": "Chat content",
+        "history": "Use chat history",
+        "image": "Upload image (optional)",
+        "audio": "Upload audio (optional)"
+      }
+    },
+    "deepseek": {
+      "name": "deepseek",
+      "description": "Chat with DeepSeek AI",
+      "options": {
+        "text": "Chat content",
+        "history": "Use chat history"
+      }
+    },
+    "chat-gemini": {
+      "name": "chat-gemini",
+      "description": "Chat with Google Gemini",
+      "options": {
+        "model": "Select model version",
+        "text": "Chat content"
+      }
+    },
+    "agent": {
+      "name": "agent",
+      "description": "Use AI agent features",
+      "options": {
+        "text": "Question or request",
+        "model": "Select AI model",
+        "history": "Use chat history",
+        "enable_search": "Enable web search",
+        "image": "Upload image (optional)",
+        "audio": "Upload audio (optional)",
+        "file": "Upload file (optional)"
+      },
+      "generating": "Generating response...",
+      "usageExceeded": "You have exceeded the usage limit for this model. You have used {usage}/{limit} messages for model {model}.",
+      "today": "Today's usage",
+      "imageGenerated": "AI has generated an image for you.",
+      "openThink": "Show thinking process",
+      "hideThink": "Hide thinking process",
+      "think": "Thinking Process",
+      "showSearchResults": "Show search results",
+      "hideSearchResults": "Hide search results",
+      "searchResults": "Search Results",
+      "fullsearchResults": "Full Search Results",
+      "searchResultsTooLong": "Search results are too long to display here. See additional embed for complete results.",
+      "search": "Search enabled (used)",
+      "searchdisable": "Search disabled",
+      "searchnotused": "Search enabled (not used)",
+      "viewHistory": "View History",
+      "error": "An error occurred: {error}"
+    },
+    "chat": {
+      "name": "chat",
+      "description": "Use general AI chat features",
+      "options": {
+        "text": "Chat content",
+        "model": "Select AI model",
+        "history": "Use chat history",
+        "enable_search": "Enable web search",
+        "image": "Upload image (optional)",
+        "audio": "Upload audio (optional)",
+        "file": "Upload file (optional)"
+      }
+    },
+    "chat-pro": {
+      "name": "chat-pro",
+      "description": "Start or stop advanced chat mode",
+      "options": {
+        "start": "Start advanced chat mode",
+        "stop": "Stop advanced chat mode"
+      }
+    },
+    "checkin": {
+      "name": "checkin",
+      "description": "Daily check-in",
+      "options": {},
+      "placeholder": "Check in to receive daily rewards",
+      "alreadyExists": "You have already checked in today"
+    },    "createcheckin": {
+      "name": "createcheckin",
+      "description": "Create a check-in channel",
+      "options": {
+        "content": "Check-in content",
+        "簽到內容": "Check-in content"
+      }
+    },
+    "giveaway": {
+      "name": "giveaway",
+      "description": "Create or cancel a giveaway event",
+      "options": {
+        "start": "Start giveaway",
+        "cancel": "Cancel giveaway"
+      },
+      "start": {
+        "title": "🎉 Giveaway Started!",
+        "description": "Prize: **{prize}**\nClick 🎉 to participate!\nTime remaining: <t:{endTime}:R>.",
+        "footer": "Created by {user}"
+      },
+      "cancel": {
+        "noActiveGiveaways": "You don't have any active giveaways",
+        "optionLabel": "{prize} (ends at {endTime})",
+        "optionDescription": "Prize: {prize}",
+        "selectPlaceholder": "Select a giveaway to cancel",
+        "selectPrompt": "Please select the giveaway you want to cancel:",
+        "timeout": "Selection timed out or an error occurred",
+        "notFound": "Giveaway not found or has already ended",
+        "embedTitle": "❌ Giveaway Cancelled",
+        "embedDescription": "Prize: **{prize}**\nGiveaway has been cancelled by {user}.",
+        "embedFooter": "Giveaway cancelled",
+        "success": "Giveaway \"{prize}\" has been successfully cancelled",
+        "error": "An error occurred while cancelling the giveaway, please try again later"
+      },
+      "end": {
+        "title": "🎉 Giveaway Ended!",
+        "noWinners": "Prize: **{prize}**\nNo one participated in the giveaway.",
+        "description": "Prize: **{prize}**\nWinner(s): {winners}",
+        "winnersSeparator": ", ",
+        "footer": "Thanks for participating!"
+      },
+      "dm": {
+        "title": "🎉 Congratulations!",
+        "description": "You won **{prize}** in the giveaway. Please contact an admin to claim your prize.",
+        "prizeField": "Prize",
+        "serverField": "Server Name",
+        "linkField": "Jump Link",
+        "linkValue": "[Click here](https://discord.com/channels/{guildId}/{channelId})",
+        "footer": "Thank you for participating!"
+      },
+      "log": {
+        "created": "User {user} created a giveaway: {prize}, ID: {id}",
+        "cancelled": "User {user} cancelled a giveaway: {prize}, ID: {id}",
+        "cancelError": "Error occurred while cancelling the giveaway",
+        "ending": "Timer ended, starting the drawing",
+        "noParticipants": "No one participated in the giveaway",
+        "dmError": "Unable to send DM to user {user}",
+        "endError": "Error occurred while ending the giveaway"
+      }
+    },    "log": {
+      "name": "log",
+      "description": "Set up server logs",
+      "options": {
+        "set": "Set log channel",
+        "disable": "Disable log feature",
+        "status": "Check log status",
+        "設定": "Configure log settings",
+        "關閉": "Disable logging",
+        "狀態": "Check log status"
+      },
+      "set": {
+        "title": "✅ Log feature configured",
+        "description": "Logs will be sent to {channel}",
+        "missingPermissions": "⚠️ I need permissions to send messages and embed links in {channel} to send logs.",
+        "fieldMessageLog": "Message Log",
+        "fieldVoiceLog": "Voice Log",
+        "fieldMemberLog": "Member Log",
+        "fieldServerLog": "Server Log"
+      },
+      "disable": {
+        "success": "✅ Log feature has been disabled",
+        "notConfigured": "❓ This server has not configured the log feature yet"
+      },
+      "status": {
+        "title": "📝 Log Feature Status",
+        "description": "Current log channel: {channelMention}",
+        "channelNotFound": "Channel not found",
+        "notConfigured": "❓ This server has not configured the log feature yet"
+      },
+      "test": {
+        "title": "📝 Log system enabled",
+        "description": "This is a test message indicating that the log system has been successfully configured."
+      },
+      "error": "❌ An error occurred while configuring the log feature, please try again later or contact an administrator."
+    },
+    "voicechannel": {
+      "name": "voicechannel",
+      "description": "Manage auto-created private voice channels",
+      "noPermission": "You don't have permission to manage channels, you can't use this command.",
+      "options": {
+        "set": "Set up the auto-creation of private voice channels",
+        "channel": "Select the source voice channel",
+        "template": "Set the channel name template, variables: {username}, {count}",
+        "userlimit": "Set the default user limit for the new channel (0 means no limit)",
+        "disable": "Disable the auto-creation of private voice channels",
+        "status": "Check the status of the auto-creation of private voice channels"
+      },
+      "notVoiceChannel": "Please select a voice channel as the source channel.",
+      "setupSuccess": {
+        "title": "✅ Auto-creation of private voice channels feature has been set up",
+        "description": "Set {channelName} as the source channel. When users join this channel, a private voice channel will be automatically created."
+      },
+      "setupDescription": "Set {channelName} as the source channel. When users join this channel, a private voice channel will be automatically created.",
+      "channelStyle": "Channel style",
+      "defaultUserLimit": "Default user limit",
+      "noLimit": "No limit",
+      "disableSuccess": {
+        "title": "❌ Auto-creation of private voice channels feature has been disabled",
+        "description": "Auto-creation of private voice channels has been disabled for this server."
+      },
+      "disableDescription": "Auto-creation of private voice channels has been disabled for this server.",
+      "statusTitle": "📊 Auto-creation of private voice channels status",
+      "status": {
+        "title": "📊 Auto-creation of private voice channels status",
+        "enabled": "Auto-creation of private voice channels is enabled for this server.",
+        "disabled": "Auto-creation of private voice channels is not enabled for this server."
+      },
+      "statusDisabled": "Auto-creation of private voice channels is not enabled for this server.",
+      "statusEnabled": "Auto-creation of private voice channels is enabled for this server.",
+      "sourceChannel": "Source channel",
+      "channelNotFound": "Channel not found (may have been deleted)",
+      "error": "Error setting up auto-creation of private voice channels: {errorMessage}",
+      "unlimited": "Unlimited"
+    },
+    "lyrics": {
+      "name": "lyrics",
+      "description": "Get the lyrics for the currently playing song",
+      "options": {
+        "song": "Song name to search lyrics for"
+      },
+      "notFound": "No lyrics found for this song ❌",
+      "clickHereText": "Click here to search lyrics on Google",
+      "error": "No lyrics found for this song ❌"
+    },    "record": {
+      "name": "record",
+      "description": "Record voice channel content",
+      "options": {
+        "start": "Start recording",
+        "stop": "Stop recording"
+      }
+    },
+    "help": {
+      "name": "help",
+      "description": "Show all available Guizhong commands",
+      "title": "Guizhong Help Center",
+      "mainDescription": "To see all available commands, select a category from the dropdown menu below.",
+      "aboutBot": "About Guizhong",
+      "aboutBotDescription": "Guizhong is a powerful Discord music bot that supports multi-platform music playback and advanced commands.",
+      "selectCategory": "Select a category to view commands",
+      "categories": {
+        "general": "General",
+        "generalDescription": "Commands not related to music",
+        "music": "Music Controls",
+        "musicDescription": "Commands for music playback",
+        "effects": "Sound Effects",
+        "effectsDescription": "Commands to control current music effects",
+        "llm": "AI Features",
+        "llmDescription": "AI-related commands",
+        "misc": "Miscellaneous",
+        "miscDescription": "Other utility commands"
+      },
+      "supportServer": "Support Server",
+      "githubRepo": "GitHub",
+      "viewAllCommands": "View All Commands",
+      "commandNotFound": "Command \"{command}\" not found. Please check the spelling and try again.",
+      "category": "Category",
+      "required": "(Required)",
+      "optional": "(Optional)",
+      "options": "Options",
+      "usage": "Usage",
+      "backToMainMenu": "Back to Main Menu"
+    },
+    "stats": {
+      "name": "stats",
+      "description": "Show bot statistics",
+      "title": "Guizhong Bot Statistics",
+      "statDescription": "Guizhong is currently in **{servers} servers**, has played **{songs} songs**, skipped **{skipped} songs**, and shuffled **{shuffled} playlists**.",
+      "botInfo": "Bot Information",
+      "botInfoValue": "🕒 Uptime: **{uptime}**\n📚 Discord.js: **{djsVersion}**\n⚙️ Node.js: **{nodeVersion}**",
+      "systemInfo": "System Information",
+      "systemInfoValue": "💾 Memory Usage: **{memory}**\n🖥️ CPU: **{cpu}**\n💻 System: **{platform}**",
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "footer": "Statistics generated at {date}"
+    },
+    "playBili": {
+      "name": "playbili",
+      "description": "Play a song from Bilibili",
+      "options": {
+        "query": "Enter track name, artist, or URL."
+      }
+    },
+    "see": {
+      "name": "see",
+      "description": "View all lottery tickets"
+    },
+    "Giveaway": {
+      "name": "giveaway",
+      "description": "Create a giveaway event"
+    },    "subYT": {
+      "name": "subyt",
+      "description": "Subscribe to YouTube channel updates",
+      "options": {
+        "channel": "YouTube channel link",
+        "channel_id": "Channel ID"
+      }
+    },
+    "subscribe": {
+      "name": "subscribe",
+      "description": "Subscribe to YouTube channel updates",
+      "options": {
+        "channel_id": "YouTube Channel ID"
+      }
+    },
+    "AIChat": {
+      "options": {
+        "model": "Select model",
+        "text": "Enter content",
+        "history": "Select previous conversation history",
+        "image": "Upload image for analysis",
+        "audio": "Upload audio for analysis"
+      }
+    }
+  },
+  "player": {
+    "nowPlaying": "▶️ Now playing {title} in {channel} 🎧",
+    "duration": "Duration",
+    "requestedBy": "Requested by",
+    "volume": "Volume **{volume}**%",
+    "effects": "Playback effects",
+    "noEffects": "None",
+    "progress": "Playback progress",
+    "loopMode": "Loop mode",
+    "loopOff": "Off",
+    "loopTrack": "Track loop",
+    "loopQueue": "Queue loop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "pauseSuccess": "{user}: Successfully {action} **{title}**.",
+    "skipSuccess": "{user}: Song **{title}** has been skipped ✅",
+    "previousSuccess": "{user}: Playing previous track ✅",
+    "previousError": "No music was played before this track... Try again? ❌",
+    "stopSuccess": "{user}: Music stopped ✅",
+    "lyricsNotFound": "No lyrics found for this song ❌",
+    "lyricsCourtesy": "Lyrics provided by Genius",
+    "buttons": {
+      "back": "Back",
+      "pause": "Pause",
+      "skip": "Next",
+      "stop": "Stop",
+      "lyrics": "Lyrics",
+      "autoplay": "Autoplay",
+      "shuffle": "Shuffle"
+    },
+    "channelEmpty": "Music stopped due to {duration} inactivity",
+    "queue": {
+      "shuffled": "Queue shuffled **{count} songs! ✅**!",
+      "notEnoughSongs": "There are not enough songs in the queue (need at least 2)... Try again? ❌"
+    },
+    "lyrics": {
+      "clickHereText": "Click here to view lyrics"
+    },
+    "errors": {
+      "playerErrorTitle": "Player Error",
+      "playerErrorDescription": "A player error occurred while trying to perform this action.",
+      "errorLabel": "Error"
+    }
+  },
+  "common": {
+    "notPlaying": "No music is currently playing... Try again? ❌",
+    "error": "Something went wrong... Try again? ❌"
+  }
+}

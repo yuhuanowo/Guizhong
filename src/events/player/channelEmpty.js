@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const config = require("../../config");
+const i18n = require("../../utils/i18n");
 
 module.exports = {
     name: "emptyChannel",
@@ -10,9 +11,14 @@ module.exports = {
             () => {};
         }
 
+        const guildId = queue.guild.id;
+        const language = i18n.getServerLanguage(guildId);
         const embed = new EmbedBuilder();
 
-        embed.setTitle(`由於 ${formatMS(config.leaveOnEmptyDelay)} 不活動，音樂已停止`);
+        const channelEmptyText = i18n.getString("player.channelEmpty", language, {
+            duration: formatMS(config.leaveOnEmptyDelay)
+        });
+        embed.setTitle(channelEmptyText);
         embed.setColor(config.embedColour);
 
         queue.metadata.channel.send({ embeds: [embed] });
