@@ -39,6 +39,8 @@ try {
         ollamaEndpoint: configFile.ollamaEndpoint ?? "http://localhost:11434",
         groqApiKey: configFile.groqApiKey ?? "",
         openRouterApiKey: configFile.openRouterApiKey ?? "",
+        cloudflareApiKey: configFile.cloudflareApiKey ?? "",
+        cloudflareEndpoint: configFile.cloudflareEndpoint ?? "https://api.cloudflare.com/client/v4/images/generate",
         oauthTokens: configFile.oauthTokens ?? {},
         showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
         mongoURI: configFile.mongoURI ?? "",

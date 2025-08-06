@@ -134,6 +134,18 @@ groqApiKey: ""
 # OpenRouter API 密鑰
 openRouterApiKey: ""
 
+# Cloudflare API Key
+# Cloudflare API 密钥
+# Cloudflare API 密鑰
+cloudflareApiKey: ""
+
+# Cloudflare API Endpoint (default: https://api.cloudflare.com/client/v4/accounts/yourid/ai/run/@cf/black-forest-labs/flux-1-schnell)
+# Cloudflare API 端点（默认: https://api.cloudflare.com/client/v4/accounts/yourid/ai/run/@cf/black-forest-labs/flux-1-schnell）
+# Cloudflare API 端點（預設: https://api.cloudflare.com/client/v4/accounts/yourid/ai/run/@cf/black-forest-labs/flux-1-schnell）
+cloudflareEndpoint: ""
+
+
+
 # Database configurations
 # 數據庫配置
 # 数据库配置

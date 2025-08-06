@@ -5,6 +5,7 @@ const logger = require("../../../utils/logger.js");
 const fs = require("fs");
 const { v4: uuidv4 } = require("uuid");
 const { AttachmentBuilder } = require("discord.js");
+const config = require("../../../config.js");
 
 /**
  * 通过Cloudflare API生成图片
@@ -13,8 +14,12 @@ const { AttachmentBuilder } = require("discord.js");
  */
 async function generateImageCloudflare(prompt) {
   try {
-    const response = await fetch("https://api.cloudflare.com/client/v4/accounts/3e2e76471f8a716c607cd933b85c18e5/ai/run/@cf/black-forest-labs/flux-1-schnell", {
-      headers: { Authorization: "Bearer 3eu2DB0wWYAcJUZb9flhw7XA4AalzmNUXNvabGM_", "Content-Type": "application/json" },
+    const apiKey = config.cloudflareApiKey || process.env.CLOUDFLARE_API_KEY;
+    const endpoint = config.cloudflareEndpoint || process.env.CLOUDFLARE_ENDPOINT;
+    if (!apiKey) throw new Error("Cloudflare API Key 未配置");
+    if (!endpoint) throw new Error("Cloudflare Endpoint 未配置");
+    const response = await fetch(endpoint, {
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       method: "POST",
       body: JSON.stringify({ "prompt": prompt })
     });
