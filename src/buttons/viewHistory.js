@@ -25,14 +25,14 @@ module.exports = {
         async (err, rows) => {
           if (err || !rows.length) {
             const embed = new EmbedBuilder()
-              .setDescription(i18n.getString("buttons.viewHistory.noHistory", language) || "沒有可用的歷史對話");
+              .setDescription(i18n.getString("player.buttons.viewHistory.noHistory", language) || "沒有可用的歷史對話");
             return await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
           }
 
           // 建立選單
           const selectMenu = new StringSelectMenuBuilder()
             .setCustomId("historySelect")
-            .setPlaceholder(i18n.getString("buttons.viewHistory.selectPlaceholder", language) || "選擇要查看的歷史對話")
+            .setPlaceholder(i18n.getString("player.buttons.viewHistory.selectPlaceholder", language) || "選擇要查看的歷史對話")
             .addOptions(rows.map(r => ({
               label: r.prompt.substring(0, 50),
               value: r.id.toString()
@@ -42,8 +42,8 @@ module.exports = {
 
            
           const embed = new EmbedBuilder()
-            .setTitle(i18n.getString("buttons.viewHistory.historyListTitle", language) || "歷史紀錄列表")
-            .setDescription(i18n.getString("buttons.viewHistory.selectRecord", language) || "請選擇要查看的紀錄")
+            .setTitle(i18n.getString("player.buttons.viewHistory.historyListTitle", language) || "歷史紀錄列表")
+            .setDescription(i18n.getString("player.buttons.viewHistory.selectRecord", language) || "請選擇要查看的紀錄")
             .setColor("#e8d8ff");
 
           await interaction.reply({ embeds: [embed], components: [row], flags: MessageFlags.Ephemeral });

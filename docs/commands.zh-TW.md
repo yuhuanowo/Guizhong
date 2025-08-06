@@ -61,7 +61,8 @@
 
 | 命令 | 描述 | 用法 | 示例 |
 |-----|------|-----|------|
-| `/chat` | 與AI聊天 | `/chat [模型] [文本] [歷史ID(可選)]` | `/chat text:請介紹一下中國的傳統節日 model:03-mini historyId:12345 enablesearch:true image:image.png ` |
+| `/agent` | 使用AI代理功能 | `/agent [text] [model] [history] [enable_search] [image] [audio] [file]` | `/agent text:請介紹一下中國的傳統節日 model:gpt-4o enable_search:true` |
+| `/start` | 開啟連續AI聊天會話 | `/start [model] [enable_search] [title]` | `/start model:gpt-4.1-nano enable_search:true title:我的AI助手` |
 
 ## 抽獎系統命令
 
@@ -126,10 +127,26 @@
 
 3. AI對話連續互動：
    ```
-   /chat text:請介紹一下中國的傳統節日 model:03-mini historyId:12345 enablesearch:true image:image.png
+   /agent text:請介紹一下中國的傳統節日 model:gpt-4o enable_search:true
    ```
 
-4. 抽獎系統完整流程(管理員)：
+4. 連續AI對話會話：
+   ```
+   # 開啟新的聊天會話
+   /start model:gpt-4.1-nano enable_search:true title:學習助手
+   
+   # 在線程中直接發送消息進行對話
+   你好，請幫我解釋一下量子物理
+   
+   # AI會自動回應並記住上下文
+   # 繼續在同一線程中對話
+   請給我一些學習資源
+   
+   # 使用控制按鈕管理會話
+   # 點擊"結束會話"按鈕結束對話
+   ```
+
+5. 抽獎系統完整流程(管理員)：
    ```
    # 清空舊彩票
    /deleteall
@@ -140,6 +157,31 @@
    # 進行抽獎
    /draw
    ```
+
+### 連續AI聊天功能
+
+歸終提供了連續AI聊天功能，讓您可以與AI進行長時間的對話而無需重複設定參數：
+
+#### 使用方法
+1. **開啟會話**：使用 `/start` 命令創建一個新的聊天線程
+2. **持續對話**：直接在線程中發送消息，AI會自動回應
+3. **上下文記憶**：AI會記住整個對話的上下文
+4. **靈活控制**：使用按鈕控制搜索功能和會話狀態
+
+#### 功能特點
+- 🚀 **快速開始**：一鍵創建專屬聊天空間
+- 💬 **連續對話**：無需重複設定，直接聊天
+- 🧠 **記憶功能**：AI記住整個對話歷史
+- 🔍 **搜索切換**：隨時開啟/關閉網絡搜索
+- ⏰ **自動清理**：24小時後自動清理會話
+- 🔒 **權限控制**：只有創建者可以控制會話
+
+#### 支援功能
+- 文字對話
+- 圖片分析
+- 音頻處理
+- 網絡搜索（可選）
+- 思考過程顯示（適用於思考型模型）
 
 ### 表情符號和按鈕控制
 

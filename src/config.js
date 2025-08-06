@@ -35,8 +35,13 @@ try {
         googleapikey: configFile.googleapikey ?? "",
         openaiapikey: configFile.openaiapikey ?? "",
         githubToken: configFile.githubToken ?? "",
+        geminiApiKey: configFile.geminiApiKey ?? "",
+        ollamaEndpoint: configFile.ollamaEndpoint ?? "http://localhost:11434",
+        groqApiKey: configFile.groqApiKey ?? "",
+        openRouterApiKey: configFile.openRouterApiKey ?? "",
         oauthTokens: configFile.oauthTokens ?? {},
         showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
+        mongoURI: configFile.mongoURI ?? "",
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");

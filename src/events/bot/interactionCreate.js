@@ -27,9 +27,225 @@ module.exports = {
                 logger.error(error);
             }
         } else if (interaction.isButton()) {
+            // 处理线程会话控制按钮
+            if (interaction.customId.startsWith("end_session_") || 
+                interaction.customId.startsWith("session_info_") || 
+                interaction.customId.startsWith("toggle_search_") ||
+                interaction.customId.startsWith("pause_session_") ||
+                interaction.customId.startsWith("export_session_") ||
+                interaction.customId.startsWith("clear_history_")) {
+                
+                const startCommand = require("../../commands/LLM/Start");
+                const threadId = interaction.customId.split("_").pop();
+                const guildId = interaction.guild.id;
+                const language = i18n.getServerLanguage(guildId);
+                const session = startCommand.getActiveSession(threadId);
+                
+                if (!session) {
+                    return await interaction.reply({
+                        content: i18n.getString("commands.start.sessionExpired", language),
+                        ephemeral: true
+                    });
+                }
+
+                // 检查权限 - 只有会话创建者和管理员可以控制
+                if (interaction.user.id !== session.userId && !interaction.member.permissions.has("ManageThreads")) {
+                    return await interaction.reply({
+                        content: i18n.getString("commands.start.noPermission", language),
+                        ephemeral: true
+                    });
+                }
+
+                if (interaction.customId.startsWith("end_session_")) {
+                    // 结束会话
+                    startCommand.endSession(threadId);
+                    
+                    const embed = new EmbedBuilder()
+                        .setTitle(i18n.getString("commands.start.sessionEnded", language))
+                        .setDescription(i18n.getString("commands.start.sessionEndedDesc", language))
+                        .setColor("#ff9900")
+                        .setTimestamp();
+
+                    await interaction.reply({ embeds: [embed] });
+                    
+                    // 删除线程（延迟3秒让用户看到消息）
+                    setTimeout(async () => {
+                        try {
+                            if (interaction.channel && interaction.channel.isThread()) {
+                                await interaction.channel.delete("AI聊天会话已结束");
+                                logger.info(`线程已删除: ${threadId}`);
+                            }
+                        } catch (deleteError) {
+                            logger.error("删除线程失败:", deleteError);
+                            // 如果删除失败，尝试归档
+                            try {
+                                await interaction.channel.setArchived(true);
+                                logger.info(`线程已归档: ${threadId}`);
+                            } catch (archiveError) {
+                                logger.error("归档线程失败:", archiveError);
+                            }
+                        }
+                    }, 3000);
+
+                } else if (interaction.customId.startsWith("session_info_")) {
+                    // 显示会话信息
+                    const embed = new EmbedBuilder()
+                        .setTitle(i18n.getString("commands.start.sessionInfo", language))
+                        .addFields(
+                            {
+                                name: i18n.getString("commands.start.sessionId", language),
+                                value: session.sessionId.split('-')[0],
+                                inline: true
+                            },
+                            {
+                                name: i18n.getString("commands.start.model", language),
+                                value: session.model,
+                                inline: true
+                            },
+                            {
+                                name: i18n.getString("commands.start.searchStatus", language),
+                                value: session.enableSearch ? 
+                                    i18n.getString("commands.agent.search", language) : 
+                                    i18n.getString("commands.agent.searchdisable", language),
+                                inline: true
+                            },
+                            {
+                                name: i18n.getString("commands.start.createdAt", language),
+                                value: `<t:${Math.floor(session.createdAt.getTime() / 1000)}:F>`,
+                                inline: false
+                            },
+                            {
+                                name: i18n.getString("commands.start.messageCount", language),
+                                value: `${session.messages.length / 2} ${i18n.getString("commands.start.exchanges", language)}`,
+                                inline: true
+                            }
+                        )
+                        .setColor("#5865F2")
+                        .setTimestamp();
+
+                    await interaction.reply({ embeds: [embed], ephemeral: true });
+
+                } else if (interaction.customId.startsWith("toggle_search_")) {
+                    // 切换搜索状态
+                    session.enableSearch = !session.enableSearch;
+                    
+                    const embed = new EmbedBuilder()
+                        .setTitle(i18n.getString("commands.start.searchToggled", language))
+                        .setDescription(session.enableSearch ? 
+                            i18n.getString("commands.start.searchEnabled", language) : 
+                            i18n.getString("commands.start.searchDisabled", language))
+                        .setColor(session.enableSearch ? "#00ff00" : "#ff9900");
+
+                    // 更新按钮
+                    const controlRow = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`end_session_${threadId}`)
+                                .setLabel(i18n.getString("commands.start.endSession", language))
+                                .setStyle(ButtonStyle.Danger)
+                                .setEmoji("🔚"),
+                            new ButtonBuilder()
+                                .setCustomId(`session_info_${threadId}`)
+                                .setLabel(i18n.getString("commands.start.sessionInfo", language))
+                                .setStyle(ButtonStyle.Secondary)
+                                .setEmoji("ℹ️"),
+                            new ButtonBuilder()
+                                .setCustomId(`toggle_search_${threadId}`)
+                                .setLabel(session.enableSearch ? 
+                                    i18n.getString("commands.start.disableSearch", language) : 
+                                    i18n.getString("commands.start.enableSearch", language))
+                                .setStyle(ButtonStyle.Primary)
+                                .setEmoji("🔍")
+                        );
+
+                    await interaction.update({ embeds: [embed], components: [controlRow] });
+
+                } else if (interaction.customId.startsWith("pause_session_")) {
+                    // 暂停/恢复会话
+                    const isPaused = startCommand.isSessionPaused(threadId);
+                    
+                    if (isPaused) {
+                        startCommand.resumeSession(threadId);
+                        const embed = new EmbedBuilder()
+                            .setTitle(i18n.getString("commands.start.sessionResumed", language))
+                            .setDescription(i18n.getString("commands.start.sessionResumedDesc", language))
+                            .setColor("#00ff00");
+                        
+                        await interaction.reply({ embeds: [embed] });
+                    } else {
+                        startCommand.pauseSession(threadId);
+                        const embed = new EmbedBuilder()
+                            .setTitle(i18n.getString("commands.start.sessionPaused", language))
+                            .setDescription(i18n.getString("commands.start.sessionPausedDesc", language))
+                            .setColor("#ff9900");
+                        
+                        await interaction.reply({ embeds: [embed] });
+                    }
+
+                } else if (interaction.customId.startsWith("export_session_")) {
+                    // 导出会话
+                    const exportData = startCommand.getSessionExportData(threadId);
+                    
+                    if (exportData) {
+                        const jsonData = JSON.stringify(exportData, null, 2);
+                        const buffer = Buffer.from(jsonData, 'utf8');
+                        
+                        const embed = new EmbedBuilder()
+                            .setTitle(i18n.getString("commands.start.sessionExported", language))
+                            .setDescription(i18n.getString("commands.start.sessionExportedDesc", language))
+                            .setColor("#00ff00");
+
+                        await interaction.reply({
+                            embeds: [embed],
+                            files: [{
+                                attachment: buffer,
+                                name: `chat-session-${session.sessionId.split('-')[0]}.json`
+                            }],
+                            ephemeral: true
+                        });
+                    } else {
+                        await interaction.reply({
+                            content: i18n.getString("commands.start.sessionExpired", language),
+                            ephemeral: true
+                        });
+                    }
+
+                } else if (interaction.customId.startsWith("clear_history_")) {
+                    // 清空历史记录
+                    const success = startCommand.clearSessionHistory(threadId);
+                    
+                    if (success) {
+                        const embed = new EmbedBuilder()
+                            .setTitle(i18n.getString("commands.start.historyCleared", language))
+                            .setDescription(i18n.getString("commands.start.historyClearedDesc", language))
+                            .setColor("#ff9900");
+
+                        await interaction.reply({ embeds: [embed] });
+                    } else {
+                        await interaction.reply({
+                            content: i18n.getString("commands.start.sessionExpired", language),
+                            ephemeral: true
+                        });
+                    }
+                }
+                return;
+            }
+
             if (interaction.customId.includes("-")) {
                 const dashIndex = interaction.customId.indexOf("-");
                 const button = client.buttons.get(interaction.customId.substring(0, dashIndex));
+                if (!button) return;
+                try {
+                    await button.execute(interaction, client);
+                } catch (error) {
+                    logger.error("An error occurred whilst attempting to execute a button command:"); //嘗試執行按鈕命令時發生錯誤
+                    logger.error(error);
+                }
+            } else if (interaction.customId.includes("_")) {
+                // 处理下划线分隔的按钮ID（例如：showSearchResults_messageId）
+                const underscoreIndex = interaction.customId.lastIndexOf("_");
+                const buttonName = interaction.customId.substring(0, underscoreIndex);
+                const button = client.buttons.get(buttonName);
                 if (!button) return;
                 try {
                     await button.execute(interaction, client);

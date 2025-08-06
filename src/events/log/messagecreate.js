@@ -83,6 +83,11 @@ module.exports = {
             return; // 其他机器人消息不处理
         }
 
+        // 检查是否在讨论串中，如果是则不启用回复功能
+        if (message.channel.isThread()) {
+            return; // 在讨论串中不处理回复
+        }
+
         // 原有的回复逻辑保持不变
         if (message.reference && message.reference.messageId) {
             const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);

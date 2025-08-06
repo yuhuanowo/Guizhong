@@ -105,7 +105,60 @@ YT_ACCESS_TOKEN: ""
 YT_REFRESH_TOKEN: ""
 oauthTokens: ""
 
-# GitHub Token
-# GitHub 令牌
-# GitHub 令牌
+# LLM Provider API Keys
+# LLM 提供商 API 密钥
+# LLM 提供商 API 密鑰
+
+# GitHub Model API Token
+# GitHub Model API 令牌
+# GitHub Model API 令牌
 githubToken: ""
+
+# Google Gemini API Key
+# Google Gemini API 密钥
+# Google Gemini API 密鑰
+geminiApiKey: ""
+
+# Ollama API Endpoint (default: http://localhost:11434)
+# Ollama API 端点（默认: http://localhost:11434）
+# Ollama API 端點（預設: http://localhost:11434）
+ollamaEndpoint: "http://localhost:11434"
+
+# Groq API Key
+# Groq API 密钥
+# Groq API 密鑰
+groqApiKey: ""
+
+# OpenRouter API Key
+# OpenRouter API 密钥
+# OpenRouter API 密鑰
+openRouterApiKey: ""
+
+# Database configurations
+# 數據庫配置
+# 数据库配置
+
+# MongoDB URI for database connection
+# MongoDB URI 用於數據庫連接
+# MongoDB URI 用于数据库连接
+mongoURI: ""
+
+# PostgreSQL database connection
+# PostgreSQL 數據庫連接
+# PostgreSQL 数据库连接
+postgresURI: ""
+# Example: "postgresql://username:password@localhost:5432/botdb"
+
+# Whether to use SSL for PostgreSQL connection
+# 是否為 PostgreSQL 連接使用 SSL
+# 是否为 PostgreSQL 连接使用 SSL
+postgresSSL: false
+
+# Logging settings
+# 日誌設置
+# 日志设置
+logging:
+  # Whether to show YouTubeJS error messages in the logs
+  # 是否在日誌中顯示 YouTubeJS 錯誤訊息
+  # 是否在日志中显示 YouTubeJS 错误信息
+    showYoutubeJSErrors: false

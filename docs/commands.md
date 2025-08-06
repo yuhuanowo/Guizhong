@@ -61,7 +61,8 @@ This document lists all commands supported by the Guizhong Discord bot in detail
 
 | Command | Description | Usage | Example |
 |---------|-------------|-------|---------|
-| `/chat` | Chat with AI | `/chat [model] [text] [history ID(optional)]` | `/chat text:Please introduce traditional Chinese festivals model:03-mini historyId:12345 enablesearch:true image:image.png` |
+| `/agent` | Use AI agent features | `/agent [text] [model] [history] [enable_search] [image] [audio] [file]` | `/agent text:Please introduce traditional Chinese festivals model:gpt-4o enable_search:true` |
+| `/start` | Start a continuous AI chat session | `/start [model] [enable_search] [title]` | `/start model:gpt-4.1-nano enable_search:true title:My AI Assistant` |
 
 ## Lottery System Commands
 
@@ -126,10 +127,26 @@ Here are some examples of command combinations to more efficiently use Guizhong:
 
 3. Continuous AI interaction:
    ```
-   /chat text:Please introduce traditional Chinese festivals model:03-mini historyId:12345 enablesearch:true image:image.png
+   /agent text:Please introduce traditional Chinese festivals model:gpt-4o enable_search:true
    ```
 
-4. Complete lottery system process (admin):
+4. Continuous AI chat session:
+   ```
+   # Start a new chat session
+   /start model:gpt-4.1-nano enable_search:true title:Learning Assistant
+   
+   # Send messages directly in the thread for conversation
+   Hello, please help me explain quantum physics
+   
+   # AI will respond automatically and remember context
+   # Continue chatting in the same thread
+   Please give me some learning resources
+   
+   # Use control buttons to manage the session
+   # Click "End Session" button to end the conversation
+   ```
+
+5. Complete lottery system process (admin):
    ```
    # Clear old tickets
    /deleteall
@@ -140,6 +157,31 @@ Here are some examples of command combinations to more efficiently use Guizhong:
    # Draw lottery
    /draw
    ```
+
+### Continuous AI Chat Feature
+
+Guizhong provides continuous AI chat functionality, allowing you to have extended conversations with AI without repeatedly setting parameters:
+
+#### How to Use
+1. **Start Session**: Use the `/start` command to create a new chat thread
+2. **Continuous Chat**: Send messages directly in the thread, AI will respond automatically
+3. **Context Memory**: AI remembers the entire conversation context
+4. **Flexible Control**: Use buttons to control search functionality and session status
+
+#### Features
+- 🚀 **Quick Start**: One-click creation of dedicated chat space
+- 💬 **Continuous Conversation**: Chat directly without repeated setup
+- 🧠 **Memory Function**: AI remembers entire conversation history
+- 🔍 **Search Toggle**: Enable/disable web search anytime
+- ⏰ **Auto Cleanup**: Automatic session cleanup after 24 hours
+- 🔒 **Permission Control**: Only creators can control sessions
+
+#### Supported Functions
+- Text conversation
+- Image analysis
+- Audio processing
+- Web search (optional)
+- Thinking process display (for reasoning models)
 
 ### Emoji and Button Controls
 

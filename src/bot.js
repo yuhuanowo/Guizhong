@@ -132,7 +132,7 @@ const mongoose = require("mongoose");
     
     // 連接到 MongoDB 資料庫
     try {
-        await mongoose.connect(config.mongoURI || "mongodb://localhost:27017/bot");
+        await mongoose.connect(config.mongoURI);
         logger.success("Successfully connected to MongoDB database");
         
         // 載入所有模型文件
