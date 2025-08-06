@@ -44,7 +44,7 @@ async function saveChatLogToMongo(user_id, model, prompt, reply, interaction_id)
  */
 async function updateUserMemory(user_id, newPrompt) {
   // 负载平衡 - 两个token随机轮流使用
-  const memtoken = Math.random() > 0.5 ? config.githubToken : "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";  
+  const memtoken = config.githubToken 
   const dbclient = new ModelClient(
     "https://models.inference.ai.azure.com",
     new AzureKeyCredential(memtoken),
