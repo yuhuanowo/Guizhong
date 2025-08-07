@@ -13,11 +13,16 @@ const { searchResultsCache } = require("../../buttons/showSearchResults");
 // 存储活跃的聊天会话
 const fs = require('fs');
 const path = require('path');
-const SESSIONS_FILE = path.resolve(__dirname, '../JSON/sessions.json');
+const SESSIONS_DIR = path.resolve(__dirname, '../../JSON');
+const SESSIONS_FILE = path.join(SESSIONS_DIR, 'sessions.json');
 let activeChatSessions = new Map();
 
 // 从 JSON 文件加载会话
 function loadSessionsFromFile() {
+  // 确保 sessions 目录存在
+  if (!fs.existsSync(SESSIONS_DIR)) {
+    fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+  }
   if (fs.existsSync(SESSIONS_FILE)) {
     try {
       const data = fs.readFileSync(SESSIONS_FILE, 'utf-8');
@@ -41,10 +46,37 @@ function loadSessionsFromFile() {
 // 保存会话到 JSON 文件
 function saveSessionsToFile() {
   try {
-    const sessionsArr = Array.from(activeChatSessions.values());
-    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsArr, null, 2), 'utf-8');
+    // 确保 sessions 目录存在
+    if (!fs.existsSync(SESSIONS_DIR)) {
+      try {
+        fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+        logger.info(`创建目录: ${SESSIONS_DIR}`);
+      } catch (dirError) {
+        logger.error(`创建目录失败 (${SESSIONS_DIR}):`, dirError);
+        return false;
+      }
+    }
+    
+    // 准备要保存的数据
+    const sessionsArr = Array.from(activeChatSessions.values())
+      .map(session => {
+        // 创建一个没有循环引用的纯数据对象
+        const cleanSession = { ...session };
+        // 移除不应该序列化的属性
+        delete cleanSession.client;
+        return cleanSession;
+      });
+    
+    // 写入文件，使用临时文件+重命名的方式避免部分写入
+    const tempFile = `${SESSIONS_FILE}.tmp`;
+    fs.writeFileSync(tempFile, JSON.stringify(sessionsArr, null, 2), 'utf-8');
+    fs.renameSync(tempFile, SESSIONS_FILE);
+    
+    logger.info(`成功保存会话到: ${SESSIONS_FILE} (共 ${sessionsArr.length} 个会话)`);
+    return true;
   } catch (e) {
-    logger.error('保存 sessions.json 失败:', e);
+    logger.error(`保存 sessions.json 失败 (${SESSIONS_FILE}):`, e);
+    return false;
   }
 }
 
@@ -55,6 +87,17 @@ loadSessionsFromFile();
 const sessionTimeouts = new Map();
 
 function scheduleSessionCleanup(threadId, sessionData) {
+  // 如果是永久会话，不设置清理计时器
+  if (sessionData.isPermanent) {
+    logger.info(`会话 ${threadId} 设为永久会话，不会被自动清理`);
+    // 如果之前有计时器，清除它
+    if (sessionTimeouts.has(threadId)) {
+      clearTimeout(sessionTimeouts.get(threadId));
+      sessionTimeouts.delete(threadId);
+    }
+    return;
+  }
+
   // 清除旧的计时器
   if (sessionTimeouts.has(threadId)) {
     clearTimeout(sessionTimeouts.get(threadId));
@@ -95,8 +138,8 @@ module.exports = {
       "zh-CN": "开启连续AI聊天会话",
       "zh-TW": "開啟連續AI聊天會話"
     })
-    .addStringOption((option) =>
-      option
+    .addStringOption((option) => {
+      const modelOption = option
         .setName("model")
         .setDescription("Select AI model (default: gpt-4.1-nano)")
         .setDescriptionLocalizations({
@@ -104,24 +147,10 @@ module.exports = {
           "zh-TW": "選擇AI模型 (預設: gpt-4.1-nano)"
         })
         .setRequired(false)
-        .addChoices(
-          { name: "DeepSeek-R1", value: "DeepSeek-R1" },
-          { name: "GPT-4.1", value: "gpt-4.1" },
-          { name: "GPT-4.1-mini", value: "gpt-4.1-mini" },
-          { name: "GPT-4.1-nano", value: "gpt-4.1-nano" },
-          { name: "o3", value: "o3" },
-          { name: "o4-mini", value: "o4-mini" },
-          { name: "o3-mini", value: "o3-mini" },
-          { name: "gpt4o", value: "gpt-4o" },
-          { name: "gpt4o-mini", value: "gpt-4o-mini" },
-          { name: "o1", value: "o1" },
-          { name: "o1-mini", value: "o1-mini" },
-          { name: "Cohere-command-r-08", value: "Cohere-command-r-08-2024" },
-          { name: "Ministral-3B", value: "Ministral-3B" },
-          { name: "DeepSeek-V3", value: "DeepSeek-V3-0324" },
-          { name: "Ministral-small-3.1", value: "mistral-small-2503" }
-        )
-    )
+        .setAutocomplete(true);
+      
+      return modelOption;
+    })
     .addBooleanOption((option) =>
       option
         .setName("enable_search")
@@ -234,6 +263,16 @@ module.exports = {
         .setMinValue(1)
         .setMaxValue(50)
         .setRequired(false)
+    )
+    .addBooleanOption((option) =>
+      option
+        .setName("permanent_session")
+        .setDescription("Create a permanent session that won't be deleted (Admin only)")
+        .setDescriptionLocalizations({
+          "zh-CN": "创建永久会话，不会被自动删除（仅管理员）",
+          "zh-TW": "創建永久會話，不會被自動刪除（僅管理員）"
+        })
+        .setRequired(false)
     ),
 
   async autocompleteRun(interaction) {
@@ -241,6 +280,20 @@ module.exports = {
     const language = i18n.getServerLanguage(guildId);
     try {
       const focusedValue = interaction.options.getFocused();
+      const focusedOption = interaction.options.getFocused(true);
+      
+      // 判断是否为model选项的自动补全
+      if (focusedOption && focusedOption.name === "model") {
+        const allModels = llmService.getAllAvailableModels();
+        // 支持中英文模糊搜索 name 和 value
+        const filtered = allModels.filter(m =>
+          m.name.toLowerCase().includes(focusedValue.toLowerCase()) ||
+          m.value.toLowerCase().includes(focusedValue.toLowerCase())
+        );
+        // Discord最多返回25个
+        await interaction.respond(filtered.slice(0, 25));
+        return;
+      }
 
       function formatRelativeTime(timestamp) {
         const now = new Date().getTime();
@@ -313,8 +366,14 @@ module.exports = {
     const autoArchive = interaction.options.getBoolean("auto_archive") ?? true;
     const privateThread = interaction.options.getBoolean("private_thread") || false;
     const maxMessages = interaction.options.getInteger("max_messages") || 20;
+    const requestPermanent = interaction.options.getBoolean("permanent_session") || false;
     const guildId = interaction.guild.id;
     const language = i18n.getServerLanguage(guildId);
+    
+    // 检查是否有管理员权限创建永久会话
+    const isAdmin = interaction.member.permissions.has("ADMINISTRATOR") || 
+                    interaction.member.permissions.has("MANAGE_GUILD");
+    const isPermanent = requestPermanent && isAdmin;
 
     // 生成会话ID
     const sessionId = uuidv4();
@@ -387,6 +446,7 @@ module.exports = {
         maxMessages, // 最大消息记录数
         autoArchive, // 自动归档设置
         privateThread, // 是否为私有线程
+        isPermanent, // 是否为永久会话（不会被自动删除）
         attachments: {
           hasInitialImage: !!image,
           hasInitialAudio: !!audio,
@@ -400,11 +460,14 @@ module.exports = {
       sessionData.client = interaction.client;
       scheduleSessionCleanup(thread.id, sessionData);
 
+      // 获取模型的友好显示信息
+      const modelInfo = this.getModelDisplayInfo(selectedModel);
+      
       // 创建欢迎消息
       const welcomeEmbed = new EmbedBuilder()
         .setTitle(i18n.getString("commands.start.sessionStarted", language))
         .setDescription(i18n.getString("commands.start.welcomeMessage", language, {
-          model: selectedModel,
+          model: modelInfo.displayName,
           search: enableSearch ? 
             i18n.getString("commands.agent.search", language) : 
             i18n.getString("commands.agent.searchdisable", language)
@@ -418,7 +481,7 @@ module.exports = {
             name: i18n.getString("commands.start.sessionInfo", language),
             value: i18n.getString("commands.start.sessionDetails", language, {
               sessionId: sessionId.split('-')[0],
-              model: selectedModel
+              model: modelInfo.displayName
             })
           }
         )
@@ -450,6 +513,15 @@ module.exports = {
         welcomeEmbed.addFields({
           name: i18n.getString("commands.start.attachments", language),
           value: attachmentInfo.join(", "),
+          inline: false
+        });
+      }
+      
+      // 如果是永久会话，添加提示
+      if (isPermanent) {
+        welcomeEmbed.addFields({
+          name: "📌 永久会话",
+          value: "此会话已设为永久会话，不会被自动删除",
           inline: false
         });
       }
@@ -562,28 +634,57 @@ module.exports = {
     }
   },
 
-  // 结束会话
-  async endSession(threadId, client) {
-    try {
-      // 尝试获取并删除线程
-      if (client) {
-        const threadChannel = await client.channels.fetch(threadId).catch(err => null);
-        if (threadChannel) {
-          await threadChannel.delete(`聊天会话手动结束`);
-          logger.info(`聊天线程已删除: ${threadId}`);
-        }
-      }
-    } catch (deleteError) {
-      logger.error(`删除线程失败: ${threadId}`, deleteError);
+  // 结束会话 (仅负责清除内存中的会话数据)
+  async endSession(threadId, client, forceDelete = false, userId = null, isAdmin = false) {
+    // 检查是否为永久会话
+    const session = activeChatSessions.get(threadId);
+    if (!session) {
+      logger.info(`尝试结束不存在的会话: ${threadId}`);
+      return {
+        success: false,
+        isPermanent: false,
+        message: "会话不存在或已被删除"
+      };
     }
+    
+    if (session.isPermanent && !forceDelete && !isAdmin) {
+      // 只有管理员或强制删除才能删除永久会话
+      logger.info(`尝试结束永久会话 ${threadId}，操作被拒绝`);
+      return {
+        success: false,
+        isPermanent: true,
+        message: "此会话是永久会话，不能被删除"
+      };
+    }
+    
+    // 如果指定了用户ID，检查是否为管理员或会话创建者
+    if (userId && session.userId !== userId && !isAdmin) {
+      // 不是会话创建者也不是管理员
+      logger.info(`用户 ${userId} 尝试结束不属于他的会话 ${threadId}`);
+      return {
+        success: false,
+        isPermanent: session.isPermanent,
+        message: "你没有权限结束此会话"
+      };
+    }
+    
     // 从活动会话中移除
-    const result = activeChatSessions.delete(threadId);
+    logger.info(`清除会话数据: ${threadId}`);
+    activeChatSessions.delete(threadId);
+    
+    // 保存会话状态
     saveSessionsToFile();
+    
+    // 清除定时器
     if (sessionTimeouts.has(threadId)) {
       clearTimeout(sessionTimeouts.get(threadId));
       sessionTimeouts.delete(threadId);
     }
-    return result;
+    
+    return {
+      success: true,
+      message: "会话数据已清除，频道需要手动删除"
+    };
   },
 
   // 获取所有活跃会话
@@ -594,8 +695,9 @@ module.exports = {
   // 处理初始消息
   async processInitialMessage(thread, sessionData, prompt, image, audio, userId, language) {
     try {
-      const client = llmService.createLLMClient(config.githubToken);
-
+      // 创建LLM客户端（根据模型类型自动选择适当的提供商）
+      const client = llmService.createLLMClient(sessionData.model);
+      
       // 显示正在生成的消息
       const generatingEmbed = new EmbedBuilder()
         .setDescription(i18n.getString("commands.agent.generating", language))
@@ -657,12 +759,15 @@ module.exports = {
       sessionData.messages.push(...userMessage);
       sessionData.messages.push({ role: "assistant", content: outputText });
 
+      // 获取模型的友好显示信息
+      const modelInfo = this.getModelDisplayInfo(sessionData.model);
+      
       // 创建响应embed
       const embed = new EmbedBuilder()
         .setDescription(outputText)
         .setColor("#00ff00")
         .setFooter({
-          text: `${sessionData.model} | ${i18n.getString("commands.agent.today", language)}`
+          text: `${modelInfo.displayName} | ${i18n.getString("commands.agent.today", language)}`
         });
 
       // 如果有搜索结果，添加控制按钮
@@ -723,11 +828,14 @@ module.exports = {
   exportSessionToJSON(threadId) {
     const session = activeChatSessions.get(threadId);
     if (!session) return null;
+    
+    const modelInfo = this.getModelDisplayInfo(session.model);
 
     return {
       sessionId: session.sessionId,
       userId: session.userId,
       model: session.model,
+      modelDisplayName: modelInfo.displayName,
       enableSearch: session.enableSearch,
       createdAt: session.createdAt,
       lastActivity: session.lastActivity,
@@ -760,6 +868,11 @@ module.exports = {
     const expiredThreshold = 24 * 60 * 60 * 1000; // 24小时无活动
     let cleanedCount = 0;
     for (const [threadId, session] of activeChatSessions.entries()) {
+      // 跳过永久会话
+      if (session.isPermanent) {
+        continue;
+      }
+      
       if (now - session.lastActivity > expiredThreshold) {
         try {
           if (client) {
@@ -845,12 +958,63 @@ module.exports = {
       messageCount: Math.floor(session.messages.length / 2),
       totalMessages: session.messages.length,
       lastActivity: session.lastActivity,
+      isPermanent: session.isPermanent,
       conversationHistory: session.messages.map((msg, index) => ({
         sequence: index + 1,
         role: msg.role,
         content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
         timestamp: new Date().toISOString()
       }))
+    };
+  },
+  
+  // 强制删除永久会话（仅限管理员使用）
+  /**
+   * 强制删除永久会话（仅限管理员使用）
+   * @param {string} threadId
+   * @param {object} client
+   * @param {string} userId
+   * @param {boolean} isAdmin - 必须传递，调用方需判断权限
+   */
+  async forceDeleteSession(threadId, client, userId, isAdmin) {
+    const session = activeChatSessions.get(threadId);
+    // 检查会话是否存在
+    if (!session) {
+      return {
+        success: false,
+        message: "会话不存在"
+      };
+    }
+    // 明确检查isAdmin参数，确保只有管理员才能强制删除永久会话
+    if (!isAdmin) {
+      logger.info(`尝试强制删除会话 ${threadId}，但用户不是管理员，操作被拒绝`);
+      return {
+        success: false,
+        message: "只有管理员才能强制删除永久会话"
+      };
+    }
+    // 执行删除，必须传递 isAdmin
+    return await this.endSession(threadId, client, true, userId, isAdmin);
+  },
+  
+  /**
+   * 获取模型的友好显示名称
+   * 直接调用llmService中的方法
+   * @param {string} modelName 模型名称
+   * @returns {Object} 包含模型友好显示名称的对象
+   */
+  getModelDisplayInfo(modelName) {
+    // 查找模型的友好名称
+    let displayName = modelName;
+    const allModels = llmService.getAllAvailableModels();
+    
+    const modelInfo = allModels.find(m => m.value === modelName);
+    if (modelInfo) {
+      displayName = modelInfo.name;
+    }
+    
+    return {
+      displayName
     };
   }
 };

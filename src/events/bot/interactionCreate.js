@@ -57,35 +57,75 @@ module.exports = {
                 }
 
                 if (interaction.customId.startsWith("end_session_")) {
-                    // 结束会话
-                    startCommand.endSession(threadId);
-                    
-                    const embed = new EmbedBuilder()
-                        .setTitle(i18n.getString("commands.start.sessionEnded", language))
-                        .setDescription(i18n.getString("commands.start.sessionEndedDesc", language))
-                        .setColor("#ff9900")
-                        .setTimestamp();
-
-                    await interaction.reply({ embeds: [embed] });
-                    
-                    // 删除线程（延迟3秒让用户看到消息）
-                    setTimeout(async () => {
-                        try {
-                            if (interaction.channel && interaction.channel.isThread()) {
-                                await interaction.channel.delete("AI聊天会话已结束");
-                                logger.info(`线程已删除: ${threadId}`);
-                            }
-                        } catch (deleteError) {
-                            logger.error("删除线程失败:", deleteError);
-                            // 如果删除失败，尝试归档
-                            try {
-                                await interaction.channel.setArchived(true);
-                                logger.info(`线程已归档: ${threadId}`);
-                            } catch (archiveError) {
-                                logger.error("归档线程失败:", archiveError);
-                            }
+                    try {
+                        // 检查用户权限（保留权限检查逻辑）
+                        const isAdmin = interaction.member.permissions.has("ADMINISTRATOR") || 
+                                       interaction.member.permissions.has("MANAGE_GUILD");
+                        const userId = interaction.user.id;
+                        
+                        // 结束会话，传递用户ID和管理员权限
+                        const result = await startCommand.endSession(threadId, interaction.client, false, userId, isAdmin);
+                        
+                        // 如果操作被拒绝（不是管理员尝试结束永久会话），显示错误信息
+                        if (!result.success) {
+                            const errorEmbed = new EmbedBuilder()
+                                .setTitle("❌ 操作失败")
+                                .setDescription(result.message || "无法结束会话")
+                                .setColor("#ff0000");
+                                
+                            await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                            return;
                         }
-                    }, 3000);
+                        
+                        // 操作成功，使用原来的简单逻辑
+                        const embed = new EmbedBuilder()
+                            .setTitle(i18n.getString("commands.start.sessionEnded", language))
+                            .setDescription(i18n.getString("commands.start.sessionEndedDesc", language))
+                            .setColor("#ff9900")
+                            .setTimestamp();
+
+                        // 先回复交互，再删除线程
+                        await interaction.reply({ embeds: [embed] });
+                        
+                        // 删除线程（延迟1秒让用户看到消息）
+                        setTimeout(() => {
+                            // 使用匿名函数而不是异步函数，避免未捕获的Promise异常
+                            if (interaction.channel && interaction.channel.isThread()) {
+                                interaction.channel.delete("AI聊天会话已结束")
+                                    .then(() => {
+                                        logger.info(`按钮交互：线程已删除: ${threadId}`);
+                                    })
+                                    .catch((error) => {
+                                        logger.error("按钮交互：删除线程失败:", error);
+                                        // 如果删除失败，尝试归档
+                                        if (interaction.channel) {
+                                            interaction.channel.setArchived(true)
+                                                .then(() => {
+                                                    logger.info(`线程已归档: ${threadId}`);
+                                                })
+                                                .catch((archiveError) => {
+                                                    logger.error("归档线程失败:", archiveError);
+                                                });
+                                        }
+                                    });
+                            }
+                        }, 2000);
+                    } catch (error) {
+                        logger.error("结束会话时发生错误:", error);
+                        try {
+                            const errorEmbed = new EmbedBuilder()
+                                .setTitle("❌ 处理失败")
+                                .setDescription("处理会话操作时发生错误")
+                                .setColor("#ff0000");
+                            
+                            // 检查交互是否已经回复
+                            if (!interaction.replied && !interaction.deferred) {
+                                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+                            }
+                        } catch (replyError) {
+                            logger.error("回复交互失败:", replyError);
+                        }
+                    }
 
                 } else if (interaction.customId.startsWith("session_info_")) {
                     // 显示会话信息

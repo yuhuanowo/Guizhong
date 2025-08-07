@@ -79,7 +79,7 @@ module.exports = {
             const generatingMessage = await message.reply({ embeds: [generatingEmbed] });
 
             // 创建LLM客户端
-            const client = llmService.createLLMClient(config.githubToken);
+            const client = llmService.createLLMClient(session.model);
 
             // 构建消息数组，包含会话历史
             let messages = [...session.messages];
