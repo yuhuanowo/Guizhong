@@ -124,18 +124,20 @@ module.exports = {
                     author: res.tracks[0].author
                 }));
                 //等待時間後刪除訊息
-                setTimeout(() => {
-                    interaction.deleteReply();
-                }, 10000);
+                // setTimeout(() => {
+                //     interaction.deleteReply();
+                // }, 10000)
+                ;
             } else {
                 embed.setTitle(i18n.getString("commands.play.trackAdded", language, { 
                     title: res.tracks[0].title,
                     author: res.tracks[0].author
                 }));
                 //等待時間後刪除訊息
-                setTimeout(() => {
-                    interaction.deleteReply();
-                }, 10000);
+                // setTimeout(() => {
+                //     interaction.deleteReply();
+                // }, 10000)
+                ;
             }
         } catch (err) {
             logger.error(err);

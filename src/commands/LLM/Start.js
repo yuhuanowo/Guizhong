@@ -13,7 +13,7 @@ const { searchResultsCache } = require("../../buttons/showSearchResults");
 // 存储活跃的聊天会话
 const fs = require('fs');
 const path = require('path');
-const SESSIONS_FILE = path.resolve(__dirname, '../../../sessions.json');
+const SESSIONS_FILE = path.resolve(__dirname, '../JSON/sessions.json');
 let activeChatSessions = new Map();
 
 // 从 JSON 文件加载会话
