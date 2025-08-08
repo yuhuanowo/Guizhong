@@ -15,7 +15,7 @@ function createClient(token) {
   return new ModelClient(
     "https://models.inference.ai.azure.com",
     new AzureKeyCredential(token),
-    { apiVersion: "2025-03-01-preview" }
+    { apiVersion: "2025-04-01-preview" }
   );
 }
 
@@ -63,7 +63,6 @@ async function formatUserMessage(prompt, image, audio, modelName) {
     "cohere-command-r", "cohere-command-r-plus", // Cohere 文本模型
     "ai21-jamba-1.5-mini", // AI21 小模型
     "DeepSeek-R1", "Cohere-command-r-08-2024", "Ministral-3B", // Legacy 模型
-    "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1" // Legacy GPT
   ];
   
   // 添加图片处理 - 支持多模态的模型
@@ -94,7 +93,7 @@ async function formatUserMessage(prompt, image, audio, modelName) {
 
   // 添加音频处理 - 仅 GPT-4o 系列等高级模型支持
   const audioSupportedModels = [
-    "gpt-4o", "gpt-4o-mini", "gpt-4-turbo",
+    "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini","gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano",
     "meta-llama-3.3-70b-instruct", "meta-llama-3.1-405b-instruct" // 部分 Llama 模型
   ];
   
@@ -152,15 +151,38 @@ async function sendRequest(messages, modelName, tools, client) {
     "o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3"
   ];
   
-  // 构建请求体
+  // 判断是否为gpt5、gpt-4.1、gpt-4o相关模型
+  const gpt5Models = ["gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano"];
+  const gpt4oModels = ["gpt-4o", "gpt-4o-mini"];
+  const gpt41Models = [ "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini"];
+
+  // 构建请求体，默认参数
   const requestBody = {
     messages: messages,
     model: modelName,
     stream: false, // 禁用流式响应以确保完整性
-    temperature: 0.7,
-    max_tokens: 4000
   };
-  
+
+  // gpt-5系列模型
+  if (gpt5Models.some(m => modelName.startsWith(m))) {
+    requestBody.max_completion_tokens = 131072;
+  }
+  // gpt-4o系列模型
+  else if (gpt4oModels.some(m => modelName.startsWith(m))) {
+    requestBody.max_tokens = 4096;
+    requestBody.temperature = 0.7;
+  }
+  // gpt-4.1系列模型
+  else if (gpt41Models.some(m => modelName.startsWith(m))) {
+    requestBody.max_tokens = 32768;
+    requestBody.temperature = 0.7;
+  }
+  // 其他模型
+  else {
+    requestBody.max_tokens = 4096;
+    requestBody.temperature = 0.7;
+  }
+
   // 只有支持工具调用的模型才添加 tools 参数
   if (!reasoningModels.includes(modelName) && tools && tools.length > 0) {
     requestBody.tools = tools;
@@ -169,8 +191,7 @@ async function sendRequest(messages, modelName, tools, client) {
   
   // 对于推理模型，使用更高的温度以获得更多创造性
   if (reasoningModels.includes(modelName)) {
-    requestBody.temperature = 0.1; // 推理模型使用较低温度
-    requestBody.max_tokens = 6000; // 推理模型需要更多 token
+    requestBody.max_tokens = 100000; // 推理模型需要更多 token
   }
   
   // 对于代码生成模型，优化参数

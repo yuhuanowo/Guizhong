@@ -25,20 +25,58 @@ function loadSessionsFromFile() {
   }
   if (fs.existsSync(SESSIONS_FILE)) {
     try {
-      const data = fs.readFileSync(SESSIONS_FILE, 'utf-8');
-      const sessionsArr = JSON.parse(data);
+      // 读取并去除 BOM
+      const raw = fs.readFileSync(SESSIONS_FILE, 'utf-8');
+      const cleaned = raw.replace(/^\uFEFF/, '').trim();
+
+      if (!cleaned) {
+        logger.warn(`sessions.json 为空，跳过恢复 (${SESSIONS_FILE})`);
+        activeChatSessions = new Map();
+        return;
+      }
+
+      let sessionsArr = JSON.parse(cleaned);
+      if (!Array.isArray(sessionsArr)) {
+        logger.warn(`sessions.json 格式不是数组，已忽略 (${SESSIONS_FILE})`);
+        sessionsArr = [];
+      }
+
       activeChatSessions = new Map();
-      for (const session of sessionsArr) {
-        // 恢复 Date 类型
-        session.createdAt = new Date(session.createdAt);
-        session.lastActivity = new Date(session.lastActivity);
-        activeChatSessions.set(session.threadId, session);
-        // 重新计时自动清理
-        scheduleSessionCleanup(session.threadId, session);
+
+      for (const rawSession of sessionsArr) {
+        try {
+          const session = { ...rawSession };
+          // 恢复 Date 类型并做容错
+          session.createdAt = new Date(session.createdAt || Date.now());
+          session.lastActivity = new Date(session.lastActivity || Date.now());
+          if (isNaN(session.createdAt.getTime())) session.createdAt = new Date();
+          if (isNaN(session.lastActivity.getTime())) session.lastActivity = new Date();
+
+          if (!session.threadId) {
+            logger.warn('跳过无效会话（缺少 threadId）');
+            continue;
+          }
+
+          activeChatSessions.set(session.threadId, session);
+          // 重新计时自动清理（永久会话会被跳过计时）
+          scheduleSessionCleanup(session.threadId, session);
+        } catch (oneErr) {
+          logger.error('恢复单条会话失败，已跳过:', oneErr);
+        }
       }
       logger.info(`已从 sessions.json 恢复 ${activeChatSessions.size} 个会话`);
     } catch (e) {
-      logger.error('加载 sessions.json 失败:', e);
+      // 备份损坏的文件，避免反复报错
+      try {
+        const backupPath = path.join(SESSIONS_DIR, `sessions.json.bak-${Date.now()}`);
+        fs.copyFileSync(SESSIONS_FILE, backupPath);
+        logger.error(`加载 sessions.json 失败 (${SESSIONS_FILE})，已备份为: ${backupPath}`, e);
+      } catch (backupErr) {
+        logger.error(`加载 sessions.json 失败且备份失败 (${SESSIONS_FILE})`, backupErr);
+      }
+      // 重置内存并写入空数组，防止下次启动继续失败
+      activeChatSessions = new Map();
+      try { saveSessionsToFile(); } catch {}
     }
   }
 }

@@ -26,7 +26,7 @@ function getProviderType(modelName) {
   // GitHub Model 提供的模型 - 基于2025年1月最新文档
   const githubModels = [
     // OpenAI
-        "gpt-4o", "gpt-4o-mini", "o1", "o1-mini", "o1-preview", "o3-mini", "text-embedding-3-large", "text-embedding-3-small", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "o3",
+        "gpt-4o", "gpt-4o-mini", "o1", "o1-mini", "o1-preview", "o3-mini", "text-embedding-3-large", "text-embedding-3-small", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini", "o3","gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano",
     // Cohere
         "cohere-command-a", "Cohere-command-r-plus-08-2024", "Cohere-command-r-plus", "Cohere-command-r-08-2024", "Cohere-command-r",
     // Meta
@@ -340,6 +340,10 @@ function getModelUsageLimits() {
     "gpt-4.1": High,
     "gpt-4.1-mini": Low,
     "gpt-4.1-nano": Low,
+    "gpt-5": High,
+    "gpt-5-chat": High,
+    "gpt-5-mini": Low,
+    "gpt-5-nano": Low,
     "o4-mini": 6,
     "o3": 4,
     "cohere-command-a": Low,
@@ -409,6 +413,10 @@ function getAllAvailableModels() {
   // 按getProviderType分类，命名风格统一，去除冗余
   return [
     // Github Models
+    { name: "[OpenAI] GPT-5", value: "gpt-5" },
+    { name: "[OpenAI] GPT-5-Chat", value: "gpt-5-chat" },
+    { name: "[OpenAI] GPT-5-Mini", value: "gpt-5-mini" },
+    { name: "[OpenAI] GPT-5-Nano", value: "gpt-5-nano" },
     { name: "[OpenAI] GPT-4o", value: "gpt-4o" },
     { name: "[OpenAI] GPT-4o Mini", value: "gpt-4o-mini" },
     { name: "[OpenAI] o1", value: "o1" },
