@@ -230,7 +230,7 @@
       "name": "start",
       "description": "开启连续AI聊天会话",
       "options": {
-        "model": "选择AI模型 (默认: gpt-4.1-nano)",
+        "model": "选择AI模型 (默认: gpt-5-nano)",
         "enable_search": "是否启用联网搜索 (默认：否)",
         "title": "自定义聊天会话标题"
       },

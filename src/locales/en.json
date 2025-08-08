@@ -436,7 +436,7 @@
       "name": "start",
       "description": "Start a continuous AI chat session",
       "options": {
-        "model": "Select AI model (default: gpt-4.1-nano)",
+        "model": "Select AI model (default: gpt-5-nano)",
         "enable_search": "Enable web search (default: no)",
         "title": "Custom title for the chat session"
       },

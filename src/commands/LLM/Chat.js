@@ -57,10 +57,10 @@ module.exports = {
       const choices = getAvailableModels();
       option
         .setName("model")
-        .setDescription("Select a model (default: gpt-4.1-nano <25 times, then switch to ministral-small-2503 >)")
+        .setDescription("Select a model (default: gpt-5-nano <25 times, then switch to ministral-small-2503 >)")
         .setDescriptionLocalizations({
-          "zh-CN": "选择模型 (不选择：gpt-4.1-nano <25次后改为 ministral-small-2503 >)",
-          "zh-TW": "選擇模型 (不選擇：gpt-4.1-nano <25次後改為 ministral-small-2503 >)"
+          "zh-CN": "选择模型 (不选择：gpt-5-nano <25次后改为 ministral-small-2503 >)",
+          "zh-TW": "選擇模型 (不選擇：gpt-5-nano <25次後改為 ministral-small-2503 >)"
         })
         .setRequired(false)
         .setAutocomplete(true);

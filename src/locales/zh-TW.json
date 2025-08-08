@@ -237,7 +237,7 @@
       "name": "start",
       "description": "開啟連續AI聊天會話",
       "options": {
-        "model": "選擇AI模型 (預設: gpt-4.1-nano)",
+        "model": "選擇AI模型 (預設: gpt-5-nano)",
         "enable_search": "是否啟用聯網搜尋 (預設：否)",
         "title": "自定義聊天會話標題"
       },

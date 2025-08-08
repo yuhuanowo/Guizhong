@@ -179,10 +179,10 @@ module.exports = {
     .addStringOption((option) => {
       const modelOption = option
         .setName("model")
-        .setDescription("Select AI model (default: gpt-4.1-nano)")
+        .setDescription("Select AI model (default: gpt-5-nano)")
         .setDescriptionLocalizations({
-          "zh-CN": "选择AI模型 (默认: gpt-4.1-nano)",
-          "zh-TW": "選擇AI模型 (預設: gpt-4.1-nano)"
+          "zh-CN": "选择AI模型 (默认: gpt-5-nano)",
+          "zh-TW": "選擇AI模型 (預設: gpt-5-nano)"
         })
         .setRequired(false)
         .setAutocomplete(true);
@@ -392,7 +392,7 @@ module.exports = {
     // 延迟回复以防止超时
     await interaction.deferReply();
 
-    let selectedModel = interaction.options.getString("model") || "gpt-4.1-nano";
+    let selectedModel = interaction.options.getString("model") || "gpt-5-nano";
     const enableSearch = interaction.options.getBoolean("enable_search") || false;
     const enableSystemPrompt = interaction.options.getBoolean("enable_systemprompt") !== false;
     const customTitle = interaction.options.getString("title");
