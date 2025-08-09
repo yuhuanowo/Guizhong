@@ -1,6 +1,6 @@
 /**
  * LLM Service - 统一的LLM接口
- * 支持多个LLM提供商：GitHub Model、Google AI Studio Gemini、Ollama、Groq、OpenRouter
+ * 支持多个LLM提供商：GitHub Model、Google AI Studio Gemini、Ollama、Groq、OpenRouter、Yunmo
  */
 const fs = require("fs");
 const fetch = require("node-fetch");
@@ -13,6 +13,7 @@ const geminiProvider = require("./providers/geminiProvider");
 const ollamaProvider = require("./providers/ollamaProvider");
 const groqProvider = require("./providers/groqProvider");
 const openRouterProvider = require("./providers/openRouterProvider");
+const yunmoProvider = require("./providers/yunmoProvider");
 
 // 用于存储用户使用量的路径
 const usagePath = "./src/JSON/chatgptusage.json";
@@ -83,12 +84,18 @@ function getProviderType(modelName) {
         "qwen/qwq-32b:free",
   ];
   
+  // Yunmo 提供的模型
+  const yunmoModels = [
+        "yunmo_v1",
+  ];
+  
   // 根据模型名称判断提供商
   if (githubModels.includes(modelName)) return "github";
   if (geminiModels.includes(modelName)) return "gemini";  
   if (ollamaModels.includes(modelName)) return "ollama";
   if (groqModels.includes(modelName)) return "groq";
   if (openRouterModels.includes(modelName)) return "openrouter";
+  if (yunmoModels.includes(modelName)) return "yunmo";
   
   // 默认返回GitHub Model
   logger.warn(`未知模型: ${modelName}，默认使用GitHub Model处理`);
@@ -164,6 +171,8 @@ function getSystemPrompt(modelName, language) {
   
   // 调用对应提供商的系统提示获取函数
   switch (providerType) {
+    case "yunmo":
+      return null;
     case "github":
       return githubModelProvider.getSystemPrompt(modelName, language, prompts);
     case "gemini":
@@ -253,6 +262,8 @@ function createLLMClient(modelName) {
       return groqProvider.createClient(config.groqApiKey);
     case "openrouter":
       return openRouterProvider.createClient(config.openRouterApiKey);
+    case "yunmo":
+      return yunmoProvider.createClient(config.yunmoApiKey, config.yunmoApiEndpoint);
     default:
       return githubModelProvider.createClient(config.githubToken);
   }
@@ -280,6 +291,8 @@ async function formatUserMessage(prompt, image, audio, modelName) {
       return await groqProvider.formatUserMessage(prompt, image);
     case "openrouter":
       return await openRouterProvider.formatUserMessage(prompt, image, modelName);
+    case "yunmo":
+      return await yunmoProvider.formatUserMessage({ role: "user", content: prompt }, modelName);
     default:
       return [{ role: "user", content: prompt }];
   }
@@ -308,6 +321,8 @@ async function sendLLMRequest(messages, modelName, tools, client) {
         return await groqProvider.sendRequest(messages, modelName, tools, client);
       case "openrouter":
         return await openRouterProvider.sendRequest(messages, modelName, tools, client);
+      case "yunmo":
+        return await yunmoProvider.sendRequest(messages, modelName, tools, client);
       default:
         return await githubModelProvider.sendRequest(messages, modelName, tools, client);
     }
@@ -323,9 +338,9 @@ async function sendLLMRequest(messages, modelName, tools, client) {
  */
 function getModelUsageLimits() {
   // 统一模型使用限制，按getProviderType分类，命名风格一致
-  const High = 100;
-  const Low = 20;
-  const Embedding = 1000;
+  const High = 30;
+  const Low = 100;
+  const Embedding = 100;
   const InfinityLimit = 999999;
   return {
     // Github Models (OpenAI, Cohere, Meta, DeepSeek, Mistral, xAI, Microsoft)
@@ -340,8 +355,8 @@ function getModelUsageLimits() {
     "gpt-4.1": High,
     "gpt-4.1-mini": Low,
     "gpt-4.1-nano": Low,
-    "gpt-5": High,
-    "gpt-5-chat": High,
+    "gpt-5": 4,
+    "gpt-5-chat": 4,
     "gpt-5-mini": Low,
     "gpt-5-nano": Low,
     "o4-mini": 6,
@@ -402,6 +417,9 @@ function getModelUsageLimits() {
     "mistralai/mistral-small-3.1-24b-instruct:free": InfinityLimit,
     "deepseek/deepseek-r1-0528:free": InfinityLimit,
     "qwen/qwq-32b:free": InfinityLimit,
+    
+    // Yunmo Models
+    "yunmo_v1": InfinityLimit,
   };
 }
 
@@ -490,6 +508,9 @@ function getAllAvailableModels() {
     { name: "[Mistral(OR)] Mistral Small 3.1 24B Instruct Free", value: "mistralai/mistral-small-3.1-24b-instruct:free" },
     { name: "[DeepSeek(OR)] DeepSeek R1 0528 Free", value: "deepseek/deepseek-r1-0528:free" },
     { name: "[Qwen(OR)] QwQ 32B Free", value: "qwen/qwq-32b:free" },
+    
+    // Yunmo
+    { name: "[YuhuanAI] Yunmo v1", value: "yunmo_v1" },
   ];
 }
 

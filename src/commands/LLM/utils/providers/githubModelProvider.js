@@ -165,7 +165,7 @@ async function sendRequest(messages, modelName, tools, client) {
 
   // gpt-5系列模型
   if (gpt5Models.some(m => modelName.startsWith(m))) {
-    requestBody.max_completion_tokens = 131072;
+    requestBody.max_completion_tokens = 128000;
   }
   // gpt-4o系列模型
   else if (gpt4oModels.some(m => modelName.startsWith(m))) {

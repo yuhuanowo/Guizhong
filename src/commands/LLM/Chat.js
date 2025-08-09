@@ -256,7 +256,8 @@ module.exports = {
 
       // 添加系统提示（如果启用）
       if (enableSystemPrompt) {
-        messages.unshift(llmService.getSystemPrompt(selectedModel, language));
+        const sysPrompt = llmService.getSystemPrompt(selectedModel, language);
+        if (sysPrompt) messages.unshift(sysPrompt);
       }
 
       // 获取工具定义
@@ -364,10 +365,12 @@ module.exports = {
       // 模型类型到emoji映射
       const modelEmojiMap = {
         'gpt-4': '<:gpt_4:1402509357631017083>',
-        'gpt-4o': '<:gpt_4:1402509357631017083>',
-        'gpt-4.1': '<:gpt_4:1402509357631017083>',
+        'gpt-4o': '<:gpt4o:1403243749236150435>',
+        'gpt-4.1': '<:gpt4_1:1403243798536130642>',
+        'gpt-5': '<:gpt5:1403242839214653603>',
         'gpt-oss': '<:gpt_o1:1402509357631017083>',
         'o1': '<:gpt_o1:1402509263582003320>',
+        'o4': '<:o4mini:1403243776214040638>',
         'llama': '<:llama:1402509206954967081>',
         'microsoft': '<:microsoft:1402509171026427975>',
         'qwen': '<:qwen:1402509097667924101>',
