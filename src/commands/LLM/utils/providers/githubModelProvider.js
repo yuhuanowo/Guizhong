@@ -38,7 +38,7 @@ function getSystemPrompt(modelName, language, prompts) {
     role = "developer";
   }
   // DeepSeek 等特殊模型使用 assistant 角色
-  else if (["DeepSeek-R1", "DeepSeek-V3-0324", "ai21-jamba-1.5-large", "ai21-jamba-1.5-mini"].includes(modelName)) {
+  else if (["DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528", "ai21-jamba-1.5-large", "ai21-jamba-1.5-mini"].includes(modelName)) {
     role = "assistant";  
   }
   // 其他模型使用标准 system 角色
@@ -148,7 +148,7 @@ async function formatUserMessage(prompt, image, audio, modelName) {
 async function sendRequest(messages, modelName, tools, client) {
   // 推理模型不支持工具调用
   const reasoningModels = [
-    "o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3"
+    "o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3","DeepSeek-R1","DeepSeek-V3-0324", "DeepSeek-R1-0528"
   ];
   
   // 判断是否为gpt5、gpt-4.1、gpt-4o相关模型

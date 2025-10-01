@@ -132,7 +132,6 @@ async function sendRequest(messages, modelName, tools, client) {
         modelName.includes("llama-3") ||
         modelName.includes("llama-4") ||
         modelName.includes("qwen") ||
-        modelName.includes("deepseek") ||
         modelName.includes("mistral") ||
         modelName.includes("mixtral") ||
         modelName.includes("codestral") ||

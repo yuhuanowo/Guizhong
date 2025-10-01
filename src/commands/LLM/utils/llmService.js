@@ -34,7 +34,7 @@ function getProviderType(modelName) {
         "Llama-3.2-11B-Vision-Instruct", "Llama-3.2-90B-Vision-Instruct", "Llama-3.3-70B-Instruct", "Llama-4-Maverick-17B-128E-Instruct-FP8", "Llama-4-Scout-17B-16E-Instruct", 
         "Meta-Llama-3.1-405B-Instruct", "Meta-Llama-3.1-70B-Instruct", "Meta-Llama-3.1-8B-Instruct", "Meta-Llama-3-70B-Instruct", "Meta-Llama-3-8B-Instruct",
     // DeepSeek
-        "DeepSeek-R1", "DeepSeek-V3-0324",
+        "DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528",
     // Mistral
         "Ministral-3B", "Mistral-Large-2411", "Mistral-Nemo", "mistral-medium-2505", "mistral-small-2503",
     // xAI
@@ -377,6 +377,7 @@ function getModelUsageLimits() {
     "Meta-Llama-3-70B-Instruct": High,
     "Meta-Llama-3-8B-Instruct": Low,
     "DeepSeek-R1": 4,
+    "DeepSeek-R1-0528": 4,
     "DeepSeek-V3-0324": High,
     "Ministral-3B": Low,
     "Mistral-Large-2411": High,
@@ -462,6 +463,7 @@ function getAllAvailableModels() {
     { name: "[Meta] Meta Llama 3 70B Instruct", value: "Meta-Llama-3-70B-Instruct" },
     { name: "[Meta] Meta Llama 3 8B Instruct", value: "Meta-Llama-3-8B-Instruct" },
     { name: "[DeepSeek] DeepSeek R1", value: "DeepSeek-R1" },
+    { name: "[DeepSeek] DeepSeek R1 0528", value: "DeepSeek-R1-0528" },
     { name: "[DeepSeek] DeepSeek V3 0324", value: "DeepSeek-V3-0324" },
     { name: "[Mistral] Ministral 3B", value: "Ministral-3B" },
     { name: "[Mistral] Mistral Large 2411", value: "Mistral-Large-2411" },
