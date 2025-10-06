@@ -4,7 +4,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = re
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
 const logger = require("../../utils/logger.js");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const config = require("../../config.js");
 const i18n = require("../../utils/i18n");
@@ -370,6 +370,7 @@ module.exports = {
         'gpt-5': '<:gpt5:1403242839214653603>',
         'gpt-oss': '<:gpt_o1:1402509357631017083>',
         'o1': '<:gpt_o1:1402509263582003320>',
+        'o3': '<:o3:1424711069770846321>',
         'o4': '<:o4mini:1403243776214040638>',
         'llama': '<:llama:1402509206954967081>',
         'microsoft': '<:microsoft:1402509171026427975>',

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, PermissionFlagsBits } = require("discord.js");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const logger = require("../../utils/logger.js");
 const i18n = require("../../utils/i18n");
 

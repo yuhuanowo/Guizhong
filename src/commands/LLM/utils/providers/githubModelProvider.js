@@ -59,7 +59,7 @@ async function formatUserMessage(prompt, image, audio, modelName) {
   
   // 定义不支持多模态的模型列表
   const noMultimodalModels = [
-    "o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3", // 推理模型
+    "o1-preview", "o1-mini", "o3-mini", "o1", // 推理模型
     "cohere-command-r", "cohere-command-r-plus", // Cohere 文本模型
     "ai21-jamba-1.5-mini", // AI21 小模型
     "DeepSeek-R1", "Cohere-command-r-08-2024", "Ministral-3B", // Legacy 模型
@@ -93,7 +93,7 @@ async function formatUserMessage(prompt, image, audio, modelName) {
 
   // 添加音频处理 - 仅 GPT-4o 系列等高级模型支持
   const audioSupportedModels = [
-    "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini","gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano",
+    "gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o3", "o4-mini","gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano",
     "meta-llama-3.3-70b-instruct", "meta-llama-3.1-405b-instruct" // 部分 Llama 模型
   ];
   
@@ -163,9 +163,12 @@ async function sendRequest(messages, modelName, tools, client) {
     stream: false, // 禁用流式响应以确保完整性
   };
 
-  // gpt-5系列模型
-  if (gpt5Models.some(m => modelName.startsWith(m))) {
+  // gpt-5系列模型 （not gpt-5-chat）
+  if (gpt5Models.some(m => modelName.startsWith(m)) && modelName !== "gpt-5-chat") {
     requestBody.max_completion_tokens = 128000;
+  }
+  if (modelName === "gpt-5-chat") {
+    requestBody.max_completion_tokens = 16384;
   }
   // gpt-4o系列模型
   else if (gpt4oModels.some(m => modelName.startsWith(m))) {
@@ -176,6 +179,14 @@ async function sendRequest(messages, modelName, tools, client) {
   else if (gpt41Models.some(m => modelName.startsWith(m))) {
     requestBody.max_tokens = 32768;
     requestBody.temperature = 0.7;
+  }
+  // openai o系列模型
+  else if (["o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3"].includes(modelName)) {
+    requestBody.max_completion_tokens = 100000; // 推理模型需要更多 token
+  }
+  // DeepSeek 等特殊模型
+  else if (["DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528"].includes(modelName)) {
+    requestBody.max_tokens = 4096;
   }
   // 其他模型
   else {
@@ -189,10 +200,6 @@ async function sendRequest(messages, modelName, tools, client) {
     requestBody.tool_choice = "auto"; // 自动选择是否使用工具
   }
   
-  // 对于推理模型，使用更高的温度以获得更多创造性
-  if (reasoningModels.includes(modelName)) {
-    requestBody.max_tokens = 100000; // 推理模型需要更多 token
-  }
   
   // 对于代码生成模型，优化参数
   if (modelName.includes("phi") || modelName.includes("llama")) {

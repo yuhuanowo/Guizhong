@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require("discord.js");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const logger = require("../../utils/logger.js");
 const i18n = require("../../utils/i18n");
 const config = require("../../config.js");
@@ -414,7 +414,7 @@ module.exports = {
     const isPermanent = requestPermanent && isAdmin;
 
     // 生成会话ID
-    const sessionId = uuidv4();
+  const sessionId = crypto.randomUUID();
 
     try {
       // 检查用户使用限制

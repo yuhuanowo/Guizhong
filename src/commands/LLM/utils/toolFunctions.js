@@ -3,7 +3,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const logger = require("../../../utils/logger.js");
 const fs = require("fs");
-const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
 const { AttachmentBuilder } = require("discord.js");
 const config = require("../../../config.js");
 
@@ -116,7 +116,7 @@ function processGeneratedImage(dataURI) {
   }
 
   const base64Data = dataURI.replace(/^data:image\/jpeg;base64,/, "");
-  const tempFilePath = `./recordings/${uuidv4()}.jpg`;
+  const tempFilePath = `./recordings/${crypto.randomUUID()}.jpg`;
   fs.writeFileSync(tempFilePath, base64Data, "base64");
   const attachment = new AttachmentBuilder(tempFilePath);
   
