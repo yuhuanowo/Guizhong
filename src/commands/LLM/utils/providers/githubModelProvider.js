@@ -154,7 +154,7 @@ async function sendRequest(messages, modelName, tools, client) {
   // 判断是否为gpt5、gpt-4.1、gpt-4o相关模型
   const gpt5Models = ["gpt-5", "gpt-5-chat", "gpt-5-mini", "gpt-5-nano"];
   const gpt4oModels = ["gpt-4o", "gpt-4o-mini"];
-  const gpt41Models = [ "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano", "o4-mini"];
+  const gpt41Models = [ "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano"];
 
   // 构建请求体，默认参数
   const requestBody = {
@@ -167,7 +167,7 @@ async function sendRequest(messages, modelName, tools, client) {
   if (gpt5Models.some(m => modelName.startsWith(m)) && modelName !== "gpt-5-chat") {
     requestBody.max_completion_tokens = 128000;
   }
-  if (modelName === "gpt-5-chat") {
+  else if (modelName === "gpt-5-chat") {
     requestBody.max_completion_tokens = 16384;
   }
   // gpt-4o系列模型
@@ -181,8 +181,12 @@ async function sendRequest(messages, modelName, tools, client) {
     requestBody.temperature = 0.7;
   }
   // openai o系列模型
-  else if (["o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3"].includes(modelName)) {
+  else if (["o1-preview", "o1-mini", "o3-mini", "o1", "o3"].includes(modelName)) {
     requestBody.max_completion_tokens = 100000; // 推理模型需要更多 token
+  }
+  // openai o4-mini 模型
+  else if (["o4-mini"].includes(modelName)) {
+    requestBody.max_completion_tokens = 16384;
   }
   // DeepSeek 等特殊模型
   else if (["DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528"].includes(modelName)) {
