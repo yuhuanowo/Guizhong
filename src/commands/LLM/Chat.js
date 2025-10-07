@@ -366,11 +366,20 @@ module.exports = {
       const modelEmojiMap = {
         'gpt-4': '<:gpt_4:1402509357631017083>',
         'gpt-4o': '<:gpt4o:1403243749236150435>',
+        'gpt-4o-mini': '<:gpt4omini:1425123222902407198>',
         'gpt-4.1': '<:gpt4_1:1403243798536130642>',
+        'gpt-4.1-mini': '<:gpt41mini:1425121129093267527>',
+        'gpt-4.1-nano': '<:gpt41nano:1425121237142601749>',
         'gpt-5': '<:gpt5:1403242839214653603>',
-        'gpt-oss': '<:gpt_o1:1402509357631017083>',
-        'o1': '<:gpt_o1:1402509263582003320>',
+        'gpt-5-chat': '<:gpt5chat:1425121355371905064>',
+        'gpt-5-mini': '<:gpt5mini:1425121271242559569>',
+        'gpt-5-nano': '<:gpt5nano:1425121335994224670>',
+        'gpt-oss': '<:gptoss20b:1425121439773888644>',
+        'o1': '<:o1:1425120921777213500>',
+        'o1-preview': '<:o1preview:1425120996125446224>',
+        'o1-mini': '<:o1mini:1425121008754626610>',
         'o3': '<:o3:1424711069770846321>',
+        'o3-mini': '<:o3mini:1425121020469317703>',
         'o4': '<:o4mini:1403243776214040638>',
         'llama': '<:llama:1402509206954967081>',
         'microsoft': '<:microsoft:1402509171026427975>',
@@ -393,12 +402,29 @@ module.exports = {
       const providerType = llmService.getProviderType(selectedModel);
       // 通过providerType和模型名关键字获取emoji
       function getModelEmoji(model, providerType) {
-        // 优先模型名关键字
-        for (const key in modelEmojiMap) {
-          if (model.toLowerCase().includes(key)) return modelEmojiMap[key];
+        if (!model) return '';
+        const lowerModel = model.toLowerCase();
+
+        // 1) 优先精确匹配完整模型名
+        if (modelEmojiMap[lowerModel]) return modelEmojiMap[lowerModel];
+
+        // 2) 再找同系列（以前綴匹配為主），選擇最長的匹配鍵以取得最精確的系列
+        const candidates = Object.keys(modelEmojiMap).filter(key => {
+          // 忽略空鍵與 providerType 鍵
+          if (!key) return false;
+          const k = key.toLowerCase();
+          return lowerModel.startsWith(k) || k.startsWith(lowerModel);
+        });
+
+        if (candidates.length > 0) {
+          // 選最長的 key（更具體）
+          candidates.sort((a, b) => b.length - a.length);
+          return modelEmojiMap[candidates[0]];
         }
-        // 其次providerType
-        if (modelEmojiMap[providerType]) return modelEmojiMap[providerType];
+
+        // 3) 最後嘗試 providerType 作為備援
+        if (providerType && modelEmojiMap[providerType]) return modelEmojiMap[providerType];
+
         return '';
       }
       const modelEmoji = getModelEmoji(selectedModel, providerType);
