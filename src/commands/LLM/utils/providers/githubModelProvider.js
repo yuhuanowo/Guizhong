@@ -34,8 +34,13 @@ function getSystemPrompt(modelName, language, prompts) {
   let role = "system";
   
   // 推理模型使用 developer 角色
-  if (["o1-preview", "o1-mini", "o3-mini", "o1", "o4-mini", "o3"].includes(modelName)) {
+  if (["o1-preview", "o3-mini", "o1", "o4-mini", "o3"].includes(modelName)) {
     role = "developer";
+  }
+  
+  // o1-mini 不支持 system 角色，改用 user 角色
+  else if (modelName === "o1-mini") {
+    role = "user";
   }
   // DeepSeek 等特殊模型使用 assistant 角色
   else if (["DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528", "ai21-jamba-1.5-large", "ai21-jamba-1.5-mini"].includes(modelName)) {
@@ -181,8 +186,12 @@ async function sendRequest(messages, modelName, tools, client) {
     requestBody.temperature = 0.7;
   }
   // openai o系列模型
-  else if (["o1-preview", "o1-mini", "o3-mini", "o1", "o3"].includes(modelName)) {
+  else if (["o1-preview", "o3-mini", "o1", "o3"].includes(modelName)) {
     requestBody.max_completion_tokens = 100000; // 推理模型需要更多 token
+  }
+  // openai o1-mini 模型
+  else if (["o1-mini"].includes(modelName)) {
+    requestBody.max_completion_tokens = 65536;
   }
   // openai o4-mini 模型
   else if (["o4-mini"].includes(modelName)) {
