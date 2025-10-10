@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const logger = require("../../utils/logger.js");
 const i18n = require("../../utils/i18n");
 const config = require("../../config.js");
+const modelEmojis = require("../../utils/modelEmojis");
 
 // 导入LLM相关模块
 const memoryService = require("./utils/memoryService");
@@ -500,6 +501,9 @@ module.exports = {
 
       // 获取模型的友好显示信息
       const modelInfo = this.getModelDisplayInfo(selectedModel);
+  // 获取模型对应的 emoji URL（如果有）
+  const modelEmoji = modelEmojis.getModelEmoji(selectedModel);
+  const modelEmojiUrl = modelEmojis.getEmojiUrl(modelEmoji);
       
       // 创建欢迎消息
       const welcomeEmbed = new EmbedBuilder()
@@ -524,6 +528,8 @@ module.exports = {
           }
         )
         .setColor("#00ff00")
+        // 如有 emoji URL，放在 thumbnail（或作為 author icon）
+        .setThumbnail(modelEmojiUrl || undefined)
         .setFooter({
           text: i18n.getString("commands.start.footer", language),
           iconURL: interaction.user.displayAvatarURL()
@@ -625,6 +631,11 @@ module.exports = {
           threadLink: `<#${thread.id}>`
         }))
         .setColor("#00ff00");
+
+      // 在成功回覆的 embed 也加入模型 emoji 圖示（如果有）
+      if (modelEmojiUrl) {
+        successEmbed.setThumbnail(modelEmojiUrl);
+      }
 
       await interaction.editReply({ embeds: [successEmbed] });
 
@@ -735,12 +746,18 @@ module.exports = {
     try {
       // 创建LLM客户端（根据模型类型自动选择适当的提供商）
       const client = llmService.createLLMClient(sessionData.model);
+
+      // 获取模型 emoji URL（如果有），用于 embed 缩略图
+      const modelEmoji = modelEmojis.getModelEmoji(sessionData.model);
+      const modelEmojiUrl = modelEmojis.getEmojiUrl(modelEmoji);
       
       // 显示正在生成的消息
       const generatingEmbed = new EmbedBuilder()
         .setDescription(i18n.getString("commands.agent.generating", language))
         .setColor("#3399ff");
-      
+      // 如有 emoji，顯示為縮略圖
+      if (modelEmojiUrl) generatingEmbed.setThumbnail(modelEmojiUrl);
+
       const generatingMessage = await thread.send({ embeds: [generatingEmbed] });
 
       // 构建消息数组，包含会话历史
@@ -807,6 +824,9 @@ module.exports = {
         .setFooter({
           text: `${modelInfo.displayName} | ${i18n.getString("commands.agent.today", language)}`
         });
+
+      // 在回覆 embed 上加入模型 emoji 縮略圖（如有）
+      if (modelEmojiUrl) embed.setThumbnail(modelEmojiUrl);
 
       // 如果有搜索结果，添加控制按钮
       const components = [];
