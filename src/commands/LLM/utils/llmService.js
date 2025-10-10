@@ -198,13 +198,13 @@ function getToolDefinitions(enableSearch = false) {
     type: "function",
     function: {
       name: "generateImage",
-      description: "使用cloudflare ai生成圖片並回傳 Base64 dataURI",
+      description: "Generate an image using Cloudflare AI and return Base64 dataURI. Use this when user requests to create, generate, or draw an image.",
       parameters: {
         type: "object",
         properties: {
           prompt: {
             type: "string",
-            description: "描述所要生成的圖片內容"
+            description: "Detailed description of the image to generate, in English"
           }
         },
         required: ["prompt"]
@@ -216,17 +216,17 @@ function getToolDefinitions(enableSearch = false) {
     type: "function",
     function: {
       name: "searchDuckDuckGo",
-      description: "使用 DuckDuckGo 搜索引擎進行搜索，返回相關的搜索結果",
+      description: "Search the web using DuckDuckGo search engine. Returns relevant search results with titles, URLs, and content snippets. Use this for general web searches when Tavily is not available.",
       parameters: {
         type: "object",
         properties: {
           query: {
             type: "string",
-            description: "搜索關鍵字",
+            description: "Search query keywords",
           },
           numResults: {
             type: "integer",
-            description: "返回的搜索結果數量",
+            description: "Number of search results to return",
             default: 10,
           },
         },
@@ -235,9 +235,230 @@ function getToolDefinitions(enableSearch = false) {
     },
   };
 
+  // Tavily Search - AI-optimized search engine
+  const tavilySearchTool = {
+    type: "function",
+    function: {
+      name: "tavilySearch",
+      description: "Execute intelligent web search using Tavily AI search engine, optimized for AI agents. Automatically filters and extracts the most relevant content with cleaned content snippets. Best for high-quality, structured search results. Use this as the primary search tool when web information is needed.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query string"
+          },
+          search_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Search depth. 'basic': Standard search (1 credit), suitable for general queries; 'advanced': Deep search (2 credits), provides more relevant and detailed content chunks. Use 'advanced' for complex or research-oriented queries.",
+            default: "basic"
+          },
+          max_results: {
+            type: "integer",
+            description: "Maximum number of results to return (0-20)",
+            minimum: 0,
+            maximum: 20,
+            default: 5
+          },
+          include_answer: {
+            type: "boolean",
+            description: "Whether to include LLM-generated answer. Set to true when user needs a direct answer to their question (will use 'basic' mode for quick answer). Set to false if only search results are needed.",
+            default: false
+          },
+          include_images: {
+            type: "boolean",
+            description: "Whether to include related images in results",
+            default: false
+          },
+          topic: {
+            type: "string",
+            enum: ["general", "news", "finance"],
+            description: "Search category. 'general': General search, 'news': News (good for current events), 'finance': Financial information",
+            default: "general"
+          },
+          time_range: {
+            type: "string",
+            enum: ["day", "week", "month", "year"],
+            description: "Time range filter based on publish date. Use this to get recent information."
+          }
+        },
+        required: ["query"]
+      }
+    }
+  };
+
+  // Tavily Extract - Extract content from specific URLs
+  const tavilyExtractTool = {
+    type: "function",
+    function: {
+      name: "tavilyExtract",
+      description: "Extract cleaned web page content from one or multiple specified URLs. Automatically processes and cleans HTML, returns structured content. Best for extracting complete content from specific web pages. Use this when you have specific URLs to extract content from.",
+      parameters: {
+        type: "object",
+        properties: {
+          urls: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "List of URLs to extract content from (can also be a single URL string)"
+          },
+          extract_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Extraction depth. 'basic': Basic extraction (1 credit/5 URLs), 'advanced': Advanced extraction (2 credits/5 URLs), includes tables and embedded content",
+            default: "basic"
+          },
+          format: {
+            type: "string",
+            enum: ["markdown", "text"],
+            description: "Content format. 'markdown': Markdown format, 'text': Plain text",
+            default: "markdown"
+          },
+          include_images: {
+            type: "boolean",
+            description: "Whether to include images",
+            default: false
+          }
+        },
+        required: ["urls"]
+      }
+    }
+  };
+
+  // Tavily Crawl - Crawl entire websites
+  const tavilyCrawlTool = {
+    type: "function",
+    function: {
+      name: "tavilyCrawl",
+      description: "Crawl entire websites and extract content, supports deep traversal and intelligent path selection. Best for documentation sites, knowledge bases, blogs where you need to extract content from many pages. Supports regex pattern filtering. Use this when you need to systematically extract content from a whole website or section.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "Root URL to crawl from"
+          },
+          instructions: {
+            type: "string",
+            description: "Natural language instructions to guide what content the crawler should focus on (using this option doubles the cost). Example: 'Find all API reference pages' or 'Extract all tutorial articles'"
+          },
+          max_depth: {
+            type: "integer",
+            description: "Maximum crawl depth, defines how far from root URL to explore",
+            minimum: 1,
+            default: 1
+          },
+          max_breadth: {
+            type: "integer",
+            description: "Maximum number of links to follow per page",
+            minimum: 1,
+            default: 20
+          },
+          limit: {
+            type: "integer",
+            description: "Total maximum number of pages to process",
+            minimum: 1,
+            default: 50
+          },
+          select_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Only select URLs matching these regex path patterns (e.g., ['/docs/.*', '/api/.*'])"
+          },
+          exclude_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Exclude URLs matching these regex path patterns (e.g., ['/private/.*', '/admin/.*'])"
+          },
+          extract_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Content extraction depth",
+            default: "basic"
+          },
+          format: {
+            type: "string",
+            enum: ["markdown", "text"],
+            description: "Content format",
+            default: "markdown"
+          }
+        },
+        required: ["url"]
+      }
+    }
+  };
+
+  // Tavily Map - Generate website sitemap
+  const tavilyMapTool = {
+    type: "function",
+    function: {
+      name: "tavilyMap",
+      description: "Quickly generate website sitemap, returns only discovered URL list without extracting content. Best for quickly understanding site structure, collecting URLs, or planning crawl strategy before using tavilyCrawl. Fast and low cost. Use this to explore site structure before crawling.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "Root URL to map"
+          },
+          instructions: {
+            type: "string",
+            description: "Natural language instructions to guide mapping focus (using this option doubles the cost). Example: 'Find all blog post pages'"
+          },
+          max_depth: {
+            type: "integer",
+            description: "Maximum mapping depth",
+            minimum: 1,
+            default: 1
+          },
+          max_breadth: {
+            type: "integer",
+            description: "Maximum number of links to follow per page",
+            minimum: 1,
+            default: 20
+          },
+          limit: {
+            type: "integer",
+            description: "Total maximum number of pages to process",
+            minimum: 1,
+            default: 50
+          },
+          select_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Only select URLs matching these regex path patterns"
+          },
+          exclude_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Exclude URLs matching these regex path patterns"
+          }
+        },
+        required: ["url"]
+      }
+    }
+  };
+
   const tools = [imageTool];
+  
+  
+  
   if (enableSearch) {
     tools.push(searchTool);
+    tools.push(tavilySearchTool);
+    tools.push(tavilyExtractTool);
+    tools.push(tavilyCrawlTool);
+    tools.push(tavilyMapTool);
   }
   
   return tools;

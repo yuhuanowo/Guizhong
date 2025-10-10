@@ -374,7 +374,7 @@ async function sendRequest(messages, modelName, tools, client) {
     if (functionCalls && functionCalls.length > 0) {
       logger.info(`Gemini 響應包含 ${functionCalls.length} 個函數調用`);
       toolCalls = functionCalls.map((call, index) => {
-        logger.info(`函數調用: ${call.name}(${JSON.stringify(call.args || {})})`);
+        // logger.info(`函數調用: ${call.name}(${JSON.stringify(call.args || {})})`);
         return {
           id: `call_${Date.now()}_${index}`,
           type: "function",

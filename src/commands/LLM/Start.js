@@ -220,16 +220,7 @@ module.exports = {
         })
         .setRequired(false)
     )
-    .addStringOption((option) =>
-      option
-        .setName("initial_prompt")
-        .setDescription("Initial message to start the conversation")
-        .setDescriptionLocalizations({
-          "zh-CN": "用于开始对话的初始消息",
-          "zh-TW": "用於開始對話的初始訊息"
-        })
-        .setRequired(false)
-    )
+
     .addStringOption((option) =>
       option
         .setName("history")
@@ -397,7 +388,6 @@ module.exports = {
     const enableSearch = interaction.options.getBoolean("enable_search") || false;
     const enableSystemPrompt = interaction.options.getBoolean("enable_systemprompt") !== false;
     const customTitle = interaction.options.getString("title");
-    const initialPrompt = interaction.options.getString("initial_prompt");
     const historyId = interaction.options.getString("history");
     const image = interaction.options.getAttachment("image");
     const audio = interaction.options.getAttachment("audio");
@@ -619,11 +609,6 @@ module.exports = {
         components: [controlRow1, controlRow2]
       });
 
-      // 如果有初始提示，立即发送并获取AI回应
-      if (initialPrompt) {
-        await this.processInitialMessage(thread, sessionData, initialPrompt, image, audio, interaction.user.id, language);
-      }
-
       // 回复原始交互
       const successEmbed = new EmbedBuilder()
         .setTitle(i18n.getString("commands.start.threadCreated", language))
@@ -739,147 +724,6 @@ module.exports = {
   // 获取所有活跃会话
   getAllActiveSessions() {
     return Array.from(activeChatSessions.values());
-  },
-
-  // 处理初始消息
-  async processInitialMessage(thread, sessionData, prompt, image, audio, userId, language) {
-    try {
-      // 创建LLM客户端（根据模型类型自动选择适当的提供商）
-      const client = llmService.createLLMClient(sessionData.model);
-
-      // 获取模型 emoji URL（如果有），用于 embed 缩略图
-      const modelEmoji = modelEmojis.getModelEmoji(sessionData.model);
-      const modelEmojiUrl = modelEmojis.getEmojiUrl(modelEmoji);
-      
-      // 显示正在生成的消息
-      const generatingEmbed = new EmbedBuilder()
-        .setDescription(i18n.getString("commands.agent.generating", language))
-        .setColor("#3399ff");
-      // 如有 emoji，顯示為縮略圖
-      if (modelEmojiUrl) generatingEmbed.setThumbnail(modelEmojiUrl);
-
-      const generatingMessage = await thread.send({ embeds: [generatingEmbed] });
-
-      // 构建消息数组，包含会话历史
-      let messages = [...sessionData.messages];
-
-      // 格式化用户消息
-      const userMessage = await llmService.formatUserMessage(prompt, image, audio, sessionData.model);
-      messages = [...messages, ...userMessage];
-
-      // 添加系统提示（如果启用）
-      if (sessionData.enableSystemPrompt) {
-        messages.unshift(llmService.getSystemPrompt(sessionData.model, language));
-      }
-
-      // 获取工具定义
-      const tools = llmService.getToolDefinitions(sessionData.enableSearch);
-
-      // 发送LLM请求
-      let response = await llmService.sendLLMRequest(messages, sessionData.model, tools, client);
-      let actuallySearched = false;
-      let searchResults = null;
-
-      // 处理工具调用
-      if (response.body.choices && response.body.choices[0].finish_reason === "tool_calls") {
-        const toolCall = response.body.choices[0].message.tool_calls[0];
-        const functionName = toolCall.function.name;
-        let functionArgs;
-
-        try {
-          functionArgs = JSON.parse(toolCall.function.arguments);
-        } catch (parseError) {
-          logger.error("工具调用参数解析失败:", parseError);
-          throw new Error("工具调用参数解析失败");
-        }
-
-        if (functionName === "search" && sessionData.enableSearch) {
-          actuallySearched = true;
-          searchResults = await toolFunctions.searchDuckDuckGoLite(functionArgs.query, functionArgs.numResults || 5);
-          
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(searchResults)
-          });
-
-          response = await llmService.sendLLMRequest(messages, sessionData.model, tools, client);
-        }
-      }
-
-      // 获取最终输出文本
-      const outputText = response.body.choices[0].message.content;
-
-      // 更新会话历史
-      sessionData.messages.push(...userMessage);
-      sessionData.messages.push({ role: "assistant", content: outputText });
-
-      // 获取模型的友好显示信息
-      const modelInfo = this.getModelDisplayInfo(sessionData.model);
-      
-      // 创建响应embed
-      const embed = new EmbedBuilder()
-        .setDescription(outputText)
-        .setColor("#00ff00")
-        .setFooter({
-          text: `${modelInfo.displayName} | ${i18n.getString("commands.agent.today", language)}`
-        });
-
-      // 在回覆 embed 上加入模型 emoji 縮略圖（如有）
-      if (modelEmojiUrl) embed.setThumbnail(modelEmojiUrl);
-
-      // 如果有搜索结果，添加控制按钮
-      const components = [];
-      if (actuallySearched && searchResults) {
-        const searchRow = new ActionRowBuilder()
-          .addComponents(
-            new ButtonBuilder()
-              .setCustomId(`showSearchResults_${generatingMessage.id}`)
-              .setLabel(i18n.getString("commands.agent.showSearchResults", language))
-              .setStyle(ButtonStyle.Secondary)
-              .setEmoji("🔍")
-          );
-        components.push(searchRow);
-      }
-
-      await generatingMessage.edit({ 
-        embeds: [embed],
-        components
-      });
-
-      // 如果有搜索结果，存储它们
-      if (searchResults) {
-        searchResultsCache.set(generatingMessage.id, searchResults);
-        setTimeout(() => {
-          searchResultsCache.delete(generatingMessage.id);
-        }, 10 * 60 * 1000); // 10分钟后清理缓存
-      }
-
-      // 保存对话记录
-      try {
-        await memoryService.saveChatLogToMongo(
-          userId,
-          sessionData.model,
-          prompt,
-          outputText,
-          String(generatingMessage.id)
-        );
-        
-        // await memoryService.updateUserMemory(userId, prompt);
-      } catch (mongoError) {
-        logger.error("保存对话记录失败:", mongoError);
-      }
-
-      logger.info(`初始消息处理完成: ${outputText.substring(0, 100)}...`);
-      
-    } catch (error) {
-      logger.error("处理初始消息失败:", error);
-      await thread.send({
-        embeds: [new EmbedBuilder()
-          .setDescription(i18n.getString("commands.agent.error", language, { error: error.message }))
-          .setColor("#ff0000")]
-      });
-    }
   },
 
   // 导出会话为JSON格式

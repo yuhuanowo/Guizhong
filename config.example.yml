@@ -144,6 +144,11 @@ cloudflareApiKey: ""
 # Cloudflare API 端點（預設: https://api.cloudflare.com/client/v4/accounts/yourid/ai/run/@cf/black-forest-labs/flux-1-schnell）
 cloudflareEndpoint: ""
 
+# Tavily API Key (Get your free API key at https://app.tavily.com/)
+# Tavily API 密钥（在 https://app.tavily.com/ 获取免费 API 密钥）
+# Tavily API 密鑰（在 https://app.tavily.com/ 獲取免費 API 密鑰）
+tavilyApiKey: ""
+
 
 # Database configurations
 # 數據庫配置

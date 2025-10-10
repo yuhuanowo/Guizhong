@@ -41,6 +41,7 @@ try {
         openRouterApiKey: configFile.openRouterApiKey ?? "",
         cloudflareApiKey: configFile.cloudflareApiKey ?? "",
         cloudflareEndpoint: configFile.cloudflareEndpoint ?? "https://api.cloudflare.com/client/v4/images/generate",
+        tavilyApiKey: configFile.tavilyApiKey ?? "",
         oauthTokens: configFile.oauthTokens ?? {},
         showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
         mongoURI: configFile.mongoURI ?? "",

@@ -119,57 +119,226 @@ module.exports = {
             ) {
                 messages.push(response.body.choices[0].message);
                 const calls = response.body.choices[0].message.tool_calls;
-                if (calls && calls.length === 1 && calls[0].type === "function") {
-                    const parsed = JSON.parse(calls[0].function.arguments);
+                
+                // 支持多個工具調用
+                if (calls && calls.length > 0) {
+                    logger.info(`檢測到 ${calls.length} 個工具調用: ${calls.map(t => t.function.name).join(', ')}`);
                     
-                    if (calls[0].function.name === "generateImage") {
-                        dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-                        messages.push({
-                            tool_call_id: calls[0].id,
-                            role: "tool",
-                            name: calls[0].function.name,
-                            content: JSON.stringify({ generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片" })
-                        });
-                    } else if (calls[0].function.name === "searchDuckDuckGo") {
-                        actuallySearched = true;
-                        searchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults);
-                        
-                        if (searchResults.length === 0) {
-                            messages.push({
-                                tool_call_id: calls[0].id,
-                                role: "tool",
-                                name: calls[0].function.name,
-                                content: JSON.stringify({ searchResults: "No results found" })
-                            });
-                        } else {
-                            messages.push({
-                                tool_call_id: calls[0].id,
-                                role: "tool",
-                                name: calls[0].function.name,
-                                content: JSON.stringify({ searchResults: searchResults })
-                            });
+                    for (const call of calls) {
+                        if (call.type === "function") {
+                            const parsed = JSON.parse(call.function.arguments);
+                            
+                            if (call.function.name === "generateImage") {
+                                dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+                                messages.push({
+                                    tool_call_id: call.id,
+                                    role: "tool",
+                                    name: call.function.name,
+                                    content: JSON.stringify({ generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片" })
+                                });
+                            } else if (call.function.name === "searchDuckDuckGo") {
+                                actuallySearched = true;
+                                
+                                const currentSearchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults || 10);
+                                
+                                // 合併搜尋結果
+                                if (!searchResults) {
+                                    searchResults = [];
+                                }
+                                searchResults = searchResults.concat(currentSearchResults);
+                                
+                                if (currentSearchResults.length === 0) {
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ searchResults: "No results found for: " + parsed.query })
+                                    });
+                                } else {
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ searchResults: currentSearchResults })
+                                    });
+                                }
+                            } else if (call.function.name === "tavilySearch") {
+                                actuallySearched = true;
+                                logger.info(`執行 Tavily Search: ${parsed.query}`);
+                                
+                                try {
+                                    const tavilyResults = await toolFunctions.tavilySearch(parsed);
+                                    
+                                    // 格式化 Tavily 結果以便顯示
+                                    const formattedResults = tavilyResults.results?.map(r => ({
+                                        title: r.title,
+                                        url: r.url,
+                                        contentSnippet: r.content,
+                                        domain: new URL(r.url).hostname,
+                                        icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`
+                                    })) || [];
+                                    
+                                    if (!searchResults) {
+                                        searchResults = [];
+                                    }
+                                    searchResults = searchResults.concat(formattedResults);
+                                    
+                                    // 構建回應內容
+                                    let responseContent = {
+                                        searchResults: tavilyResults.results || [],
+                                        totalResults: tavilyResults.results?.length || 0
+                                    };
+                                    
+                                    // 如果有 LLM 生成的答案，也包含進去
+                                    if (tavilyResults.answer) {
+                                        responseContent.answer = tavilyResults.answer;
+                                    }
+                                    
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify(responseContent)
+                                    });
+                                    
+                                    logger.success(`Tavily Search 完成，找到 ${formattedResults.length} 個結果`);
+                                } catch (error) {
+                                    logger.error(`Tavily Search 錯誤: ${error.message}`);
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ 
+                                            error: `Tavily 搜尋失敗: ${error.message}`,
+                                            searchResults: []
+                                        })
+                                    });
+                                }
+                            } else if (call.function.name === "tavilyExtract") {
+                                logger.info(`執行 Tavily Extract: ${Array.isArray(parsed.urls) ? parsed.urls.length : 1} 個 URL`);
+                                
+                                try {
+                                    const extractResults = await toolFunctions.tavilyExtract(parsed);
+                                    
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({
+                                            success: extractResults.results?.length || 0,
+                                            failed: extractResults.failed_results?.length || 0,
+                                            results: extractResults.results || [],
+                                            failed_results: extractResults.failed_results || []
+                                        })
+                                    });
+                                    
+                                    logger.success(`Tavily Extract 完成，成功: ${extractResults.results?.length || 0}, 失敗: ${extractResults.failed_results?.length || 0}`);
+                                } catch (error) {
+                                    logger.error(`Tavily Extract 錯誤: ${error.message}`);
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ 
+                                            error: `Tavily 提取失敗: ${error.message}`,
+                                            results: []
+                                        })
+                                    });
+                                }
+                            } else if (call.function.name === "tavilyCrawl") {
+                                logger.info(`執行 Tavily Crawl: ${parsed.url}`);
+                                
+                                try {
+                                    const crawlResults = await toolFunctions.tavilyCrawl(parsed);
+                                    
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({
+                                            base_url: crawlResults.base_url,
+                                            totalPages: crawlResults.results?.length || 0,
+                                            results: crawlResults.results || []
+                                        })
+                                    });
+                                    
+                                    logger.success(`Tavily Crawl 完成，爬取 ${crawlResults.results?.length || 0} 個頁面`);
+                                } catch (error) {
+                                    logger.error(`Tavily Crawl 錯誤: ${error.message}`);
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ 
+                                            error: `Tavily 爬取失敗: ${error.message}`,
+                                            results: []
+                                        })
+                                    });
+                                }
+                            } else if (call.function.name === "tavilyMap") {
+                                logger.info(`執行 Tavily Map: ${parsed.url}`);
+                                
+                                try {
+                                    const mapResults = await toolFunctions.tavilyMap(parsed);
+                                    
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({
+                                            base_url: mapResults.base_url,
+                                            totalUrls: mapResults.results?.length || 0,
+                                            urls: mapResults.results || []
+                                        })
+                                    });
+                                    
+                                    logger.success(`Tavily Map 完成，發現 ${mapResults.results?.length || 0} 個 URL`);
+                                } catch (error) {
+                                    logger.error(`Tavily Map 錯誤: ${error.message}`);
+                                    messages.push({
+                                        tool_call_id: call.id,
+                                        role: "tool",
+                                        name: call.function.name,
+                                        content: JSON.stringify({ 
+                                            error: `Tavily 地圖生成失敗: ${error.message}`,
+                                            urls: []
+                                        })
+                                    });
+                                }
+                            }
                         }
-
-                        // 使用搜索结果再次发送请求
+                    }
+                    
+                    logger.info(`所有工具調用完成，合併搜尋結果數: ${searchResults?.length || 0}`);
+                    
+                    // 如果有搜尋調用，使用結果再次發送請求
+                    if (actuallySearched) {
                         llmService.updateUserUsage(message.author.id, session.model, usageLimits);
+
                         response = await llmService.sendLLMRequest(messages, session.model, tools, client);
                         
+                        // 處理第二輪可能的工具調用（例如生成圖片）
                         if (
                             response.body.choices &&
                             response.body.choices[0].finish_reason === "tool_calls"
                         ) {
                             messages.push(response.body.choices[0].message);
-                            const calls = response.body.choices[0].message.tool_calls;
-                            if (calls && calls.length === 1 && calls[0].type === "function") {
-                                const parsed = JSON.parse(calls[0].function.arguments);
-                                if (calls[0].function.name === "generateImage") {
-                                    dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-                                    messages.push({
-                                        tool_call_id: calls[0].id,
-                                        role: "tool",
-                                        name: calls[0].function.name,
-                                        content: JSON.stringify({generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片"})
-                                    });
+                            const secondCalls = response.body.choices[0].message.tool_calls;
+                            
+                            if (secondCalls && secondCalls.length > 0) {
+                                for (const call of secondCalls) {
+                                    if (call.type === "function") {
+                                        const parsed = JSON.parse(call.function.arguments);
+                                        if (call.function.name === "generateImage") {
+                                            dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+                                            messages.push({
+                                                tool_call_id: call.id,
+                                                role: "tool",
+                                                name: call.function.name,
+                                                content: JSON.stringify({generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片"})
+                                            });
+                                        }
+                                    }
                                 }
                             }
                         }

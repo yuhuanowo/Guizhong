@@ -15,6 +15,7 @@ const toolFunctions = require("./utils/toolFunctions");
 const llmService = require("./utils/llmService");
 const { getModelEmoji } = require("../../utils/modelEmojis");
 const titleGenerator = require("./utils/titleGenerator");
+const { searchResultsCache } = require("../../buttons/showSearchResults");
 
 
 // 初始化数据库表
@@ -326,6 +327,149 @@ module.exports = {
                     content: JSON.stringify({ searchResults: currentSearchResults })
                   });
                 }
+              } else if (call.function.name === "tavilySearch") {
+                actuallySearched = true;
+                logger.info(`執行 Tavily Search: ${parsed.query}`);
+                
+                try {
+                  const tavilyResults = await toolFunctions.tavilySearch(parsed);
+                  
+                  // 格式化 Tavily 結果以便顯示
+                  const formattedResults = tavilyResults.results?.map(r => ({
+                    title: r.title,
+                    url: r.url,
+                    contentSnippet: r.content,
+                    domain: new URL(r.url).hostname,
+                    icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`
+                  })) || [];
+                  
+                  if (!searchResults) {
+                    searchResults = [];
+                  }
+                  searchResults = searchResults.concat(formattedResults);
+                  
+                  // 構建回應內容
+                  let responseContent = {
+                    searchResults: tavilyResults.results || [],
+                    totalResults: tavilyResults.results?.length || 0
+                  };
+                  
+                  // 如果有 LLM 生成的答案，也包含進去
+                  if (tavilyResults.answer) {
+                    responseContent.answer = tavilyResults.answer;
+                  }
+                  
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify(responseContent)
+                  });
+                  
+                  logger.success(`Tavily Search 完成，找到 ${formattedResults.length} 個結果`);
+                } catch (error) {
+                  logger.error(`Tavily Search 錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: `Tavily 搜尋失敗: ${error.message}`,
+                      searchResults: []
+                    })
+                  });
+                }
+              } else if (call.function.name === "tavilyExtract") {
+                logger.info(`執行 Tavily Extract: ${Array.isArray(parsed.urls) ? parsed.urls.length : 1} 個 URL`);
+                
+                try {
+                  const extractResults = await toolFunctions.tavilyExtract(parsed);
+                  
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({
+                      success: extractResults.results?.length || 0,
+                      failed: extractResults.failed_results?.length || 0,
+                      results: extractResults.results || [],
+                      failed_results: extractResults.failed_results || []
+                    })
+                  });
+                  
+                  logger.success(`Tavily Extract 完成，成功: ${extractResults.results?.length || 0}, 失敗: ${extractResults.failed_results?.length || 0}`);
+                } catch (error) {
+                  logger.error(`Tavily Extract 錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: `Tavily 提取失敗: ${error.message}`,
+                      results: []
+                    })
+                  });
+                }
+              } else if (call.function.name === "tavilyCrawl") {
+                logger.info(`執行 Tavily Crawl: ${parsed.url}`);
+                
+                try {
+                  const crawlResults = await toolFunctions.tavilyCrawl(parsed);
+                  
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({
+                      base_url: crawlResults.base_url,
+                      totalPages: crawlResults.results?.length || 0,
+                      results: crawlResults.results || []
+                    })
+                  });
+                  
+                  logger.success(`Tavily Crawl 完成，爬取 ${crawlResults.results?.length || 0} 個頁面`);
+                } catch (error) {
+                  logger.error(`Tavily Crawl 錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: `Tavily 爬取失敗: ${error.message}`,
+                      results: []
+                    })
+                  });
+                }
+              } else if (call.function.name === "tavilyMap") {
+                logger.info(`執行 Tavily Map: ${parsed.url}`);
+                
+                try {
+                  const mapResults = await toolFunctions.tavilyMap(parsed);
+                  
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({
+                      base_url: mapResults.base_url,
+                      totalUrls: mapResults.results?.length || 0,
+                      urls: mapResults.results || []
+                    })
+                  });
+                  
+                  logger.success(`Tavily Map 完成，發現 ${mapResults.results?.length || 0} 個 URL`);
+                } catch (error) {
+                  logger.error(`Tavily Map 錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: `Tavily 地圖生成失敗: ${error.message}`,
+                      urls: []
+                    })
+                  });
+                }
               }
             }
           }
@@ -527,200 +671,21 @@ module.exports = {
 
       // 添加搜索结果按钮
       if (searchResults && searchResults.length > 0) {
+        // 生成唯一的 messageId 並緩存搜尋結果
+        const messageId = crypto.randomBytes(8).toString('hex');
+        searchResultsCache.set(messageId, searchResults);
+        
+        // 設置緩存過期時間 (5 分鐘)
+        setTimeout(() => {
+          searchResultsCache.delete(messageId);
+        }, 5 * 60 * 1000);
+        
         row.addComponents(
           new ButtonBuilder()
-            .setCustomId("showSearchResults")
+            .setCustomId(`showSearchResults_${messageId}`)
             .setLabel(i18n.getString("commands.agent.showSearchResults", language))
             .setStyle(ButtonStyle.Secondary)
         );
-
-        const searchFilter = i =>
-          ["showSearchResults", "hideSearchResults"].includes(i.customId) &&
-          i.user.id === interaction.user.id;
-
-        if (interaction.channel) {
-          // 在公开频道中
-          const searchCollector = interaction.channel.createMessageComponentCollector({
-            filter: searchFilter,
-            time: 60000
-          });
-          
-          searchCollector.on('collect', async i => {
-            try {
-              // 立即 defer 以避免超時
-              await i.deferUpdate().catch(err => {
-                logger.error(`延遲更新失敗: ${err.message}`);
-              });
-              
-              if (i.customId === "showSearchResults") {
-                const maxFieldLength = 1024;
-                const maxDescriptionLength = 4096;
-                
-                // 準備搜尋結果
-                const searchResultsArray = searchResults.map(result =>
-                  `**${result.title}**\n${result.url}\n${result.contentSnippet || ''}`
-                );
-                
-                const searchResultsText = searchResultsArray.join('\n\n');
-      
-              if (searchResultsText.length <= maxFieldLength) {
-                // 内容在限制内，直接加入embed field
-                embed.addFields({
-                  name: i18n.getString("commands.agent.searchResults", language),
-                  value: searchResultsText,
-                  inline: false
-                });
-                
-                row.components[0]
-                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                  .setCustomId("hideSearchResults");
-      
-                await i.message.edit({ embeds: [embed], components: [row] });
-              } else if (searchResultsText.length <= maxDescriptionLength) {
-                // 内容超過 field 限制但在 description 限制內，建立新的embed
-                const searchEmbed = new EmbedBuilder()
-                  .setTitle(i18n.getString("commands.agent.fullsearchResults", language))
-                  .setDescription(searchResultsText)
-                  .setColor("#5865F2");
-      
-                row.components[0]
-                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                  .setCustomId("hideSearchResults");
-      
-                await i.message.edit({ embeds: [embed, searchEmbed], components: [row] });
-              } else {
-                // 内容過長，需要分頁處理
-                const chunks = [];
-                let currentChunk = '';
-                
-                for (const resultText of searchResultsArray) {
-                  // 如果單個結果就超過限制，需要截斷
-                  if (resultText.length > maxDescriptionLength) {
-                    const truncated = resultText.substring(0, maxDescriptionLength - 50) + '\n...(內容過長已截斷)';
-                    if (currentChunk.length + truncated.length + 2 > maxDescriptionLength) {
-                      chunks.push(currentChunk);
-                      currentChunk = truncated;
-                    } else {
-                      currentChunk += (currentChunk ? '\n\n' : '') + truncated;
-                    }
-                  } else if (currentChunk.length + resultText.length + 2 > maxDescriptionLength) {
-                    // 當前塊放不下了，開始新塊
-                    chunks.push(currentChunk);
-                    currentChunk = resultText;
-                  } else {
-                    currentChunk += (currentChunk ? '\n\n' : '') + resultText;
-                  }
-                }
-                
-                if (currentChunk) {
-                  chunks.push(currentChunk);
-                }
-                
-                // 創建分頁embeds
-                const searchEmbeds = chunks.map((chunk, index) => {
-                  return new EmbedBuilder()
-                    .setTitle(`${i18n.getString("commands.agent.fullsearchResults", language)} (${index + 1}/${chunks.length})`)
-                    .setDescription(chunk)
-                    .setColor("#5865F2");
-                });
-                
-                row.components[0]
-                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                  .setCustomId("hideSearchResults");
-      
-                // 顯示第一頁，最多顯示3個embeds（Discord限制10個embeds，但我們已經有主embed）
-                const embedsToShow = [embed, ...searchEmbeds.slice(0, Math.min(3, searchEmbeds.length))];
-                
-                if (searchEmbeds.length > 3) {
-                  // 添加提示信息
-                  const infoEmbed = new EmbedBuilder()
-                    .setDescription(`⚠️ 搜尋結果過多，僅顯示前 ${Math.min(3, searchEmbeds.length)} 頁，共 ${searchEmbeds.length} 頁`)
-                    .setColor("#FFA500");
-                  embedsToShow.push(infoEmbed);
-                }
-                
-                await i.message.edit({ embeds: embedsToShow, components: [row] });
-              }
-            } else if (i.customId === "hideSearchResults") {
-              // 移除所有搜尋結果相關的 embeds 和 fields
-              const fieldsToRemove = embed.data.fields?.findIndex(f => 
-                f.name === i18n.getString("commands.agent.searchResults", language)
-              );
-              
-              if (fieldsToRemove !== undefined && fieldsToRemove >= 0) {
-                embed.spliceFields(fieldsToRemove, 1);
-              }
-      
-              row.components[0]
-                .setLabel(i18n.getString("commands.agent.showSearchResults", language))
-                .setCustomId("showSearchResults");
-      
-              await i.message.edit({ embeds: [embed], components: [row] });
-            }
-          } catch (error) {
-            logger.error(`處理搜尋結果按鈕時出錯: ${error.message}`);
-          }
-          });
-        } else {
-          // 在私聊环境中
-          const searchCollector = interaction.user.createDM().then(dm => {
-            return dm.createMessageComponentCollector({
-              filter: searchFilter,
-              time: 60000
-            });
-          });
-        
-          searchCollector.then(dmCollector => {
-            dmCollector.on('collect', async i => {
-              if (i.customId === "showSearchResults") {
-                const maxLength = 1024;
-                const searchResultsText = searchResults.map(result =>
-                  `**${result.title}**\n${result.url}\n${result.contentSnippet || ''}`
-                ).join('\n\n');
-        
-                if (searchResultsText.length <= maxLength) {
-                  embed.addFields({
-                    name: i18n.getString("commands.agent.searchResults", language),
-                    value: searchResultsText,
-                    inline: false
-                  });
-                } else {
-                  const searchEmbed = new EmbedBuilder()
-                    .setTitle("完整搜尋結果")
-                    .setDescription(searchResultsText)
-                    .setColor("#5865F2");
-        
-                  embed.addFields({
-                    name: i18n.getString("commands.agent.searchResults", language),
-                    value: i18n.getString("commands.agent.searchResultsTooLong", language),
-                    inline: false
-                  });
-        
-                  row.components[0]
-                    .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                    .setCustomId("hideSearchResults");
-        
-                  await i.update({ embeds: [embed, searchEmbed], components: [row] });
-                  return;
-                }
-        
-                row.components[0]
-                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                  .setCustomId("hideSearchResults");
-        
-                await i.update({ embeds: [embed], components: [row] });
-              } else if (i.customId === "hideSearchResults") {
-                embed.spliceFields(0, 1);
-
-                row.components[0]
-                  .setLabel(i18n.getString("commands.agent.showSearchResults", language))
-                  .setCustomId("showSearchResults");
-        
-                await i.update({ embeds: [embed], components: [row] });
-              }
-            });
-          });
-        }
       }
       const searchenable = i18n.getString("commands.agent.search", language);
       const searchdisable = i18n.getString("commands.agent.searchdisable", language);
