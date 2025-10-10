@@ -27,20 +27,22 @@ function formatSearchResultsOptimized(searchResults, maxTotalLength = 3000) {
   let currentLength = 0;
   
   for (const result of searchResults) {
-    // 限制標題長度
-    const title = result.title.length > 100 
-      ? result.title.substring(0, 97) + "..." 
-      : result.title;
-    
-    // 限制內容片段長度
-    const snippet = result.contentSnippet 
-      ? (result.contentSnippet.length > 150 
-          ? result.contentSnippet.substring(0, 147) + "..." 
+    // 限制標題長度（更短）並加強顯著性（加 emoji 與粗體標記）
+    const rawTitle = result.title || "(無標題)";
+    const title = rawTitle.length > 60
+      ? rawTitle.substring(0, 57) + "..."
+      : rawTitle;
+
+    // 限制內容片段長度（更短）以減小內文體積
+    const snippet = result.contentSnippet
+      ? (result.contentSnippet.length > 80
+          ? result.contentSnippet.substring(0, 77) + "..."
           : result.contentSnippet)
       : "";
-    
-    // 移除 Markdown 粗體格式,保持字體大小統一
-    const formattedResult = `${title}\n🔗 ${result.url}${snippet ? '\n📝 ' + snippet : ''}`;
+
+    // 使用 emoji 與 Markdown 粗體讓標題更醒目，並將內文縮短顯示
+    // 注意：Embed 描述支援 Markdown 風格的粗體效果
+    const formattedResult = `🔹 **${title}**\n🔗 ${result.url}${snippet ? '\n📝 ' + snippet : ''}`;
     const resultLength = formattedResult.length + 2; // +2 for \n\n separator
     
     // 檢查是否會超過限制
@@ -134,11 +136,16 @@ module.exports = {
         const { text: searchResultsText, truncated, displayedCount, totalCount } = 
           formatSearchResultsOptimized(searchResults, 3800); // 為獨立 embed 預留更多空間
         
+        // 判斷使用的搜尋引擎（從第一個結果中獲取）
+        const searchEngine = searchResults[0]?.searchEngine || 'duckduckgo';
+        const poweredByText = searchEngine === 'tavily' ? 'Powered by Tavily' : 'Powered by DuckDuckGo';
+        
         // 創建獨立的搜尋結果 embed
         const searchEmbed = new EmbedBuilder()
           .setTitle(`🔍 ${i18n.getString("commands.agent.searchResults", language)} (${totalCount} 個)`)
           .setColor("#5865F2")
-          .setTimestamp();
+          .setTimestamp()
+          .setFooter({ text: poweredByText });
         
         // 檢查是否需要使用文件
         const needsFile = searchResultsText.length > MAX_EMBED_DESCRIPTION_LENGTH;

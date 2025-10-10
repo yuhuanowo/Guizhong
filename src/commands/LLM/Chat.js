@@ -3,6 +3,7 @@ const db = new sqlite3.Database("./chatlog.db");
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
+const path = require("path");
 const logger = require("../../utils/logger.js");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
@@ -306,11 +307,17 @@ module.exports = {
                 
                 const currentSearchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults || 10);
                 
+                // 為每個搜尋結果添加搜尋引擎標記
+                const markedResults = currentSearchResults.map(r => ({
+                  ...r,
+                  searchEngine: 'duckduckgo'
+                }));
+                
                 // 合併搜尋結果
                 if (!searchResults) {
                   searchResults = [];
                 }
-                searchResults = searchResults.concat(currentSearchResults);
+                searchResults = searchResults.concat(markedResults);
                 
                 if (currentSearchResults.length === 0) {
                   messages.push({
@@ -334,13 +341,14 @@ module.exports = {
                 try {
                   const tavilyResults = await toolFunctions.tavilySearch(parsed);
                   
-                  // 格式化 Tavily 結果以便顯示
+                  // 格式化 Tavily 結果以便顯示，並添加搜尋引擎標記
                   const formattedResults = tavilyResults.results?.map(r => ({
                     title: r.title,
                     url: r.url,
                     contentSnippet: r.content,
                     domain: new URL(r.url).hostname,
-                    icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`
+                    icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`,
+                    searchEngine: 'tavily'
                   })) || [];
                   
                   if (!searchResults) {
@@ -562,10 +570,19 @@ module.exports = {
         if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
           const imageResult = toolFunctions.processGeneratedImage(dataURI);
           if (imageResult.path) {
+            // embed 使用附件內嵌圖片
+            const filename = path.basename(imageResult.path);
             embed.setDescription(outputText ? outputText : i18n.getString("commands.agent.imageGenerated", language));
+            embed.setImage(`attachment://${filename}`);
             embed.setFooter({text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
-            await interaction.editReply({ embeds: [embed], files: [imageResult.attachment] });
-            fs.unlinkSync(imageResult.path); // 删除临时文件
+            try {
+              await interaction.editReply({ embeds: [embed], files: [imageResult.attachment] });
+            } catch (e) {
+              // fallback to followUp if edit fails
+              await interaction.followUp({ embeds: [embed], files: [imageResult.attachment] });
+            }
+            // 删除临时文件
+            try { fs.unlinkSync(imageResult.path); } catch (e) { logger.warn(`无法删除临时图片 ${imageResult.path}: ${e.message}`); }
           }
         } else if (dataURI) {
           logger.error("Invalid dataURI format");
@@ -659,10 +676,16 @@ module.exports = {
         if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
           const imageResult = toolFunctions.processGeneratedImage(dataURI);
           if (imageResult.path) {
+            const filename = path.basename(imageResult.path);
             embed.setDescription(outputText ? outputText : i18n.getString("commands.agent.imageGenerated", language));
+            embed.setImage(`attachment://${filename}`);
             embed.setFooter({text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
-            await interaction.editReply({ embeds: [embed], files: [imageResult.attachment] });
-            fs.unlinkSync(imageResult.path); // 删除临时文件
+            try {
+              await interaction.editReply({ embeds: [embed], files: [imageResult.attachment] });
+            } catch (e) {
+              await interaction.followUp({ embeds: [embed], files: [imageResult.attachment] });
+            }
+            try { fs.unlinkSync(imageResult.path); } catch (e) { logger.warn(`无法删除临时图片 ${imageResult.path}: ${e.message}`); }
           }
         } else if (dataURI) {
           logger.error("Invalid dataURI format");

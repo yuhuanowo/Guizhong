@@ -141,11 +141,17 @@ module.exports = {
                                 
                                 const currentSearchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults || 10);
                                 
+                                // 為每個搜尋結果添加搜尋引擎標記
+                                const markedResults = currentSearchResults.map(r => ({
+                                    ...r,
+                                    searchEngine: 'duckduckgo'
+                                }));
+                                
                                 // 合併搜尋結果
                                 if (!searchResults) {
                                     searchResults = [];
                                 }
-                                searchResults = searchResults.concat(currentSearchResults);
+                                searchResults = searchResults.concat(markedResults);
                                 
                                 if (currentSearchResults.length === 0) {
                                     messages.push({
@@ -169,13 +175,14 @@ module.exports = {
                                 try {
                                     const tavilyResults = await toolFunctions.tavilySearch(parsed);
                                     
-                                    // 格式化 Tavily 結果以便顯示
+                                    // 格式化 Tavily 結果以便顯示，並添加搜尋引擎標記
                                     const formattedResults = tavilyResults.results?.map(r => ({
                                         title: r.title,
                                         url: r.url,
                                         contentSnippet: r.content,
                                         domain: new URL(r.url).hostname,
-                                        icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`
+                                        icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`,
+                                        searchEngine: 'tavily'
                                     })) || [];
                                     
                                     if (!searchResults) {
