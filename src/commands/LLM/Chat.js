@@ -281,56 +281,84 @@ module.exports = {
       ) {
         messages.push(response.body.choices[0].message);
         const calls = response.body.choices[0].message.tool_calls;
-        if (calls && calls.length === 1 && calls[0].type === "function") {
-          const parsed = JSON.parse(calls[0].function.arguments);
-          if (calls[0].function.name === "generateImage") {
-            dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-            messages.push({
-              tool_call_id: calls[0].id,
-              role: "tool",
-              name: calls[0].function.name,
-              content: JSON.stringify({ generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片" })
-            });
-          } else if (calls[0].function.name === "searchDuckDuckGo") {
-            actuallySearched = true;
-            searchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults);
-            if (searchResults.length === 0) {
-              messages.push({
-                tool_call_id: calls[0].id,
-                role: "tool",
-                name: calls[0].function.name,
-                content: JSON.stringify({ searchResults: "No results found" })
-              });
-            } else {
-              messages.push({
-                tool_call_id: calls[0].id,
-                role: "tool",
-                name: calls[0].function.name,
-                content: JSON.stringify({ searchResults: searchResults })
-              });
+        
+        // 支持多個工具調用
+        if (calls && calls.length > 0) {
+          logger.info(`檢測到 ${calls.length} 個工具調用: ${calls.map(t => t.function.name).join(', ')}`);
+          
+          for (const call of calls) {
+            if (call.type === "function") {
+              const parsed = JSON.parse(call.function.arguments);
+              
+              if (call.function.name === "generateImage") {
+                dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+                messages.push({
+                  tool_call_id: call.id,
+                  role: "tool",
+                  name: call.function.name,
+                  content: JSON.stringify({ generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片" })
+                });
+              } else if (call.function.name === "searchDuckDuckGo") {
+                actuallySearched = true;
+                
+                const currentSearchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults || 10);
+                
+                // 合併搜尋結果
+                if (!searchResults) {
+                  searchResults = [];
+                }
+                searchResults = searchResults.concat(currentSearchResults);
+                
+                if (currentSearchResults.length === 0) {
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ searchResults: "No results found for: " + parsed.query })
+                  });
+                } else {
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ searchResults: currentSearchResults })
+                  });
+                }
+              }
             }
-
-            // 使用搜索结果再次发送请求
+          }
+          
+          logger.info(`所有工具調用完成，合併搜尋結果數: ${searchResults?.length || 0}`);
+          
+          // 如果有搜尋調用，使用結果再次發送請求
+          if (actuallySearched) {
             llmService.updateUserUsage(userId, selectedModel, usageLimits);
 
             response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
+            
+            // 處理第二輪可能的工具調用（例如生成圖片）
             if (
               response.body.choices &&
               response.body.choices[0].finish_reason === "tool_calls"
             ) {
               messages.push(response.body.choices[0].message);
-              const calls = response.body.choices[0].message.tool_calls;
-              if (calls && calls.length === 1 && calls[0].type === "function") {
-                const parsed = JSON.parse(calls[0].function.arguments);
-                if (calls[0].function.name === "generateImage") {
-                  dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-                  messages.push({
-                    tool_call_id: calls[0].id,
-                    role: "tool",
-                    name: calls[0].function.name,
-                    content: JSON.stringify({generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片"})
-                  });
-                } 
+              const secondCalls = response.body.choices[0].message.tool_calls;
+              
+              if (secondCalls && secondCalls.length > 0) {
+                for (const call of secondCalls) {
+                  if (call.type === "function") {
+                    const parsed = JSON.parse(call.function.arguments);
+                    if (call.function.name === "generateImage") {
+                      dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+                      messages.push({
+                        tool_call_id: call.id,
+                        role: "tool",
+                        name: call.function.name,
+                        content: JSON.stringify({generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片"})
+                      });
+                    }
+                  }
+                }
               }
             }
 
@@ -535,7 +563,7 @@ module.exports = {
         // 处理其他模型的标准响应
         embed = new EmbedBuilder()
           .setTitle(`${modelEmoji} AI Text Generation`)
-          .setDescription(outputText)
+          .setDescription(outputText || i18n.getString("commands.agent.noContent", language) || "無內容")
           .setColor("#00ff00")
           .setFooter({
             text: `${modelEmoji} Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit}`
@@ -576,55 +604,120 @@ module.exports = {
           });
           
           searchCollector.on('collect', async i => {
-            if (i.customId === "showSearchResults") {
-              const maxLength = 1024;
-              const searchResultsText = searchResults.map(result =>
-                `**${result.title}**\n${result.url}\n${result.contentSnippet || ''}`
-              ).join('\n\n');
+            try {
+              // 立即 defer 以避免超時
+              await i.deferUpdate().catch(err => {
+                logger.error(`延遲更新失敗: ${err.message}`);
+              });
+              
+              if (i.customId === "showSearchResults") {
+                const maxFieldLength = 1024;
+                const maxDescriptionLength = 4096;
+                
+                // 準備搜尋結果
+                const searchResultsArray = searchResults.map(result =>
+                  `**${result.title}**\n${result.url}\n${result.contentSnippet || ''}`
+                );
+                
+                const searchResultsText = searchResultsArray.join('\n\n');
       
-              if (searchResultsText.length <= maxLength) {
-                // 内容在限制内，直接加入embed
+              if (searchResultsText.length <= maxFieldLength) {
+                // 内容在限制内，直接加入embed field
                 embed.addFields({
                   name: i18n.getString("commands.agent.searchResults", language),
                   value: searchResultsText,
                   inline: false
                 });
-              } else {
-                // 内容过长，建立新的embed
-                const searchEmbed = new EmbedBuilder()
-                  .setTitle(i18n.getString("commands.agent.fullsearchResults", language))
-                  .setDescription(searchResultsText)
-                  .setColor("#5865F2"); // Discord蓝色
-      
-                embed.addFields({
-                  name: i18n.getString("commands.agent.searchResults", language),
-                  value: searchResultsText,
-                  inline: false
-                });
-      
-                // 修改按钮
+                
                 row.components[0]
                   .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
                   .setCustomId("hideSearchResults");
       
-                await i.update({ embeds: [embed, searchEmbed], components: [row] });
-                return;
+                await i.message.edit({ embeds: [embed], components: [row] });
+              } else if (searchResultsText.length <= maxDescriptionLength) {
+                // 内容超過 field 限制但在 description 限制內，建立新的embed
+                const searchEmbed = new EmbedBuilder()
+                  .setTitle(i18n.getString("commands.agent.fullsearchResults", language))
+                  .setDescription(searchResultsText)
+                  .setColor("#5865F2");
+      
+                row.components[0]
+                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
+                  .setCustomId("hideSearchResults");
+      
+                await i.message.edit({ embeds: [embed, searchEmbed], components: [row] });
+              } else {
+                // 内容過長，需要分頁處理
+                const chunks = [];
+                let currentChunk = '';
+                
+                for (const resultText of searchResultsArray) {
+                  // 如果單個結果就超過限制，需要截斷
+                  if (resultText.length > maxDescriptionLength) {
+                    const truncated = resultText.substring(0, maxDescriptionLength - 50) + '\n...(內容過長已截斷)';
+                    if (currentChunk.length + truncated.length + 2 > maxDescriptionLength) {
+                      chunks.push(currentChunk);
+                      currentChunk = truncated;
+                    } else {
+                      currentChunk += (currentChunk ? '\n\n' : '') + truncated;
+                    }
+                  } else if (currentChunk.length + resultText.length + 2 > maxDescriptionLength) {
+                    // 當前塊放不下了，開始新塊
+                    chunks.push(currentChunk);
+                    currentChunk = resultText;
+                  } else {
+                    currentChunk += (currentChunk ? '\n\n' : '') + resultText;
+                  }
+                }
+                
+                if (currentChunk) {
+                  chunks.push(currentChunk);
+                }
+                
+                // 創建分頁embeds
+                const searchEmbeds = chunks.map((chunk, index) => {
+                  return new EmbedBuilder()
+                    .setTitle(`${i18n.getString("commands.agent.fullsearchResults", language)} (${index + 1}/${chunks.length})`)
+                    .setDescription(chunk)
+                    .setColor("#5865F2");
+                });
+                
+                row.components[0]
+                  .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
+                  .setCustomId("hideSearchResults");
+      
+                // 顯示第一頁，最多顯示3個embeds（Discord限制10個embeds，但我們已經有主embed）
+                const embedsToShow = [embed, ...searchEmbeds.slice(0, Math.min(3, searchEmbeds.length))];
+                
+                if (searchEmbeds.length > 3) {
+                  // 添加提示信息
+                  const infoEmbed = new EmbedBuilder()
+                    .setDescription(`⚠️ 搜尋結果過多，僅顯示前 ${Math.min(3, searchEmbeds.length)} 頁，共 ${searchEmbeds.length} 頁`)
+                    .setColor("#FFA500");
+                  embedsToShow.push(infoEmbed);
+                }
+                
+                await i.message.edit({ embeds: embedsToShow, components: [row] });
               }
-      
-              row.components[0]
-                .setLabel(i18n.getString("commands.agent.hideSearchResults", language))
-                .setCustomId("hideSearchResults");
-      
-              await i.update({ embeds: [embed], components: [row] });
             } else if (i.customId === "hideSearchResults") {
-              embed.spliceFields(0, 1);
+              // 移除所有搜尋結果相關的 embeds 和 fields
+              const fieldsToRemove = embed.data.fields?.findIndex(f => 
+                f.name === i18n.getString("commands.agent.searchResults", language)
+              );
+              
+              if (fieldsToRemove !== undefined && fieldsToRemove >= 0) {
+                embed.spliceFields(fieldsToRemove, 1);
+              }
       
               row.components[0]
                 .setLabel(i18n.getString("commands.agent.showSearchResults", language))
                 .setCustomId("showSearchResults");
       
-              await i.update({ embeds: [embed], components: [row] });
+              await i.message.edit({ embeds: [embed], components: [row] });
             }
+          } catch (error) {
+            logger.error(`處理搜尋結果按鈕時出錯: ${error.message}`);
+          }
           });
         } else {
           // 在私聊环境中

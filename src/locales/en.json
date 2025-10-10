@@ -414,6 +414,7 @@
       "usageExceeded": "You have exceeded the usage limit for this model. You have used {usage}/{limit} messages for model {model}.",
       "today": "Today's usage",
       "imageGenerated": "AI has generated an image for you.",
+      "noContent": "No content",
       "openThink": "Show thinking process",
       "hideThink": "Hide thinking process",
       "think": "Thinking Process",

@@ -128,48 +128,98 @@ async function sendRequest(messages, modelName, tools, client) {
         continue;
       }
       
+      // 轉換角色名稱以適應 Gemini API
+      let geminiRole = msg.role;
+      if (msg.role === "assistant") {
+        geminiRole = "model";
+      } else if (msg.role === "tool") {
+        // Gemini 使用 "function" 而不是 "tool"
+        geminiRole = "function";
+      }
+      
+      // 处理工具/函数响应
+      if (msg.role === "tool") {
+        // 工具響應需要特殊格式
+        try {
+          const functionResponse = {
+            name: msg.name,
+            response: {
+              name: msg.name,
+              content: msg.content
+            }
+          };
+          
+          processedMessages.push({
+            role: "function",
+            parts: [{ functionResponse }]
+          });
+        } catch (error) {
+          logger.warn(`處理工具響應時出錯: ${error.message}`);
+          // 降級為普通文本消息
+          processedMessages.push({
+            role: "model",
+            parts: [{ text: msg.content }]
+          });
+        }
+        continue;
+      }
+      
       // 转换消息格式以适应Gemini API
       if (Array.isArray(msg.content)) {
         const parts = [];
         for (const part of msg.content) {
           if (part.type === "text") {
             parts.push({ text: part.text });
-          } else if (part.type === "image_url" && part.image_url.url.startsWith('data:image/')) {
-            // 从Base64提取图像数据
-            const base64Data = part.image_url.url.split(',')[1];
-            const mimeType = part.image_url.url.split(';')[0].split(':')[1];
+          } else if (part.type === "image_url" && part.image_url?.url) {
+            if (part.image_url.url.startsWith('data:image/')) {
+              // 从Base64提取图像数据
+              const base64Data = part.image_url.url.split(',')[1];
+              const mimeType = part.image_url.url.split(';')[0].split(':')[1];
+              parts.push({
+                inlineData: {
+                  data: base64Data,
+                  mimeType: mimeType
+                }
+              });
+            }
+          } else if (part.type === "image" && part.image?.data) {
+            // 直接的图像数据 - 需要确保是base64字符串
+            const imageData = Buffer.isBuffer(part.image.data) 
+              ? part.image.data.toString('base64')
+              : part.image.data;
             parts.push({
               inlineData: {
-                data: base64Data,
-                mimeType: mimeType
-              }
-            });
-          } else if (part.type === "image" && part.image.data) {
-            // 直接的图像数据
-            parts.push({
-              inlineData: {
-                data: part.image.data,
+                data: imageData,
                 mimeType: part.image.mimeType
               }
             });
-          } else if (part.type === "audio" && part.audio.data) {
+          } else if (part.type === "audio" && part.audio?.data) {
             // Gemini 2.0+ 支持音频
+            const audioData = Buffer.isBuffer(part.audio.data)
+              ? part.audio.data.toString('base64')
+              : part.audio.data;
             parts.push({
               inlineData: {
-                data: part.audio.data,
+                data: audioData,
                 mimeType: part.audio.mimeType
               }
             });
           }
         }
-        processedMessages.push({ role: msg.role, parts });
+        // 使用之前確定的角色
+        processedMessages.push({ 
+          role: geminiRole, 
+          parts 
+        });
       } else {
-        processedMessages.push({ role: msg.role, parts: [{ text: msg.content }] });
+        processedMessages.push({ 
+          role: geminiRole, 
+          parts: [{ text: msg.content }] 
+        });
       }
     }
     
     // 创建Gemini生成配置
-    let modelConfig = { model: modelName };
     let generationConfig = {
       temperature: 0.7,
       topK: 40,
@@ -182,15 +232,19 @@ async function sendRequest(messages, modelName, tools, client) {
       // 思考模型需要更高的输出长度
       generationConfig.maxOutputTokens = 12000;
       generationConfig.temperature = 0.1;
-    } else if (modelName.includes("2.0")) {
-      // Gemini 2.0 模型支持更长输出
+    } else if (modelName.includes("2.0") || modelName.includes("2.5")) {
+      // Gemini 2.0/2.5 模型支持更长输出
       generationConfig.maxOutputTokens = 10000;
     }
     
-    // 函数调用支持 - 大多数 Gemini 模型都支持
+    // 函数调用支持配置
     const toolSupportedModels = [
+      "gemini-2.5-pro",
+      "gemini-2.5-flash", 
+      "gemini-2.5-flash-lite",
       "gemini-2.0-flash-exp",
-      "gemini-2.0-flash-thinking-exp-1219",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-thinking-exp",
       "gemini-1.5-pro", 
       "gemini-1.5-pro-002",
       "gemini-1.5-flash",
@@ -201,7 +255,13 @@ async function sendRequest(messages, modelName, tools, client) {
       "gemini-exp-1114"
     ];
     
-    if (toolSupportedModels.includes(modelName) && tools && tools.length > 0) {
+    // 准备工具配置
+    let toolsConfig = [];
+    let toolConfig = null;
+    
+    const isToolSupported = toolSupportedModels.some(supported => modelName.includes(supported));
+    
+    if (isToolSupported && tools && tools.length > 0) {
       const functionDeclarations = tools.map(tool => {
         if (tool.type === "function") {
           return {
@@ -214,32 +274,55 @@ async function sendRequest(messages, modelName, tools, client) {
       }).filter(Boolean);
       
       if (functionDeclarations.length > 0) {
-        modelConfig.tools = [{
-          functionDeclarations
+        toolsConfig = [{
+          functionDeclarations: functionDeclarations
         }];
         
-        // Gemini 2.0 支持工具配置
-        if (modelName.includes("2.0")) {
-          modelConfig.toolConfig = {
+        // 配置工具调用模式 (Gemini 1.5+ 和 2.0+ 支持)
+        if (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5")) {
+          toolConfig = {
             functionCallingConfig: {
-              mode: "AUTO" // 自动选择是否调用函数
+              mode: "AUTO" // AUTO, ANY, NONE
             }
           };
         }
       }
+    } else if (!isToolSupported && tools && tools.length > 0) {
+      logger.warn(`模型 ${modelName} 不支持工具調用`);
+    }
+    
+    // 创建模型实例配置
+    const modelConfig = {
+      model: modelName,
+      generationConfig: generationConfig
+    };
+    
+    // 添加工具配置
+    if (toolsConfig.length > 0) {
+      modelConfig.tools = toolsConfig;
+    }
+    
+    if (toolConfig) {
+      modelConfig.toolConfig = toolConfig;
+    }
+    
+    // 设置系统指令（Gemini 1.5+ 和 2.0+ 支持）
+    if (systemPrompt && (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5"))) {
+      modelConfig.systemInstruction = {
+        parts: [{ text: systemPrompt }]
+      };
     }
     
     // 创建模型实例
-    const genModel = client.getGenerativeModel(modelConfig, { generationConfig });
+    const genModel = client.getGenerativeModel(modelConfig);
     
-    // 设置系统指令（如果模型支持）
-    let chatOptions = {};
-    if (systemPrompt && modelName.includes("1.5") || modelName.includes("2.0")) {
-      chatOptions.systemInstruction = { parts: [{ text: systemPrompt }] };
-    }
+    // 准备历史消息（排除最后一条用户消息）
+    const history = processedMessages.slice(0, -1);
     
     // 创建聊天会话
-    const chat = genModel.startChat(chatOptions);
+    const chat = genModel.startChat({
+      history: history
+    });
     
     // 获取最后一条用户消息
     const lastUserMessage = processedMessages[processedMessages.length - 1];
@@ -253,20 +336,54 @@ async function sendRequest(messages, modelName, tools, client) {
     let toolCalls = null;
     
     // 处理文本响应
-    if (response.text) {
-      responseContent = response.text();
+    try {
+      const text = response.text();
+      if (text) {
+        responseContent = text;
+      }
+    } catch (e) {
+      // 如果没有文本内容（例如只有函数调用），忽略错误
+      logger.error(`無文本響應: ${e.message}`);
     }
     
-    // 处理函数调用
-    if (response.functionCalls && response.functionCalls.length > 0) {
-      toolCalls = response.functionCalls.map((call, index) => ({
-        id: `call_${Date.now()}_${index}`,
-        type: "function",
-        function: {
-          name: call.name,
-          arguments: JSON.stringify(call.args || {})
-        }
-      }));
+    // 处理函数调用 - 檢查多種可能的屬性
+    let functionCalls = null;
+    
+    // 方法1: 使用 functionCalls() 方法
+    try {
+      if (typeof response.functionCalls === 'function') {
+        functionCalls = response.functionCalls();
+      }
+    } catch (e) {
+      logger.error(`functionCalls() 方法不可用: ${e.message}`);
+    }
+    
+    // 方法2: 直接訪問 functionCall 屬性（單數）
+    if (!functionCalls && response.functionCall) {
+      functionCalls = [response.functionCall];
+    }
+    
+    // 方法3: 檢查 candidates[0].content.parts 中的 functionCall
+    if (!functionCalls && result.response?.candidates?.[0]?.content?.parts) {
+      const parts = result.response.candidates[0].content.parts;
+      functionCalls = parts
+        .filter(part => part.functionCall)
+        .map(part => part.functionCall);
+    }
+    
+    if (functionCalls && functionCalls.length > 0) {
+      logger.info(`Gemini 響應包含 ${functionCalls.length} 個函數調用`);
+      toolCalls = functionCalls.map((call, index) => {
+        logger.info(`函數調用: ${call.name}(${JSON.stringify(call.args || {})})`);
+        return {
+          id: `call_${Date.now()}_${index}`,
+          type: "function",
+          function: {
+            name: call.name,
+            arguments: JSON.stringify(call.args || {})
+          }
+        };
+      });
     }
     
     // 返回统一格式的响应
@@ -290,6 +407,7 @@ async function sendRequest(messages, modelName, tools, client) {
     };
   } catch (error) {
     logger.error(`Gemini请求失败: ${error.message}`);
+    logger.error(`错误堆栈: ${error.stack}`);
     return {
       status: "400", 
       body: {

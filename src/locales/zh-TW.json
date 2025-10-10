@@ -215,6 +215,7 @@
       "usageExceeded": "您已超出此模型的使用限制。您已為模型 {model} 使用了 {usage}/{limit} 條訊息。",
       "today": "今日使用量",
       "imageGenerated": "AI已為您生成了一張圖片。",
+      "noContent": "無內容",
       "openThink": "顯示思考過程",
       "hideThink": "隱藏思考過程",
       "think": "思考過程",

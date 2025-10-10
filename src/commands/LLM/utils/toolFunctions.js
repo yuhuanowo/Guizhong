@@ -49,9 +49,13 @@ async function generateImageCloudflare(prompt) {
  */
 async function searchDuckDuckGoLite(query, numResults) {
   try {
+    logger.info(`開始搜尋: "${query}", 預期結果數: ${numResults}`);
+    
     const response = await axios.get(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`, {
-      headers: { "User-Agent": "Mozilla/5.0" }
+      headers: { "User-Agent": "Mozilla/5.0" },
+      timeout: 10000 // 10秒超時
     });
+    
     const $ = cheerio.load(response.data);
     const results = [];
 
@@ -73,34 +77,48 @@ async function searchDuckDuckGoLite(query, numResults) {
         url = url.slice(0, rutIndex);
       }
 
-      results.push({ title, url });
+      if (title && url) {
+        results.push({ title, url });
+      }
     });
 
+    logger.info(`DuckDuckGo 搜尋找到 ${results.length} 個初始結果`);
+
     // 获取网页内容、解析域名与图标
-    for (let result of results) {
+    for (let i = 0; i < results.length; i++) {
+      const result = results[i];
       try {
-        const siteRes = await axios.get(result.url);
+        const siteRes = await axios.get(result.url, {
+          timeout: 5000,
+          maxRedirects: 3
+        });
         const $site = cheerio.load(siteRes.data);
         const domain = new URL(result.url).hostname;
         const icon = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(domain)}`;
         const description = $site('meta[name="description"]').attr('content') || 
                            $site('meta[property="og:description"]').attr('content') || 
                            $site('meta[name="twitter:description"]').attr('content') || 
-                           $site.text().slice(0, 200);
+                           $site('p').first().text().slice(0, 200) || 
+                           '無描述';
         result.icon = icon;
         result.domain = domain;
-        result.contentSnippet = description;
-      } catch {
+        result.contentSnippet = description.trim();
+        // logger.success(`成功獲取第 ${i + 1} 個結果的詳細信息: ${result.title}`);
+      } catch (err) {
         // 若无法连接网站则只返回基本信息
-        result.icon = null;
-        result.domain = null;
-        result.contentSnippet = null;
+        logger.warn(`無法獲取網站詳細信息 ${result.url}: ${err.message}`);
+        const domain = result.url.match(/^https?:\/\/([^\/]+)/)?.[1] || 'unknown';
+        result.icon = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(domain)}`;
+        result.domain = domain;
+        result.contentSnippet = '無法獲取描述';
       }
     }
 
+    logger.info(`搜尋完成，返回 ${results.length} 個結果`);
     return results;
   } catch (error) {
-    console.error("Search error:", error.message);
+    logger.error(`DuckDuckGo 搜尋錯誤: ${error.message}`);
+    logger.error(`錯誤堆棧: ${error.stack}`);
     return [];
   }
 }
