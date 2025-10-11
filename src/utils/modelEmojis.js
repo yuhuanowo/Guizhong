@@ -37,6 +37,7 @@ const modelEmojiMap = {
   'github': '<:github:1402508652287361094>',
   'openrouter': '<:openrouter:1402508596784271442>',
   'ollama': '<:ollama:1402508573518594148>',
+  'zhipu': '<:zhipu:1426396289913983026>',
 };
 
 /**

@@ -14,6 +14,7 @@ const ollamaProvider = require("./providers/ollamaProvider");
 const groqProvider = require("./providers/groqProvider");
 const openRouterProvider = require("./providers/openRouterProvider");
 const yunmoProvider = require("./providers/yunmoProvider");
+const zhipuProvider = require("./providers/zhipuProvider");
 
 // 用于存储用户使用量的路径
 const usagePath = "./src/JSON/chatgptusage.json";
@@ -89,6 +90,15 @@ function getProviderType(modelName) {
         "yunmo_v1",
   ];
   
+  // Zhipu AI 提供的模型 - 基於官方文檔
+  const zhipuModels = [
+    // 文本模型
+      "glm-4.6", "glm-4.5-air", "glm-4.5-flash", "glm-4-flash-250414", "glm-z1-flash",
+    // 視覺模型
+        "glm-4.5v", "glm-4.1v-thinking-flash", "glm-4v-flash",
+
+  ];
+  
   // 根据模型名称判断提供商
   if (githubModels.includes(modelName)) return "github";
   if (geminiModels.includes(modelName)) return "gemini";  
@@ -96,6 +106,7 @@ function getProviderType(modelName) {
   if (groqModels.includes(modelName)) return "groq";
   if (openRouterModels.includes(modelName)) return "openrouter";
   if (yunmoModels.includes(modelName)) return "yunmo";
+  if (zhipuModels.includes(modelName)) return "zhipu";
   
   // 默认返回GitHub Model
   logger.warn(`未知模型: ${modelName}，默认使用GitHub Model处理`);
@@ -183,6 +194,8 @@ function getSystemPrompt(modelName, language) {
       return groqProvider.getSystemPrompt(language, prompts);
     case "openrouter":
       return openRouterProvider.getSystemPrompt(modelName, language, prompts);
+    case "zhipu":
+      return zhipuProvider.getSystemPrompt(modelName, language, prompts);
     default:
       return { role: "system", content: prompts[language] || prompts['zh-TW'] };
   }
@@ -449,9 +462,107 @@ function getToolDefinitions(enableSearch = false) {
     }
   };
 
+  // Zhipu AI 圖像生成工具
+  const zhipuImageTool = {
+    type: "function",
+    function: {
+      name: "generateImageZhipu",
+      description: "Generate high-quality images using Zhipu AI's CogView-3-Flash model. Supports text-to-image generation with various sizes. Use this when user requests to create, generate, or draw an image with Zhipu AI, or when high-quality Chinese prompt understanding is needed.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "Detailed description of the image to generate. Can be in Chinese or English. The model excels at understanding Chinese prompts."
+          },
+          size: {
+            type: "string",
+            description: "Image size. Recommended: '1024x1024' (default), '768x1344', '864x1152', '1344x768', '1152x864', '1440x720', '720x1440'. Custom sizes must be 512-2048px, divisible by 16, max 2^21 pixels.",
+            default: "1024x1024"
+          }
+        },
+        required: ["prompt"]
+      }
+    }
+  };
+
+  // Zhipu AI 視頻生成工具
+  const zhipuVideoTool = {
+    type: "function",
+    function: {
+      name: "generateVideoZhipu",
+      description: "Generate videos using Zhipu AI's CogVideoX-Flash model. Supports text-to-video and image-to-video generation. This is an asynchronous operation that returns a task ID. Use queryVideoResultZhipu to check the generation status and get the video file. Suitable for creating short video clips with AI-generated content or animations.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "Detailed description of the video to generate. Can be in Chinese or English. Maximum 512 characters. Required unless imageUrl is provided."
+          },
+          quality: {
+            type: "string",
+            enum: ["speed", "quality"],
+            description: "Generation mode. 'speed': Faster generation (default), 'quality': Higher quality output, takes longer",
+            default: "speed"
+          },
+          size: {
+            type: "string",
+            enum: ["1280x720", "720x1280", "1024x1024", "1920x1080", "1080x1920", "2048x1080", "3840x2160"],
+            description: "Video resolution. Default is based on input image ratio if imageUrl is provided, otherwise uses 1080p for shortest side.",
+            default: "1920x1080"
+          },
+          fps: {
+            type: "integer",
+            enum: [30, 60],
+            description: "Frame rate (FPS). Options: 30 or 60. Default: 30",
+            default: 30
+          },
+          duration: {
+            type: "integer",
+            enum: [5, 10],
+            description: "Video duration in seconds. Options: 5 or 10. Default: 5",
+            default: 5
+          },
+          withAudio: {
+            type: "boolean",
+            description: "Whether to generate AI audio effects. Default: false",
+            default: false
+          },
+          imageUrl: {
+            type: "string",
+            description: "Optional: URL or Base64 encoded image to generate video from. Supports PNG, JPEG, JPG formats, max 5MB. Can be used with or without prompt for image-to-video generation."
+          }
+        },
+        required: []
+      }
+    }
+  };
+
+  // 查詢Zhipu視頻生成結果工具
+  const queryZhipuVideoTool = {
+    type: "function",
+    function: {
+      name: "queryVideoResultZhipu",
+      description: "Query the status and result of a Zhipu AI video generation task. Use this after calling generateVideoZhipu to check if the video is ready and get the download file. The task may be PROCESSING (in progress), SUCCESS (completed), or FAIL (failed).",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "The task ID returned by generateVideoZhipu"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
+  };
+
   const tools = [imageTool];
   
-  
+  // 添加Zhipu AI 工具
+  tools.push(zhipuImageTool);
+  tools.push(zhipuVideoTool);
+  tools.push(queryZhipuVideoTool);
   
   if (enableSearch) {
     tools.push(searchTool);
@@ -485,6 +596,8 @@ function createLLMClient(modelName) {
       return openRouterProvider.createClient(config.openRouterApiKey);
     case "yunmo":
       return yunmoProvider.createClient(config.yunmoApiKey, config.yunmoApiEndpoint);
+    case "zhipu":
+      return zhipuProvider.createClient(config.zhipuApiKey);
     default:
       return githubModelProvider.createClient(config.githubToken);
   }
@@ -514,6 +627,8 @@ async function formatUserMessage(prompt, image, audio, modelName) {
       return await openRouterProvider.formatUserMessage(prompt, image, modelName);
     case "yunmo":
       return await yunmoProvider.formatUserMessage({ role: "user", content: prompt }, modelName);
+    case "zhipu":
+      return await zhipuProvider.formatUserMessage(prompt, image, audio, modelName);
     default:
       return [{ role: "user", content: prompt }];
   }
@@ -544,6 +659,8 @@ async function sendLLMRequest(messages, modelName, tools, client) {
         return await openRouterProvider.sendRequest(messages, modelName, tools, client);
       case "yunmo":
         return await yunmoProvider.sendRequest(messages, modelName, tools, client);
+      case "zhipu":
+        return await zhipuProvider.sendRequest(messages, modelName, tools, client);
       default:
         return await githubModelProvider.sendRequest(messages, modelName, tools, client);
     }
@@ -642,6 +759,21 @@ function getModelUsageLimits() {
     
     // Yunmo Models
     "yunmo_v1": InfinityLimit,
+    
+    // Zhipu AI Models
+    // 文本模型 - 根據官方價格頁面設定
+    "glm-4.6": High, 
+    "glm-4.5-air": Low,
+    "glm-4.5-flash": InfinityLimit,  
+    "glm-4-flash-250414": InfinityLimit,
+    "glm-z1-flash": InfinityLimit,
+    
+    // 視覺模型
+    "glm-4.5v": Low,
+    "glm-4.1v-thinking-flash": InfinityLimit,
+    "glm-4v-flash": InfinityLimit,
+
+
   };
 }
 
@@ -734,6 +866,19 @@ function getAllAvailableModels() {
     
     // Yunmo
     { name: "[YuhuanAI] Yunmo v1", value: "yunmo_v1" },
+    
+    // Zhipu AI - 文本模型
+    { name: "[Zhipu] GLM-4.6", value: "glm-4.6" },
+    { name: "[Zhipu] GLM-4.5-Air", value: "glm-4.5-air" },
+    { name: "[Zhipu] GLM-4.5-Flash (Free)", value: "glm-4.5-flash" },
+    { name: "[Zhipu] GLM-4-Flash-250414 (Free)", value: "glm-4-flash-250414" },
+    { name: "[Zhipu] GLM-Z1-Flash (Free)", value: "glm-z1-flash" },
+    
+    // Zhipu AI - 視覺模型
+    { name: "[Zhipu] GLM-4.5V", value: "glm-4.5v" },
+    { name: "[Zhipu] GLM-4.1V-Thinking-Flash (Free)", value: "glm-4.1v-thinking-flash" },
+    { name: "[Zhipu] GLM-4V-Flash (Free)", value: "glm-4v-flash" },
+
   ];
 }
 

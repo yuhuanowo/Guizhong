@@ -39,6 +39,7 @@ try {
         ollamaEndpoint: configFile.ollamaEndpoint ?? "http://localhost:11434",
         groqApiKey: configFile.groqApiKey ?? "",
         openRouterApiKey: configFile.openRouterApiKey ?? "",
+        zhipuApiKey: configFile.zhipuApiKey ?? "",
         cloudflareApiKey: configFile.cloudflareApiKey ?? "",
         cloudflareEndpoint: configFile.cloudflareEndpoint ?? "https://api.cloudflare.com/client/v4/images/generate",
         tavilyApiKey: configFile.tavilyApiKey ?? "",

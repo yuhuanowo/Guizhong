@@ -434,7 +434,14 @@
       "searchnotused": "Search enabled (not used)",
       "viewHistory": "View History",
       "error": "An error occurred: {error}",
-      "archiveTime": "Auto-archive at: {time}"
+      "archiveTime": "Auto-archive at: {time}",
+      "zhipuImageGenerated": "Image generated using Zhipu AI CogView-3-Flash",
+      "zhipuVideoGenerating": "Zhipu AI is generating video, please wait...",
+      "zhipuVideoGenerated": "Zhipu AI video generation completed!",
+      "zhipuVideoDownload": "🎬 Video File",
+      "zhipuVideoFailed": "Video generation failed",
+      "zhipuVideoTimeout": "Video generation timeout (over 5 minutes)",
+      "zhipuImageFailed": "Image generation failed"
     },
     "start": {
       "name": "start",

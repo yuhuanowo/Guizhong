@@ -6,6 +6,7 @@ const fs = require("fs");
 const crypto = require("crypto");
 const { AttachmentBuilder } = require("discord.js");
 const config = require("../../../config.js");
+const zhipuProvider = require("./providers/zhipuProvider.js");
 
 // Tavily API 基礎配置
 const TAVILY_BASE_URL = "https://api.tavily.com";
@@ -365,6 +366,109 @@ function processGeneratedImage(dataURI) {
   };
 }
 
+/**
+ * 使用Zhipu AI 生成圖像 (僅使用免費模型 cogview-3-flash)
+ * @param {Object} options 生成選項
+ * @param {string} options.prompt - 圖像描述提示 (必填)
+ * @param {string} [options.size='1024x1024'] - 圖片尺寸
+ * @param {boolean} [options.watermark_enabled=true] - 是否添加水印
+ * @returns {Promise<Object>} 生成結果 { imageUrl, created }
+ */
+async function generateImageZhipu(options) {
+  try {
+    const apiKey = config.zhipuApiKey;
+    if (!apiKey) {
+      throw new Error("Zhipu AI API Key 未配置");
+    }
+    
+    const client = zhipuProvider.createClient(apiKey);
+    // 固定使用免費模型
+    const modelName = "cogview-3-flash";
+    
+    const result = await zhipuProvider.generateImage(
+      options.prompt,
+      modelName,
+      client
+    );
+    
+    return result;
+  } catch (error) {
+    logger.error(`Zhipu AI 圖像生成錯誤: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * 使用Zhipu AI 生成視頻 (僅使用免費模型 cogvideox-flash)
+ * 注意：這是異步接口，需要使用 queryVideoResultZhipu 查詢結果
+ * @param {Object} options 生成選項
+ * @param {string} options.prompt - 視頻描述提示
+ * @param {string} [options.quality='speed'] - 質量: 'speed' (快速), 'quality' (高質量)
+ * @param {boolean} [options.withAudio=false] - 是否生成 AI 音效
+ * @param {string} [options.size='1920x1080'] - 視頻尺寸
+ * @param {number} [options.fps=30] - 幀率: 30 或 60
+ * @param {number} [options.duration=5] - 持續時長(秒): 5 或 10
+ * @param {string} [options.imageUrl] - 基於圖片生成視頻的圖片 URL
+ * @param {boolean} [options.watermark_enabled=true] - 是否添加水印
+ * @returns {Promise<Object>} 任務信息 { taskId, requestId, taskStatus, model }
+ */
+async function generateVideoZhipu(options) {
+  try {
+    const apiKey = config.zhipuApiKey;
+    if (!apiKey) {
+      throw new Error("Zhipu AI API Key 未配置");
+    }
+    
+    const client = zhipuProvider.createClient(apiKey);
+    // 固定使用免費模型
+    const modelName = "cogvideox-flash";
+    
+    const videoOptions = {
+      quality: options.quality || "speed",
+      withAudio: options.withAudio !== undefined ? options.withAudio : false,
+      size: options.size || "1920x1080",
+      fps: options.fps || 30,
+      duration: options.duration || 5,
+      imageUrl: options.imageUrl,
+    };
+    
+    const result = await zhipuProvider.generateVideo(
+      options.prompt,
+      modelName,
+      videoOptions,
+      client
+    );
+    
+    return result;
+  } catch (error) {
+    logger.error(`Zhipu AI 視頻生成錯誤: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * 查詢Zhipu AI 異步任務結果 (用於視頻生成)
+ * @param {string} taskId - 任務 ID
+ * @returns {Promise<Object>} 任務結果
+ */
+async function queryVideoResultZhipu(taskId) {
+  try {
+    const apiKey = config.zhipuApiKey;
+    if (!apiKey) {
+      throw new Error("Zhipu AI API Key 未配置");
+    }
+    
+    const client = zhipuProvider.createClient(apiKey);
+    
+    const result = await zhipuProvider.queryAsyncResult(taskId, client);
+    
+    return result;
+  } catch (error) {
+    logger.error(`查詢Zhipu AI 視頻任務錯誤: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   // Tavily APIs
   tavilySearch,
@@ -375,6 +479,10 @@ module.exports = {
   generateImageCloudflare,
   // DuckDuckGo
   searchDuckDuckGoLite,
+  // Zhipu AI
+  generateImageZhipu,
+  generateVideoZhipu,
+  queryVideoResultZhipu,
   // Utils
   processGeneratedImage
 };

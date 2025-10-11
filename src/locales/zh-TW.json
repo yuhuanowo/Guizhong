@@ -235,7 +235,14 @@
       "searchnotused": "搜索已啟用（未使用）",
       "viewHistory": "查看歷史記錄",
       "error": "發生錯誤：{error}",
-      "archiveTime": "自動歸檔時間: {time}"
+      "archiveTime": "自動歸檔時間: {time}",
+      "zhipuImageGenerated": "已使用Zhipu AI CogView-3-Flash 生成圖片",
+      "zhipuVideoGenerating": "Zhipu AI 正在生成視頻，請稍候...",
+      "zhipuVideoGenerated": "Zhipu AI 視頻生成完成！",
+      "zhipuVideoDownload": "🎬 視頻文件",
+      "zhipuVideoFailed": "視頻生成失敗",
+      "zhipuVideoTimeout": "視頻生成超時（超過5分鐘）",
+      "zhipuImageFailed": "圖片生成失敗"
     },
     "start": {
       "name": "start",

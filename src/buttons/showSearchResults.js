@@ -99,8 +99,8 @@ module.exports = {
   calculateEmbedSize,
   async execute(interaction) {
     try {
-      console.log('showSearchResults executed with customId:', interaction.customId);
-      console.log('Message embeds count:', interaction.message.embeds.length);
+      // console.log('showSearchResults executed with customId:', interaction.customId);
+      // console.log('Message embeds count:', interaction.message.embeds.length);
       
       // 處理 showSearchResults 和 hideSearchResults 兩種按鈕
       if (!interaction.customId.startsWith("showSearchResults_") && 

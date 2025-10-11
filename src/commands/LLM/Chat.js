@@ -4,6 +4,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = re
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const fetch = require("node-fetch");
 const logger = require("../../utils/logger.js");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
@@ -279,6 +280,7 @@ module.exports = {
 
       // 处理可能的工具调用
       let dataURI = null;
+      let videoUrl = null; // 添加視頻 URL 變量
       if (
         response.body.choices &&
         response.body.choices[0].finish_reason === "tool_calls"
@@ -478,47 +480,338 @@ module.exports = {
                     })
                   });
                 }
+              } else if (call.function.name === "generateImageZhipu") {
+                try {
+                  const imageResult = await toolFunctions.generateImageZhipu(parsed);
+                  
+                  // 下載圖片並轉換為 dataURI
+                  const imageResponse = await fetch(imageResult.imageUrl);
+                  const imageBuffer = await imageResponse.buffer();
+                  const base64Image = imageBuffer.toString('base64');
+                  dataURI = `data:image/jpeg;base64,${base64Image}`;
+                  
+                    // 回傳給 LLM 的工具結果：僅回報成功與提示詞，不包含外部圖片 URL
+                    messages.push({
+                      tool_call_id: call.id,
+                      role: "tool",
+                      name: call.function.name,
+                      content: JSON.stringify({ 
+                        generateResult: i18n.getString("commands.agent.zhipuImageGenerated", language),
+                        prompt: parsed.prompt
+                      })
+                    });
+                } catch (error) {
+                  logger.error(`Zhipu AI 圖像生成錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: i18n.getString("commands.agent.zhipuImageFailed", language) + `: ${error.message}`
+                    })
+                  });
+                }
+              } else if (call.function.name === "generateVideoZhipu") {
+                try {
+                  const videoResult = await toolFunctions.generateVideoZhipu(parsed);
+                  
+                  // 自動輪詢查詢結果，最多等待 5 分鐘
+                  const maxAttempts = 30; // 30 次 x 10 秒 = 5 分鐘
+                  let attempts = 0;
+                  let finalResult = null;
+                  
+                  while (attempts < maxAttempts) {
+                    attempts++;
+                    
+                    // 等待 10 秒再查詢
+                    await new Promise(resolve => setTimeout(resolve, 10000));
+                    
+                    try {
+                      const queryResult = await toolFunctions.queryVideoResultZhipu(videoResult.taskId);
+                      
+                      if (queryResult.task_status === "SUCCESS") {
+                        finalResult = queryResult;
+                        break;
+                      } else if (queryResult.task_status === "FAIL") {
+                        throw new Error(queryResult.error?.message || i18n.getString("commands.agent.zhipuVideoFailed", language));
+                      }
+                      // 如果是 PROCESSING，繼續循環
+                    } catch (queryError) {
+                      logger.error(`查詢視頻結果錯誤: ${queryError.message}`);
+                      throw queryError;
+                    }
+                  }
+                  
+                  if (finalResult && finalResult.task_status === "SUCCESS") {
+                    const generatedVideoUrl = finalResult.video_result?.[0]?.url || null;
+                    const coverImageUrl = finalResult.video_result?.[0]?.cover_image_url || null;
+                    
+                    // 下載視頻文件
+                    if (generatedVideoUrl) {
+                      const videoResponse = await fetch(generatedVideoUrl);
+                      const videoBuffer = await videoResponse.buffer();
+                      
+                      // 保存到臨時文件
+                      const tempVideoPath = `./recordings/${crypto.randomUUID()}.mp4`;
+                      fs.writeFileSync(tempVideoPath, videoBuffer);
+                      
+                      // 保存視頻路徑以便後續發送
+                      videoUrl = tempVideoPath;
+                    }
+                    
+                    // 回傳給 LLM 的工具結果：不要包含本地檔案或外部下載連結，只返回 taskId/taskStatus/prompt
+                    messages.push({
+                      tool_call_id: call.id,
+                      role: "tool",
+                      name: call.function.name,
+                      content: JSON.stringify({ 
+                        generateResult: i18n.getString("commands.agent.zhipuVideoGenerated", language),
+                        taskId: videoResult.taskId,
+                        taskStatus: "SUCCESS",
+                        model: finalResult.model,
+                        prompt: parsed.prompt
+                      })
+                    });
+                  } else {
+                    // 超時未完成
+                    messages.push({
+                      tool_call_id: call.id,
+                      role: "tool",
+                      name: call.function.name,
+                      content: JSON.stringify({ 
+                        generateResult: i18n.getString("commands.agent.zhipuVideoTimeout", language),
+                        taskId: videoResult.taskId,
+                        taskStatus: "TIMEOUT",
+                        model: videoResult.model,
+                        prompt: parsed.prompt
+                      })
+                    });
+                  }
+                } catch (error) {
+                  logger.error(`Zhipu AI 視頻生成錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: i18n.getString("commands.agent.zhipuVideoFailed", language) + `: ${error.message}`
+                    })
+                  });
+                }
+              } else if (call.function.name === "queryVideoResultZhipu") {
+                logger.info(`查詢Zhipu AI 視頻任務: ${parsed.taskId}`);
+                
+                try {
+                  const queryResult = await toolFunctions.queryVideoResultZhipu(parsed.taskId);
+                  
+                  let resultMessage = {
+                    taskId: queryResult.id,
+                    taskStatus: queryResult.task_status,
+                    model: queryResult.model
+                  };
+                  
+                  if (queryResult.task_status === "SUCCESS") {
+                    resultMessage.videoUrl = queryResult.video_result?.[0]?.url || null;
+                    resultMessage.coverImageUrl = queryResult.video_result?.[0]?.cover_image_url || null;
+                    resultMessage.message = "Video generated successfully";
+                  } else if (queryResult.task_status === "PROCESSING") {
+                    resultMessage.message = "Video is being generated, please check again later...";
+                  } else if (queryResult.task_status === "FAIL") {
+                    resultMessage.message = "Video generation failed";
+                    resultMessage.error = queryResult.error || "Unknown error";
+                  }
+                  
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify(resultMessage)
+                  });
+                  
+                  logger.success(`Zhipu AI 視頻任務查詢完成: ${queryResult.task_status}`);
+                } catch (error) {
+                  logger.error(`Zhipu AI 視頻任務查詢錯誤: ${error.message}`);
+                  messages.push({
+                    tool_call_id: call.id,
+                    role: "tool",
+                    name: call.function.name,
+                    content: JSON.stringify({ 
+                      error: `Video task query failed: ${error.message}`
+                    })
+                  });
+                }
               }
+            }
+
+            // 如果上面的邏輯沒有為該 call.id 推送任何 tool 訊息，插入一個預設的錯誤回應以滿足 LLM 的驗證要求
+            if (!messages.some(m => m.tool_call_id === call.id)) {
+              messages.push({
+                tool_call_id: call.id,
+                role: "tool",
+                name: (call.function && call.function.name) || call.name || "unknown",
+                content: JSON.stringify({ error: `No handler implemented for tool call ${call.function ? call.function.name : call.name || call.id}` })
+              });
             }
           }
           
           logger.info(`所有工具調用完成，合併搜尋結果數: ${searchResults?.length || 0}`);
           
-          // 如果有搜尋調用，使用結果再次發送請求
-          if (actuallySearched) {
-            llmService.updateUserUsage(userId, selectedModel, usageLimits);
-
-            response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
+          // 工具調用完成後，再次發送請求獲得最終回應
+          llmService.updateUserUsage(userId, selectedModel, usageLimits);
+          response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
+          
+          // 處理第二輪可能的工具調用（例如搜尋後再生成圖片或視頻）
+          if (
+            response.body.choices &&
+            response.body.choices[0].finish_reason === "tool_calls"
+          ) {
+            messages.push(response.body.choices[0].message);
+            const secondCalls = response.body.choices[0].message.tool_calls;
             
-            // 處理第二輪可能的工具調用（例如生成圖片）
-            if (
-              response.body.choices &&
-              response.body.choices[0].finish_reason === "tool_calls"
-            ) {
-              messages.push(response.body.choices[0].message);
-              const secondCalls = response.body.choices[0].message.tool_calls;
+            if (secondCalls && secondCalls.length > 0) {
+              logger.info(`第二輪檢測到 ${secondCalls.length} 個工具調用: ${secondCalls.map(t => t.function.name).join(', ')}`);
               
-              if (secondCalls && secondCalls.length > 0) {
-                for (const call of secondCalls) {
-                  if (call.type === "function") {
-                    const parsed = JSON.parse(call.function.arguments);
-                    if (call.function.name === "generateImage") {
-                      dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+              for (const call of secondCalls) {
+                if (call.type === "function") {
+                  const parsed = JSON.parse(call.function.arguments);
+                  
+                  if (call.function.name === "generateImage") {
+                    dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
+                    messages.push({
+                      tool_call_id: call.id,
+                      role: "tool",
+                      name: call.function.name,
+                      content: JSON.stringify({generateResult: "Image generated with prompt: " + parsed.prompt})
+                    });
+                  } else if (call.function.name === "generateImageZhipu") {
+                    try {
+                      const imageResult = await toolFunctions.generateImageZhipu(parsed);
+                      
+                      // 下載圖片並轉換為 dataURI
+                      const imageResponse = await fetch(imageResult.imageUrl);
+                      const imageBuffer = await imageResponse.buffer();
+                      const base64Image = imageBuffer.toString('base64');
+                      dataURI = `data:image/jpeg;base64,${base64Image}`;
+                      
                       messages.push({
                         tool_call_id: call.id,
                         role: "tool",
                         name: call.function.name,
-                        content: JSON.stringify({generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片"})
+                        content: JSON.stringify({ 
+                          generateResult: i18n.getString("commands.agent.zhipuImageGenerated", language),
+                          imageUrl: imageResult.imageUrl,
+                          created: imageResult.created
+                        })
+                      });
+                    } catch (error) {
+                      logger.error(`Zhipu AI 圖像生成錯誤: ${error.message}`);
+                      messages.push({
+                        tool_call_id: call.id,
+                        role: "tool",
+                        name: call.function.name,
+                        content: JSON.stringify({ 
+                          error: i18n.getString("commands.agent.zhipuImageFailed", language) + `: ${error.message}`
+                        })
                       });
                     }
-                  }
+                  } else if (call.function.name === "generateVideoZhipu") {
+                    try {
+                      const videoResult = await toolFunctions.generateVideoZhipu(parsed);
+                      
+                      // 自動輪詢查詢結果，最多等待 5 分鐘
+                      const maxAttempts = 30;
+                      let attempts = 0;
+                      let finalResult = null;
+                      
+                      while (attempts < maxAttempts) {
+                        attempts++;
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                        
+                        try {
+                          const queryResult = await toolFunctions.queryVideoResultZhipu(videoResult.taskId);
+                          
+                          if (queryResult.task_status === "SUCCESS") {
+                            finalResult = queryResult;
+                            break;
+                          } else if (queryResult.task_status === "FAIL") {
+                            throw new Error(queryResult.error?.message || i18n.getString("commands.agent.zhipuVideoFailed", language));
+                          }
+                        } catch (queryError) {
+                          logger.error(`查詢視頻結果錯誤: ${queryError.message}`);
+                          throw queryError;
+                        }
+                      }
+                      
+                      if (finalResult && finalResult.task_status === "SUCCESS") {
+                        const generatedVideoUrl = finalResult.video_result?.[0]?.url || null;
+                        
+                        // 下載視頻文件
+                        if (generatedVideoUrl) {
+                          const videoResponse = await fetch(generatedVideoUrl);
+                          const videoBuffer = await videoResponse.buffer();
+                          const tempVideoPath = `./recordings/${crypto.randomUUID()}.mp4`;
+                          fs.writeFileSync(tempVideoPath, videoBuffer);
+                          videoUrl = tempVideoPath;
+                        }
+                        
+                        // 回傳給 LLM 的工具結果：不要包含本地檔案路徑，僅回報 task 信息與提示詞
+                        messages.push({
+                          tool_call_id: call.id,
+                          role: "tool",
+                          name: call.function.name,
+                          content: JSON.stringify({ 
+                            generateResult: i18n.getString("commands.agent.zhipuVideoGenerated", language),
+                            taskId: videoResult.taskId,
+                            taskStatus: "SUCCESS",
+                            model: finalResult.model,
+                            prompt: parsed.prompt
+                          })
+                        });
+                      } else {
+                        messages.push({
+                          tool_call_id: call.id,
+                          role: "tool",
+                          name: call.function.name,
+                          content: JSON.stringify({ 
+                            generateResult: i18n.getString("commands.agent.zhipuVideoTimeout", language),
+                            taskId: videoResult.taskId,
+                            taskStatus: "TIMEOUT"
+                          })
+                        });
+                      }
+                    } catch (error) {
+                      logger.error(`Zhipu AI 視頻生成錯誤: ${error.message}`);
+                      messages.push({
+                        tool_call_id: call.id,
+                        role: "tool",
+                        name: call.function.name,
+                        content: JSON.stringify({ 
+                          error: i18n.getString("commands.agent.zhipuVideoFailed", language) + `: ${error.message}`
+                        })
+                      });
+                    }
+                    }
+
+                    // 第二輪也要保底：若未為該 call.id 推送 tool 訊息，插入預設回應
+                    if (!messages.some(m => m.tool_call_id === call.id)) {
+                      messages.push({
+                        tool_call_id: call.id,
+                        role: "tool",
+                        name: (call.function && call.function.name) || call.name || "unknown",
+                        content: JSON.stringify({ error: `No handler implemented for tool call ${call.function ? call.function.name : call.name || call.id}` })
+                      });
+                    }
                 }
               }
+              
+              // 第二輪工具調用完成後，再次發送請求獲得最終回應
+              llmService.updateUserUsage(userId, selectedModel, usageLimits);
+              response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
             }
+          }
 
-            if (response.status !== "200") {
-              throw response.body.error;
-            }
+          if (response.status !== "200") {
+            throw response.body.error;
           }
         }
       }
@@ -584,6 +877,20 @@ module.exports = {
             // 删除临时文件
             try { fs.unlinkSync(imageResult.path); } catch (e) { logger.warn(`无法删除临时图片 ${imageResult.path}: ${e.message}`); }
           }
+        } else if (videoUrl) {
+          // 處理生成的視頻 - 發送文件
+          embed.setDescription(displayText || i18n.getString("commands.agent.zhipuVideoGenerated", language));
+          const videoAttachment = new AttachmentBuilder(videoUrl);
+          embed.setFooter({text: `Powered by ${selectedModel} with CogVideoX-Flash | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
+          
+          try {
+            await interaction.editReply({ embeds: [embed], files: [videoAttachment] });
+          } catch (e) {
+            await interaction.followUp({ embeds: [embed], files: [videoAttachment] });
+          }
+          
+          // 删除临时视频文件
+          try { fs.unlinkSync(videoUrl); } catch (e) { logger.warn(`无法删除临时视频 ${videoUrl}: ${e.message}`); }
         } else if (dataURI) {
           logger.error("Invalid dataURI format");
         }
@@ -687,6 +994,20 @@ module.exports = {
             }
             try { fs.unlinkSync(imageResult.path); } catch (e) { logger.warn(`无法删除临时图片 ${imageResult.path}: ${e.message}`); }
           }
+        } else if (videoUrl) {
+          // 處理生成的視頻 - 發送文件
+          embed.setDescription(outputText || i18n.getString("commands.agent.zhipuVideoGenerated", language));
+          const videoAttachment = new AttachmentBuilder(videoUrl);
+          embed.setFooter({text: `Powered by ${selectedModel} with CogVideoX-Flash | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
+          
+          try {
+            await interaction.editReply({ embeds: [embed], files: [videoAttachment] });
+          } catch (e) {
+            await interaction.followUp({ embeds: [embed], files: [videoAttachment] });
+          }
+          
+          // 删除临时视频文件
+          try { fs.unlinkSync(videoUrl); } catch (e) { logger.warn(`无法删除临时视频 ${videoUrl}: ${e.message}`); }
         } else if (dataURI) {
           logger.error("Invalid dataURI format");
         }

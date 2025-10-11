@@ -134,6 +134,11 @@ groqApiKey: ""
 # OpenRouter API 密鑰
 openRouterApiKey: ""
 
+# Zhipu AI API Key (Get your API key at https://bigmodel.cn/usercenter/proj-mgmt/apikeys)
+# 智谱 AI API 密钥（在 https://bigmodel.cn/usercenter/proj-mgmt/apikeys 获取 API 密钥）
+# Zhipu AI API 密鑰（在 https://bigmodel.cn/usercenter/proj-mgmt/apikeys 獲取 API 密鑰）
+zhipuApiKey: ""
+
 # Cloudflare API Key
 # Cloudflare API 密钥
 # Cloudflare API 密鑰
