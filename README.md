@@ -25,6 +25,11 @@
   </a>
   <a href="https://github.com/yuhuanowo/Guizhong"><img alt="Statistics Graphs" src="https://repobeats.axiom.co/api/embed/ab7080243cf7b8ed4e30271afc121489272ff6c9.svg"></a>
 </p>
+<p align="center">
+  <a href="https://discord.com/oauth2/authorize?client_id=1082152889209860247" title="Invite Guizhong to your server">
+    <img alt="Invite Guizhong" src="https://img.shields.io/badge/Invite%20Guizhong-Add%20to%20Server-%237289DA?logo=discord&logoColor=white" />
+  </a>
+</p>
 
 <p align="center">
   <a href="docs/README_ZH-CN.md">简体中文</a> |
