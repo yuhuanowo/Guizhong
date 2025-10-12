@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@ai-sdk/google':
-        specifier: ^2.0.17
-        version: 2.0.17(zod@3.25.76)
+        specifier: ^2.0.20
+        version: 2.0.20(zod@3.25.76)
       '@azure-rest/ai-inference':
         specifier: ^1.0.0-beta.6
         version: 1.0.0-beta.6
@@ -24,8 +24,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0(encoding@0.1.13)
       '@discordjs/builders':
-        specifier: ^1.11.3
-        version: 1.11.3
+        specifier: ^1.12.2
+        version: 1.12.2
       '@discordjs/rest':
         specifier: ^2.6.0
         version: 2.6.0
@@ -42,8 +42,8 @@ importers:
         specifier: ^0.24.1
         version: 0.24.1
       ai:
-        specifier: ^5.0.60
-        version: 5.0.60(zod@3.25.76)
+        specifier: ^5.0.68
+        version: 5.0.68(zod@3.25.76)
       axios:
         specifier: ^1.12.2
         version: 1.12.2
@@ -72,8 +72,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       discord.js:
-        specifier: ^14.22.1
-        version: 14.22.1
+        specifier: ^14.23.2
+        version: 14.23.2
       download:
         specifier: ^8.0.0
         version: 8.0.0
@@ -114,14 +114,14 @@ importers:
         specifier: ^2.30.1
         version: 2.30.1
       mongoose:
-        specifier: ^8.19.0
-        version: 8.19.0(socks@2.8.6)
+        specifier: ^8.19.1
+        version: 8.19.1(socks@2.8.6)
       node-fetch:
         specifier: ^2.7.0
         version: 2.7.0(encoding@0.1.13)
       npm:
-        specifier: ^11.6.1
-        version: 11.6.1
+        specifier: ^11.6.2
+        version: 11.6.2
       officeparser:
         specifier: ^5.2.1
         version: 5.2.1
@@ -129,14 +129,14 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       openai:
-        specifier: ^6.1.0
-        version: 6.1.0(ws@8.18.3)(zod@3.25.76)
+        specifier: ^6.3.0
+        version: 6.3.0(ws@8.18.3)(zod@3.25.76)
       openai-api:
         specifier: ^1.3.1
         version: 1.3.1
       pdf-parse:
-        specifier: ^2.1.7
-        version: 2.1.7
+        specifier: ^2.2.6
+        version: 2.2.6
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -147,8 +147,8 @@ importers:
         specifier: ^1.3.5
         version: 1.3.5(ffmpeg-static@5.2.0)
       puppeteer:
-        specifier: ^24.23.0
-        version: 24.23.0(typescript@5.9.2)
+        specifier: ^24.24.0
+        version: 24.24.0(typescript@5.9.2)
       qs:
         specifier: ^6.14.0
         version: 6.14.0
@@ -195,20 +195,20 @@ importers:
 
 packages:
 
-  '@ai-sdk/gateway@1.0.33':
-    resolution: {integrity: sha512-v9i3GPEo4t3fGcSkQkc07xM6KJN75VUv7C1Mqmmsu2xD8lQwnQfsrgAXyNuWe20yGY0eHuheSPDZhiqsGKtH1g==}
+  '@ai-sdk/gateway@1.0.39':
+    resolution: {integrity: sha512-ijYCKG2sbn2RBVfIgaXNXvzHAf2HpFXxQODtjMI+T7Z4CLryflytchsZZ9qrGtsjiQVopKOV6m6kj4lq5fnbsg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/google@2.0.17':
-    resolution: {integrity: sha512-6LyuUrCZuiULg0rUV+kT4T2jG19oUntudorI4ttv1ARkSbwl8A39ue3rA487aDDy6fUScdbGFiV5Yv/o4gidVA==}
+  '@ai-sdk/google@2.0.20':
+    resolution: {integrity: sha512-+pVkl1GSnORRJEKnjscQEdfW4RR2csVVY8F3QkCHdWjbeSIqrEQw8MWQ4SrtsVLJdAvqyG9WMdiDR7WXSXpn4Q==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/provider-utils@3.0.10':
-    resolution: {integrity: sha512-T1gZ76gEIwffep6MWI0QNy9jgoybUHE7TRaHB5k54K8mF91ciGFlbtCGxDYhMH3nCRergKwYFIDeFF0hJSIQHQ==}
+  '@ai-sdk/provider-utils@3.0.12':
+    resolution: {integrity: sha512-ZtbdvYxdMoria+2SlNarEk6Hlgyf+zzcznlD55EAl+7VZvJaSg2sqPvwArY7L6TfDEDJsnCq0fdhBSkYo0Xqdg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -318,8 +318,8 @@ packages:
   '@discord-player/utils@7.1.0':
     resolution: {integrity: sha512-Glaj91FRoi6GRHLQ+rDZWmWL8GEnnUl1OXotIZ1A66flk/C+p99KZahBdHV9u24QZrU5mL+yqGYxqqIQYf4rxQ==}
 
-  '@discordjs/builders@1.11.3':
-    resolution: {integrity: sha512-p3kf5eV49CJiRTfhtutUCeivSyQ/l2JlKodW1ZquRwwvlOWmG9+6jFShX6x8rUiYhnP6wKI96rgN/SXMy5e5aw==}
+  '@discordjs/builders@1.12.2':
+    resolution: {integrity: sha512-AugKmrgRJOHXEyMkABH/hXpAmIBKbYokCEl9VAM4Kh6FvkdobQ+Zhv7AR6K+y5hS7+VQ7gKXPYCe1JQmV07H1g==}
     engines: {node: '>=16.11.0'}
 
   '@discordjs/collection@1.5.3':
@@ -934,8 +934,8 @@ packages:
   '@pm2/pm2-version-check@1.0.4':
     resolution: {integrity: sha512-SXsM27SGH3yTWKc2fKR4SYNxsmnvuBQ9dd6QHtEWmiZ/VqaOYPAIlS8+vMcn27YLtAEBGvNRSh3TPNvtjZgfqA==}
 
-  '@puppeteer/browsers@2.10.10':
-    resolution: {integrity: sha512-3ZG500+ZeLql8rE0hjfhkycJjDj0pI/btEh3L9IkWUYcOrgP0xCNRq3HbtbqOPbvDhFaAWD88pDFtlLv8ns8gA==}
+  '@puppeteer/browsers@2.10.11':
+    resolution: {integrity: sha512-kp3ORGce+oC3qUMJ+g5NH9W4Q7mMG7gV2I+alv0bCbfkZ36B2V/xKCg9uYavSgjmsElhwBneahWjJP7A6fuKLw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -1121,8 +1121,8 @@ packages:
     resolution: {integrity: sha512-sOx1PKSuFwnIl7z4RN0Ls7N9AQawmR9r66eI5rFCzLDIs8HTIYrIpH9QjYWoX0lkgGrkLxXhi4QnK7MizPRrIg==}
     engines: {node: '>=20.0.0'}
 
-  '@vercel/oidc@3.0.1':
-    resolution: {integrity: sha512-V/YRVrJDqM6VaMBjRUrd6qRMrTKvZjHdVdEmdXsOZMulTa3iK98ijKTc3wldBmst6W5rHpqMoKllKcBAHgN7GQ==}
+  '@vercel/oidc@3.0.2':
+    resolution: {integrity: sha512-JekxQ0RApo4gS4un/iMGsIL1/k4KUBe3HmnGcDvzHuFBdQdudEJgTqcsJC7y6Ul4Yw5CeykgvQbX2XeEJd0+DA==}
     engines: {node: '>= 20'}
 
   '@vladfrangu/async_event_emitter@2.4.6':
@@ -1174,8 +1174,8 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.60:
-    resolution: {integrity: sha512-80U/3kmdBW6g+JkLXpz/P2EwkyEaWlPlYtuLUpx/JYK9F7WZh9NnkYoh1KvUi1Sbpo0NyurBTvX0a2AG9mmbDA==}
+  ai@5.0.68:
+    resolution: {integrity: sha512-SB6r+4TkKVlSg2ozGBSfuf6Is5hrcX/bpGBzOoyHIN3b4ILGhaly0IHEvP8+3GGIHXqtkPVEUmR6V05jKdjNlg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1750,6 +1750,9 @@ packages:
   discord-api-types@0.38.18:
     resolution: {integrity: sha512-ygenySjZKUaBf5JT8BNhZSxLzwpwdp41O0wVroOTu/N2DxFH7dxYTZUSnFJ6v+/2F3BMcnD47PC47u4aLOLxrQ==}
 
+  discord-api-types@0.38.29:
+    resolution: {integrity: sha512-+5BfrjLJN1hrrcK0MxDQli6NSv5lQH7Y3/qaOfk9+k7itex8RkA/UcevVMMLe8B4IKIawr4ITBTb2fBB2vDORg==}
+
   discord-player-youtubei@1.5.0:
     resolution: {integrity: sha512-TYwYQ5cUpOxAffqa+AkM4XVEWFqe9DAFoNl91sHrA+LrvWgPNU5W9sA9P3UQGNqsFnu0Cf93dsQvXL73n+uX0w==}
     hasBin: true
@@ -1763,8 +1766,8 @@ packages:
   discord-voip@7.1.0:
     resolution: {integrity: sha512-6aQgI3QUj0Ee5tqaAV+pgBcOrgnkBh5/1UxAqbKMYQinQNs9LEZA7OoCxlWdiJVpVM2c1AxCdqhfryQMvM10+A==}
 
-  discord.js@14.22.1:
-    resolution: {integrity: sha512-3k+Kisd/v570Jr68A1kNs7qVhNehDwDJAPe4DZ2Syt+/zobf9zEcuYFvsfIaAOgCa0BiHMfOOKQY4eYINl0z7w==}
+  discord.js@14.23.2:
+    resolution: {integrity: sha512-tU2NFr823X3TXEc8KyR/4m296KLxPai4nirN3q9kHCpY4TKj96n9lHZnyLzRNMui8EbL07jg9hgH2PWWfKMGIg==}
     engines: {node: '>=18'}
 
   dom-serializer@2.0.0:
@@ -2904,8 +2907,8 @@ packages:
       socks:
         optional: true
 
-  mongoose@8.19.0:
-    resolution: {integrity: sha512-Z4iRiBkC7aR7a/rxQxtUAUBasFdiXkBuv3EY4NwkRbs92xKA4pwzi1Q4D+odFBe+ChahMNAYg2JP+7tWzZM0sQ==}
+  mongoose@8.19.1:
+    resolution: {integrity: sha512-oB7hGQJn4f8aebqE7mhE54EReb5cxVgpCxQCQj0K/cK3q4J3Tg08nFP6sM52nJ4Hlm8jsDnhVYpqIITZUAhckQ==}
     engines: {node: '>=16.20.1'}
 
   mpath@0.9.0:
@@ -3000,8 +3003,8 @@ packages:
     resolution: {integrity: sha512-D6MUW4K/VzoJ4rJ01JFKxDrtY1v9wrgzCX5f2qj/lzH1m/lW6MhUZFKerVsnyjOhOsYzI9Kqqak+10l4LvLpMw==}
     engines: {node: '>=4'}
 
-  npm@11.6.1:
-    resolution: {integrity: sha512-7iDSHDoup6uMQJ37yWrhfqcbMhF0UEfGRap6Nv+aKQcrIJXlCi2cKbj75WBmiHlcwsQCy/U0zEwDZdAx6H/Vaw==}
+  npm@11.6.2:
+    resolution: {integrity: sha512-7iKzNfy8lWYs3zq4oFPa8EXZz5xt9gQNKJZau3B1ErLBb6bF7sBJ00x09485DOvRT2l5Gerbl3VlZNT57MxJVA==}
     engines: {node: ^20.17.0 || >=22.9.0}
     hasBin: true
     bundledDependencies:
@@ -3047,7 +3050,6 @@ packages:
       - ms
       - node-gyp
       - nopt
-      - normalize-package-data
       - npm-audit-report
       - npm-install-checks
       - npm-package-arg
@@ -3108,8 +3110,8 @@ packages:
   openai-api@1.3.1:
     resolution: {integrity: sha512-wKhm/BZS/PyzQRJTdl6kciwL4LpqqyertLYEbbPYDg7ySk1tEywPSBnMio0xdSQaRmdSYVS8VHzJvnwKb9tqkw==}
 
-  openai@6.1.0:
-    resolution: {integrity: sha512-5sqb1wK67HoVgGlsPwcH2bUbkg66nnoIYKoyV9zi5pZPqh7EWlmSrSDjAh4O5jaIg/0rIlcDKBtWvZBuacmGZg==}
+  openai@6.3.0:
+    resolution: {integrity: sha512-E6vOGtZvdcb4yXQ5jXvDlUG599OhIkb/GjBLZXS+qk0HF+PJReIldEc9hM8Ft81vn+N6dRdFRb7BZNK8bbvXrw==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -3226,9 +3228,9 @@ packages:
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
 
-  pdf-parse@2.1.7:
-    resolution: {integrity: sha512-bO9yT+xiQu73i1Anp1TQHqqKdL7zkhbGeMEiSBL3XBTDk1LZUySsHjMyxhpevAi4h78zbpM/c0HACdf6TQLj/Q==}
-    engines: {node: '>=16'}
+  pdf-parse@2.2.6:
+    resolution: {integrity: sha512-TSfwr4cSMTGazmKWw+thTeCfnIYMahcBCGCBNwxfTOKThHeSeajdQd2mkclmwdZJV7letkhie4KIYe9ys6LWWQ==}
+    engines: {node: '>=20.16.0 <21 || >=22.3.0'}
 
   pdfjs-dist@5.4.296:
     resolution: {integrity: sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q==}
@@ -3472,12 +3474,12 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  puppeteer-core@24.23.0:
-    resolution: {integrity: sha512-yl25C59gb14sOdIiSnJ08XiPP+O2RjuyZmEG+RjYmCXO7au0jcLf7fRiyii96dXGUBW7Zwei/mVKfxMx/POeFw==}
+  puppeteer-core@24.24.0:
+    resolution: {integrity: sha512-RR5AeQ6dIbSepDe9PTtfgK1fgD7TuA9qqyGxPbFCyGfvfkbR7MiqNYdE7AhbTaFIqG3hFBtWwbVKVZF8oEqj7Q==}
     engines: {node: '>=18'}
 
-  puppeteer@24.23.0:
-    resolution: {integrity: sha512-BVR1Lg8sJGKXY79JARdIssFWK2F6e1j+RyuJP66w4CUmpaXjENicmA3nNpUXA8lcTdDjAndtP+oNdni3T/qQqA==}
+  puppeteer@24.24.0:
+    resolution: {integrity: sha512-jRn6T8rSrQZXIplXICpH2zYJ2XrIFY7Ug0+TxRTuwY8ZTL7+MKDvFH0aLG7Xx3ts4twzxIKZmiYo+qg7whNpZw==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3862,8 +3864,8 @@ packages:
   tar-fs@2.1.3:
     resolution: {integrity: sha512-090nwYJDmlhwFwEW3QQl+vaNnxsO2yVsd45eTKRBzSzu+hlb1w2K9inVq5b0ngXuLVqQ4ApvsUHHnu/zQNkWAg==}
 
-  tar-fs@3.1.0:
-    resolution: {integrity: sha512-5Mty5y/sOF1YWj1J6GiBodjlDc05CUR8PKXrsnFAiSG0xA+GHeWLovaZPYUDXkH/1iKRf2+M5+OrRgzC7O9b7w==}
+  tar-fs@3.1.1:
+    resolution: {integrity: sha512-LZA0oaPOc2fVo82Txf3gw+AkEd38szODlptMYejQUhndHMLQ9M059uXR+AfS7DNo0NpINvSqDsvyaCrBVkptWg==}
 
   tar-stream@1.6.2:
     resolution: {integrity: sha512-rzS0heiNf8Xn7/mpdSVVSMAWAoy9bfb1WOTYC78Z0UQKeKa/CWS8FOq0lKGNa8DWKAn9gxjCvMLYc5PGXYlK2A==}
@@ -4292,20 +4294,20 @@ packages:
 
 snapshots:
 
-  '@ai-sdk/gateway@1.0.33(zod@3.25.76)':
+  '@ai-sdk/gateway@1.0.39(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.10(zod@3.25.76)
-      '@vercel/oidc': 3.0.1
+      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
+      '@vercel/oidc': 3.0.2
       zod: 3.25.76
 
-  '@ai-sdk/google@2.0.17(zod@3.25.76)':
+  '@ai-sdk/google@2.0.20(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.10(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
       zod: 3.25.76
 
-  '@ai-sdk/provider-utils@3.0.10(zod@3.25.76)':
+  '@ai-sdk/provider-utils@3.0.12(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
       '@standard-schema/spec': 1.0.0
@@ -4462,12 +4464,12 @@ snapshots:
     dependencies:
       '@discordjs/collection': 1.5.3
 
-  '@discordjs/builders@1.11.3':
+  '@discordjs/builders@1.12.2':
     dependencies:
       '@discordjs/formatters': 0.6.1
       '@discordjs/util': 1.1.1
       '@sapphire/shapeshift': 4.0.0
-      discord-api-types: 0.38.18
+      discord-api-types: 0.38.29
       fast-deep-equal: 3.1.3
       ts-mixer: 6.0.4
       tslib: 2.8.1
@@ -4478,7 +4480,7 @@ snapshots:
 
   '@discordjs/formatters@0.6.1':
     dependencies:
-      discord-api-types: 0.38.18
+      discord-api-types: 0.38.29
 
   '@discordjs/rest@2.6.0':
     dependencies:
@@ -4517,7 +4519,7 @@ snapshots:
       '@sapphire/async-queue': 1.5.5
       '@types/ws': 8.18.1
       '@vladfrangu/async_event_emitter': 2.4.6
-      discord-api-types: 0.38.18
+      discord-api-types: 0.38.29
       tslib: 2.8.1
       ws: 8.18.3
     transitivePeerDependencies:
@@ -4992,14 +4994,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@puppeteer/browsers@2.10.10':
+  '@puppeteer/browsers@2.10.11':
     dependencies:
       debug: 4.4.3
       extract-zip: 2.0.1
       progress: 2.0.3
       proxy-agent: 6.5.0
       semver: 7.7.2
-      tar-fs: 3.1.0
+      tar-fs: 3.1.1
       yargs: 17.7.2
     transitivePeerDependencies:
       - bare-buffer
@@ -5147,7 +5149,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vercel/oidc@3.0.1': {}
+  '@vercel/oidc@3.0.2': {}
 
   '@vladfrangu/async_event_emitter@2.4.6': {}
 
@@ -5191,11 +5193,11 @@ snapshots:
       indent-string: 4.0.0
     optional: true
 
-  ai@5.0.60(zod@3.25.76):
+  ai@5.0.68(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 1.0.33(zod@3.25.76)
+      '@ai-sdk/gateway': 1.0.39(zod@3.25.76)
       '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.10(zod@3.25.76)
+      '@ai-sdk/provider-utils': 3.0.12(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
@@ -5782,6 +5784,8 @@ snapshots:
 
   discord-api-types@0.38.18: {}
 
+  discord-api-types@0.38.29: {}
+
   discord-player-youtubei@1.5.0:
     dependencies:
       bgutils-js: 3.2.0
@@ -5831,16 +5835,16 @@ snapshots:
       - tsx
       - yaml
 
-  discord.js@14.22.1:
+  discord.js@14.23.2:
     dependencies:
-      '@discordjs/builders': 1.11.3
+      '@discordjs/builders': 1.12.2
       '@discordjs/collection': 1.5.3
       '@discordjs/formatters': 0.6.1
       '@discordjs/rest': 2.6.0
       '@discordjs/util': 1.1.1
       '@discordjs/ws': 1.2.3
       '@sapphire/snowflake': 3.5.3
-      discord-api-types: 0.38.18
+      discord-api-types: 0.38.29
       fast-deep-equal: 3.1.3
       lodash.snakecase: 4.1.1
       magic-bytes.js: 1.12.1
@@ -7095,7 +7099,7 @@ snapshots:
     optionalDependencies:
       socks: 2.8.6
 
-  mongoose@8.19.0(socks@2.8.6):
+  mongoose@8.19.1(socks@2.8.6):
     dependencies:
       bson: 6.10.4
       kareem: 2.6.3
@@ -7118,7 +7122,7 @@ snapshots:
 
   mquery@5.0.0:
     dependencies:
-      debug: 4.4.1
+      debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
 
@@ -7210,7 +7214,7 @@ snapshots:
       query-string: 5.1.1
       sort-keys: 2.0.0
 
-  npm@11.6.1: {}
+  npm@11.6.2: {}
 
   npmlog@6.0.2:
     dependencies:
@@ -7258,7 +7262,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  openai@6.1.0(ws@8.18.3)(zod@3.25.76):
+  openai@6.3.0(ws@8.18.3)(zod@3.25.76):
     optionalDependencies:
       ws: 8.18.3
       zod: 3.25.76
@@ -7370,9 +7374,11 @@ snapshots:
 
   pathe@2.0.3: {}
 
-  pdf-parse@2.1.7:
+  pdf-parse@2.2.6:
     dependencies:
       pdfjs-dist: 5.4.296
+    optionalDependencies:
+      '@napi-rs/canvas': 0.1.80
 
   pdfjs-dist@5.4.296:
     optionalDependencies:
@@ -7631,9 +7637,9 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  puppeteer-core@24.23.0:
+  puppeteer-core@24.24.0:
     dependencies:
-      '@puppeteer/browsers': 2.10.10
+      '@puppeteer/browsers': 2.10.11
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
       debug: 4.4.3
       devtools-protocol: 0.0.1508733
@@ -7646,13 +7652,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  puppeteer@24.23.0(typescript@5.9.2):
+  puppeteer@24.24.0(typescript@5.9.2):
     dependencies:
-      '@puppeteer/browsers': 2.10.10
+      '@puppeteer/browsers': 2.10.11
       chromium-bidi: 9.1.0(devtools-protocol@0.0.1508733)
       cosmiconfig: 9.0.0(typescript@5.9.2)
       devtools-protocol: 0.0.1508733
-      puppeteer-core: 24.23.0
+      puppeteer-core: 24.24.0
       typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bare-buffer
@@ -8159,7 +8165,7 @@ snapshots:
       pump: 3.0.3
       tar-stream: 2.2.0
 
-  tar-fs@3.1.0:
+  tar-fs@3.1.1:
     dependencies:
       pump: 3.0.3
       tar-stream: 3.1.7
