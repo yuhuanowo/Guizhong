@@ -133,12 +133,12 @@ function updateUserUsage(userId, modelName, usageLimits) {
     if (!userUsage.date || userUsage.date !== currentDate) userUsage = { date: currentDate };
     if (!userUsage[userId]) userUsage[userId] = {};
     
-    // 如果未指定模型，根据gpt-5-nano的使用量决定使用哪个模型
+    // 如果未指定模型，根据gpt-5-mini的使用量决定使用哪个模型
     if (!modelName) {
-      if (userUsage[userId]["gpt-5-nano"] > usageLimits["gpt-5-nano"] - 5) {
-        modelName = "gpt-4.1-nano";
+      if (userUsage[userId]["gpt-5-mini"] > usageLimits["gpt-5-mini"] - 5) {
+        modelName = "gpt-4.1-mini";
       } else {
-        modelName = "gpt-5-nano";
+        modelName = "gpt-5-mini";
       }
     }
     
@@ -155,9 +155,9 @@ function updateUserUsage(userId, modelName, usageLimits) {
   } catch (error) {
     logger.error(`更新用户使用量出错: ${error.message}`);
     return {
-      selectedModel: modelName || "gpt-5-nano",
+      selectedModel: modelName || "gpt-5-mini",
       usage: 1,
-      limit: usageLimits[modelName || "gpt-5-nano"] || 10,
+      limit: usageLimits[modelName || "gpt-5-mini"] || 10,
       isExceeded: false
     };
   }
