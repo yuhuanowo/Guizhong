@@ -47,13 +47,13 @@ function getProviderType(modelName) {
   const geminiModels = [
     // Gemini 2.5 系列
         "gemini-2.5-pro",
-        "gemini-2.5-flash-preview-05-20",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-preview-09-2025",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash-lite-preview-09-2025",
     // Gemini 2.0 系列
         "gemini-2.0-flash",
         "gemini-2.0-flash-lite",
-    // Gemini 1.5 系列
-        "gemini-1.5-pro",
-        "gemini-1.5-flash",
     // Gemma 系列
         "gemma-3-27b-it",
         "gemma-3n-e4b-it",
@@ -83,6 +83,10 @@ function getProviderType(modelName) {
         "mistralai/mistral-small-3.1-24b-instruct:free",
         "deepseek/deepseek-r1-0528:free",
         "qwen/qwq-32b:free",
+        "x-ai/grok-4.1-fast:free",
+        "kwaipilot/kat-coder-pro:free",
+        "qwen/qwen3-coder:free",
+        "moonshotai/kimi-k2:free"
   ];
   
   // Yunmo 提供的模型
@@ -512,16 +516,16 @@ function getToolDefinitions(enableSearch = false) {
             default: "1920x1080"
           },
           fps: {
-            type: "integer",
-            enum: [30, 60],
+            type: "string",
+            enum: ["30", "60"],
             description: "Frame rate (FPS). Options: 30 or 60. Default: 30",
-            default: 30
+            default: "30"
           },
           duration: {
-            type: "integer",
-            enum: [5, 10],
+            type: "string",
+            enum: ["5", "10"],
             description: "Video duration in seconds. Options: 5 or 10. Default: 5",
-            default: 5
+            default: "5"
           },
           withAudio: {
             type: "boolean",
@@ -732,11 +736,12 @@ function getModelUsageLimits() {
     "Phi-4-reasoning": Low,
     // Gemini
     "gemini-2.5-pro": 100,
-    "gemini-2.5-flash-preview-05-20": 250,
+    "gemini-2.5-flash": 250,
+    "gemini-2.5-flash-preview-09-2025": 250,
+    "gemini-2.5-flash-lite": 250,
+    "gemini-2.5-flash-lite-preview-09-2025": 250,
     "gemini-2.0-flash": 750,
     "gemini-2.0-flash-lite": 750,
-    "gemini-1.5-pro": 25,
-    "gemini-1.5-flash": 750,
     "gemma-3-27b-it": 7200,
     "gemma-3n-e4b-it": 7200,
     // Ollama
@@ -756,6 +761,10 @@ function getModelUsageLimits() {
     "mistralai/mistral-small-3.1-24b-instruct:free": InfinityLimit,
     "deepseek/deepseek-r1-0528:free": InfinityLimit,
     "qwen/qwq-32b:free": InfinityLimit,
+    "x-ai/grok-4.1-fast:free": InfinityLimit,
+    "kwaipilot/kat-coder-pro:free": InfinityLimit,
+    "qwen/qwen3-coder:free": InfinityLimit,
+    "moonshotai/kimi-k2:free": InfinityLimit,
     
     // Yunmo Models
     "yunmo_v1": InfinityLimit,
@@ -836,11 +845,12 @@ function getAllAvailableModels() {
 
     // Gemini
     { name: "[Google] Gemini 2.5 Pro", value: "gemini-2.5-pro" },
-    { name: "[Google] Gemini 2.5 Flash Preview 05-20", value: "gemini-2.5-flash-preview-05-20" },
+    { name: "[Google] Gemini 2.5 Flash", value: "gemini-2.5-flash" },
+    { name: "[Google] Gemini 2.5 Flash Preview 09-2025", value: "gemini-2.5-flash-preview-09-2025" },
+    { name: "[Google] Gemini 2.5 Flash Lite", value: "gemini-2.5-flash-lite" },
+    { name: "[Google] Gemini 2.5 Flash Lite Preview 09-2025", value: "gemini-2.5-flash-lite-preview-09-2025" },
     { name: "[Google] Gemini 2.0 Flash", value: "gemini-2.0-flash" },
     { name: "[Google] Gemini 2.0 Flash Lite", value: "gemini-2.0-flash-lite" },
-    { name: "[Google] Gemini 1.5 Pro", value: "gemini-1.5-pro" },
-    { name: "[Google] Gemini 1.5 Flash", value: "gemini-1.5-flash" },
     { name: "[Google] Gemma 3 27B IT", value: "gemma-3-27b-it" },
     { name: "[Google] Gemma 3N E4B IT", value: "gemma-3n-e4b-it" },
 
@@ -863,6 +873,10 @@ function getAllAvailableModels() {
     { name: "[Mistral(OR)] Mistral Small 3.1 24B Instruct Free", value: "mistralai/mistral-small-3.1-24b-instruct:free" },
     { name: "[DeepSeek(OR)] DeepSeek R1 0528 Free", value: "deepseek/deepseek-r1-0528:free" },
     { name: "[Qwen(OR)] QwQ 32B Free", value: "qwen/qwq-32b:free" },
+    { name: "[xAI(OR)] Grok 4.1 Fast Free", value: "x-ai/grok-4.1-fast:free" },
+    { name: "[KwaiPilot(OR)] KAT Coder Pro Free", value: "kwaipilot/kat-coder-pro:free" },
+    { name: "[Qwen(OR)] Qwen3 Coder Free", value: "qwen/qwen3-coder:free" },
+    { name: "[MoonshotAI(OR)] Kimi K2 Free", value: "moonshotai/kimi-k2:free" },
     
     // Yunmo
     { name: "[YuhuanAI] Yunmo v1", value: "yunmo_v1" },

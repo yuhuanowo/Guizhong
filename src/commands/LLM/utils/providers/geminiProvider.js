@@ -2,7 +2,7 @@
  * Google AI Studio Gemini Provider
  * 处理所有Google AI Gemini模型API调用
  */
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const fetch = require("node-fetch");
 const logger = require("../../../../utils/logger.js");
 
@@ -12,7 +12,7 @@ const logger = require("../../../../utils/logger.js");
  * @returns {Object} Gemini客户端
  */
 function createClient(apiKey) {
-  return new GoogleGenerativeAI(apiKey);
+  return new GoogleGenAI({ apiKey });
 }
 
 /**
@@ -62,14 +62,16 @@ async function formatUserMessage(prompt, image, audio) {
     }
   }
   
-  // Gemini 支持音频输入（Gemini 2.0+ 和部分 1.5 模型）
+  // Gemini 支持音频输入（Gemini 1.5+ 全系列模型）
   const audioSupportedModels = [
-    "gemini-2.0-flash-exp",
-    "gemini-2.0-flash-thinking-exp-1219", 
-    "gemini-1.5-pro",
-    "gemini-1.5-pro-002",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-002"
+    "gemini-3-pro",
+    "gemini-2.5-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash-lite-preview-09-2025",
+    "gemini-2.5-flash-preview-09-2025",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
   ];
   
   if (audio && audioSupportedModels.some(model => userMessage[0].modelName?.includes(model))) {
@@ -139,26 +141,34 @@ async function sendRequest(messages, modelName, tools, client) {
       
       // 处理工具/函数响应
       if (msg.role === "tool") {
-        // 工具響應需要特殊格式
+        // 工具響應需要特殊格式，在 Google GenAI SDK 中，工具響應是 user 角色的一部分
         try {
+          // 嘗試解析內容，如果是 JSON 字符串
+          let contentObj = msg.content;
+          try {
+            if (typeof msg.content === 'string') {
+                contentObj = JSON.parse(msg.content);
+            }
+          } catch (e) {
+            // 如果不是 JSON，則包裝在對象中
+            contentObj = { result: msg.content };
+          }
+
           const functionResponse = {
             name: msg.name,
-            response: {
-              name: msg.name,
-              content: msg.content
-            }
+            response: contentObj
           };
           
           processedMessages.push({
-            role: "function",
+            role: "user", // 修正：工具響應應使用 user 角色
             parts: [{ functionResponse }]
           });
         } catch (error) {
           logger.warn(`處理工具響應時出錯: ${error.message}`);
           // 降級為普通文本消息
           processedMessages.push({
-            role: "model",
-            parts: [{ text: msg.content }]
+            role: "user",
+            parts: [{ text: `Function result for ${msg.name}: ${msg.content}` }]
           });
         }
         continue;
@@ -231,7 +241,12 @@ async function sendRequest(messages, modelName, tools, client) {
     if (modelName.includes("thinking")) {
       // 思考模型需要更高的输出长度
       generationConfig.maxOutputTokens = 12000;
-      generationConfig.temperature = 0.1;
+      generationConfig.temperature = 0.1; // 思考模型通常需要較低溫度
+    } else if (modelName.includes("gemini-3")) {
+      // Gemini 3 模型建議使用默認溫度 (1.0)
+      // 移除 temperature 設置以使用默認值
+      delete generationConfig.temperature;
+      generationConfig.maxOutputTokens = 8192;
     } else if (modelName.includes("2.0") || modelName.includes("2.5")) {
       // Gemini 2.0/2.5 模型支持更长输出
       generationConfig.maxOutputTokens = 10000;
@@ -239,20 +254,14 @@ async function sendRequest(messages, modelName, tools, client) {
     
     // 函数调用支持配置
     const toolSupportedModels = [
+      "gemini-3-pro",
       "gemini-2.5-pro",
-      "gemini-2.5-flash", 
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-preview-09-2025",
+      "gemini-2.5-flash-lite-preview-09-2025",
       "gemini-2.5-flash-lite",
-      "gemini-2.0-flash-exp",
       "gemini-2.0-flash",
-      "gemini-2.0-flash-thinking-exp",
-      "gemini-1.5-pro", 
-      "gemini-1.5-pro-002",
-      "gemini-1.5-flash",
-      "gemini-1.5-flash-002", 
-      "gemini-1.5-flash-8b",
-      "gemini-exp-1206",
-      "gemini-exp-1121", 
-      "gemini-exp-1114"
+      "gemini-2.0-flash-lite",
     ];
     
     // 准备工具配置
@@ -278,8 +287,8 @@ async function sendRequest(messages, modelName, tools, client) {
           functionDeclarations: functionDeclarations
         }];
         
-        // 配置工具调用模式 (Gemini 1.5+ 和 2.0+ 支持)
-        if (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5")) {
+        // 配置工具调用模式 (Gemini 1.5+ 和 2.0+ 和 3.0+ 支持)
+        if (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5") || modelName.includes("3.0") || modelName.includes("gemini-3")) {
           toolConfig = {
             functionCallingConfig: {
               mode: "AUTO" // AUTO, ANY, NONE
@@ -291,45 +300,31 @@ async function sendRequest(messages, modelName, tools, client) {
       logger.warn(`模型 ${modelName} 不支持工具調用`);
     }
     
-    // 创建模型实例配置
-    const modelConfig = {
-      model: modelName,
-      generationConfig: generationConfig
+    // 构建最终配置
+    const config = {
+        ...generationConfig
     };
-    
-    // 添加工具配置
+
     if (toolsConfig.length > 0) {
-      modelConfig.tools = toolsConfig;
+        config.tools = toolsConfig;
     }
     
     if (toolConfig) {
-      modelConfig.toolConfig = toolConfig;
+        config.toolConfig = toolConfig;
     }
     
-    // 设置系统指令（Gemini 1.5+ 和 2.0+ 支持）
-    if (systemPrompt && (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5"))) {
-      modelConfig.systemInstruction = {
-        parts: [{ text: systemPrompt }]
-      };
+    if (systemPrompt && (modelName.includes("1.5") || modelName.includes("2.0") || modelName.includes("2.5") || modelName.includes("3.0") || modelName.includes("gemini-3"))) {
+        config.systemInstruction = {
+            parts: [{ text: systemPrompt }]
+        };
     }
-    
-    // 创建模型实例
-    const genModel = client.getGenerativeModel(modelConfig);
-    
-    // 准备历史消息（排除最后一条用户消息）
-    const history = processedMessages.slice(0, -1);
-    
-    // 创建聊天会话
-    const chat = genModel.startChat({
-      history: history
-    });
-    
-    // 获取最后一条用户消息
-    const lastUserMessage = processedMessages[processedMessages.length - 1];
-    
+
     // 发送请求
-    const result = await chat.sendMessage(lastUserMessage.parts);
-    const response = result.response;
+    const result = await client.models.generateContent({
+        model: modelName,
+        contents: processedMessages,
+        config: config
+    });
     
     // 将Gemini响应格式转换为通用格式
     let responseContent = "";
@@ -337,39 +332,26 @@ async function sendRequest(messages, modelName, tools, client) {
     
     // 处理文本响应
     try {
-      const text = response.text();
-      if (text) {
-        responseContent = text;
+      // 手動提取文本以避免 SDK 在存在函數調用時發出警告
+      if (result.candidates && result.candidates[0]?.content?.parts) {
+        responseContent = result.candidates[0].content.parts
+          .filter(part => part.text)
+          .map(part => part.text)
+          .join('');
+      } else {
+        // 後備方案
+        const text = result.text;
+        if (text) {
+          responseContent = text;
+        }
       }
     } catch (e) {
       // 如果没有文本内容（例如只有函数调用），忽略错误
-      logger.error(`無文本響應: ${e.message}`);
+      // logger.error(`無文本響應: ${e.message}`);
     }
     
-    // 处理函数调用 - 檢查多種可能的屬性
-    let functionCalls = null;
-    
-    // 方法1: 使用 functionCalls() 方法
-    try {
-      if (typeof response.functionCalls === 'function') {
-        functionCalls = response.functionCalls();
-      }
-    } catch (e) {
-      logger.error(`functionCalls() 方法不可用: ${e.message}`);
-    }
-    
-    // 方法2: 直接訪問 functionCall 屬性（單數）
-    if (!functionCalls && response.functionCall) {
-      functionCalls = [response.functionCall];
-    }
-    
-    // 方法3: 檢查 candidates[0].content.parts 中的 functionCall
-    if (!functionCalls && result.response?.candidates?.[0]?.content?.parts) {
-      const parts = result.response.candidates[0].content.parts;
-      functionCalls = parts
-        .filter(part => part.functionCall)
-        .map(part => part.functionCall);
-    }
+    // 处理函数调用
+    const functionCalls = result.functionCalls;
     
     if (functionCalls && functionCalls.length > 0) {
       logger.info(`Gemini 響應包含 ${functionCalls.length} 個函數調用`);
@@ -399,9 +381,9 @@ async function sendRequest(messages, modelName, tools, client) {
           finish_reason: toolCalls && toolCalls.length > 0 ? "tool_calls" : "stop"
         }],
         usage: {
-          prompt_tokens: result.response?.usageMetadata?.promptTokenCount || 0,
-          completion_tokens: result.response?.usageMetadata?.candidatesTokenCount || 0,
-          total_tokens: result.response?.usageMetadata?.totalTokenCount || 0
+          prompt_tokens: result.usageMetadata?.promptTokenCount || 0,
+          completion_tokens: result.usageMetadata?.candidatesTokenCount || 0,
+          total_tokens: result.usageMetadata?.totalTokenCount || 0
         }
       }
     };

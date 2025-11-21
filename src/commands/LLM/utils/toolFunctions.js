@@ -427,8 +427,8 @@ async function generateVideoZhipu(options) {
       quality: options.quality || "speed",
       withAudio: options.withAudio !== undefined ? options.withAudio : false,
       size: options.size || "1920x1080",
-      fps: options.fps || 30,
-      duration: options.duration || 5,
+      fps: parseInt(options.fps) || 30,
+      duration: parseInt(options.duration) || 5,
       imageUrl: options.imageUrl,
     };
     

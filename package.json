@@ -24,7 +24,7 @@
         "@discordjs/voice": "^0.19.0",
         "@distube/ytdl-core": "^4.16.12",
         "@ffmpeg-installer/ffmpeg": "^1.1.0",
-        "@google/generative-ai": "^0.24.1",
+        "@google/genai": "^1.30.0",
         "ai": "^5.0.75",
         "axios": "^1.12.2",
         "better-sqlite3": "^12.4.1",

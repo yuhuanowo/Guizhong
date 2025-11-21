@@ -173,7 +173,7 @@ async function sendRequest(messages, modelName, tools, client) {
     requestBody.max_completion_tokens = 128000;
   }
   else if (modelName === "gpt-5-chat") {
-    requestBody.max_completion_tokens = 16384;
+    requestBody.max_completion_tokens = 4000;
   }
   // gpt-4o系列模型
   else if (gpt4oModels.some(m => modelName.startsWith(m))) {
@@ -182,24 +182,24 @@ async function sendRequest(messages, modelName, tools, client) {
   }
   // gpt-4.1系列模型
   else if (gpt41Models.some(m => modelName.startsWith(m))) {
-    requestBody.max_tokens = 32768;
+    requestBody.max_tokens = 4096;
     requestBody.temperature = 0.7;
   }
   // openai o系列模型
   else if (["o1-preview", "o3-mini", "o1", "o3"].includes(modelName)) {
-    requestBody.max_completion_tokens = 100000; // 推理模型需要更多 token
+    requestBody.max_completion_tokens = 4000; // 推理模型需要更多 token
   }
   // openai o1-mini 模型
   else if (["o1-mini"].includes(modelName)) {
-    requestBody.max_completion_tokens = 65536;
+    requestBody.max_completion_tokens = 4000;
   }
   // openai o4-mini 模型
   else if (["o4-mini"].includes(modelName)) {
-    requestBody.max_completion_tokens = 16384;
+    requestBody.max_completion_tokens = 4000;
   }
   // DeepSeek 等特殊模型
   else if (["DeepSeek-R1", "DeepSeek-V3-0324", "DeepSeek-R1-0528"].includes(modelName)) {
-    requestBody.max_tokens = 4096;
+    requestBody.max_tokens = 4000;
   }
   // 其他模型
   else {
