@@ -193,6 +193,7 @@ module.exports = {
   },
 
   async execute(interaction, messageId) {
+    const startTime = Date.now();
     let selectedModel = interaction.options.getString("model");
     const historyId = interaction.options.getString("history");
     const prompt = interaction.options.getString("text") || "";
@@ -245,10 +246,9 @@ module.exports = {
       
       // 如果有历史ID，加载历史对话
       if (historyId) {
-        const historyChat = await memoryService.getHistoryById(historyId, userId);
-        if (historyChat) {
-          messages.push({ role: "user", content: historyChat.prompt });
-          messages.push({ role: "assistant", content: historyChat.reply });
+        const historyMessages = await memoryService.getConversationHistory(historyId, userId);
+        if (historyMessages && historyMessages.length > 0) {
+          messages = [...messages, ...historyMessages];
         } else {
           logger.info(`找不到历史对话: ${historyId}`);
         }
@@ -835,6 +835,17 @@ module.exports = {
       // 创建响应组件
       let embed;
       const row = new ActionRowBuilder();
+
+      // Add Open in Web button
+      if (config.webUrl) {
+        row.addComponents(
+          new ButtonBuilder()
+            .setLabel(i18n.getString("commands.agent.openInWeb", language))
+            .setStyle(ButtonStyle.Link)
+            .setURL(`${config.webUrl}/chat/${interaction.id}`)
+        );
+      }
+
       const today = i18n.getString("commands.agent.today", language);
 
       // 获取模型类型和 emoji
@@ -1100,12 +1111,40 @@ module.exports = {
       }
 
       // 保存对话记录并更新用户记忆
+      const endTime = Date.now();
+      const processingTime = endTime - startTime;
+      
+      const extraData = {
+        userInfo: {
+          username: interaction.user.username,
+          avatar_url: interaction.user.displayAvatarURL({ extension: 'png', size: 256 }),
+          display_name: interaction.user.displayName
+        },
+        guildInfo: interaction.guild ? {
+          name: interaction.guild.name,
+          id: interaction.guild.id,
+          icon_url: interaction.guild.iconURL({ extension: 'png', size: 256 })
+        } : null,
+        usage: {
+          prompt_tokens: response.body.usage?.prompt_tokens || 0,
+          completion_tokens: response.body.usage?.completion_tokens || 0,
+          total_tokens: response.body.usage?.total_tokens || 0
+        },
+        options: {
+          enable_search: enableSearch,
+          enable_system_prompt: enableSystemPrompt
+        },
+        processingTime: processingTime
+      };
+
       await memoryService.saveChatLogToMongo(
         userId, 
         selectedModel, 
         prompt, 
         outputText, 
-        String(sentMessageId)
+        interaction.id,
+        historyId || null,
+        extraData
       );
       
       logger.info(`保存对话记录到MongoDB，消息ID: ${sentMessageId}`);

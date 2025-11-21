@@ -164,16 +164,10 @@ tavilyApiKey: ""
 # MongoDB URI 用于数据库连接
 mongoURI: ""
 
-# PostgreSQL database connection
-# PostgreSQL 數據庫連接
-# PostgreSQL 数据库连接
-postgresURI: ""
-# Example: "postgresql://username:password@localhost:5432/botdb"
-
-# Whether to use SSL for PostgreSQL connection
-# 是否為 PostgreSQL 連接使用 SSL
-# 是否为 PostgreSQL 连接使用 SSL
-postgresSSL: false
+# Base URL for the Web Viewer (Next.js)
+# 用於 Web 檢視（Next.js）的基底網址
+# 用于 Web 视图（Next.js）的基底网址
+webBaseUrl: ""
 
 # Logging settings
 # 日誌設置

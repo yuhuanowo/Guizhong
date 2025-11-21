@@ -1,0 +1,126 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --radius: 1.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-zinc-950 text-zinc-50 antialiased selection:bg-indigo-500/30 selection:text-indigo-100;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 100% 0%, rgba(168, 85, 247, 0.05) 0%, transparent 30%),
+      radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 30%);
+    background-attachment: fixed;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40 transition-colors;
+}
+
+/* Markdown Styles - Modernized */
+.markdown-body {
+  @apply text-base leading-8 text-gray-300 font-light;
+}
+
+.markdown-body h1, 
+.markdown-body h2, 
+.markdown-body h3, 
+.markdown-body h4 {
+  @apply font-semibold tracking-tight text-white mt-8 mb-4 scroll-m-20;
+}
+
+.markdown-body h1 { @apply text-3xl lg:text-4xl border-b border-border/50 pb-2; }
+.markdown-body h2 { @apply text-2xl lg:text-3xl; }
+.markdown-body h3 { @apply text-xl lg:text-2xl; }
+
+.markdown-body p {
+  @apply mb-6 leading-7;
+}
+
+.markdown-body ul {
+  @apply list-disc list-outside mb-6 pl-6 space-y-2 marker:text-primary;
+}
+.markdown-body ol {
+  @apply list-decimal list-outside mb-6 pl-6 space-y-2 marker:text-primary;
+}
+
+.markdown-body code {
+  @apply bg-secondary/50 px-1.5 py-0.5 rounded-md text-sm font-mono text-primary-foreground border border-border/50;
+}
+
+.markdown-body pre {
+  @apply bg-[#1e1e2e] p-4 rounded-xl overflow-x-auto mb-6 border border-border/50 shadow-inner;
+}
+
+.markdown-body pre code {
+  @apply bg-transparent p-0 text-sm border-none text-gray-200;
+}
+
+.markdown-body blockquote {
+  @apply border-l-4 border-primary/50 pl-6 italic my-6 text-muted-foreground bg-secondary/20 py-2 rounded-r-lg;
+}
+
+.markdown-body a {
+  @apply text-primary hover:text-primary/80 underline underline-offset-4 decoration-primary/30 transition-colors;
+}
+
+.markdown-body table {
+  @apply w-full border-collapse mb-6 text-sm overflow-hidden rounded-lg border border-border;
+}
+
+.markdown-body th {
+  @apply bg-secondary/80 border-b border-border p-3 text-left font-medium text-white;
+}
+
+.markdown-body td {
+  @apply border-b border-border/50 p-3 text-muted-foreground;
+}
+
+.markdown-body tr:last-child td {
+  @apply border-0;
+}
+
+.markdown-body hr {
+  @apply my-8 border-border;
+}
+
+.markdown-body img {
+  @apply rounded-xl border border-border/50 shadow-lg my-6 max-w-full h-auto;
+}
+

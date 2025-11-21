@@ -34,6 +34,7 @@ module.exports = {
 
         const guildId = message.guild.id;
         const language = i18n.getServerLanguage(guildId);
+        const startTime = Date.now();
 
         try {
             // 检查会话是否暂停
@@ -452,6 +453,16 @@ module.exports = {
                     );
                 }
 
+                // 添加 Open in Web 按钮
+                if (config.webUrl) {
+                    row.addComponents(
+                        new ButtonBuilder()
+                            .setLabel(i18n.getString("commands.agent.openInWeb", language))
+                            .setStyle(ButtonStyle.Link)
+                            .setURL(`${config.webUrl}/chat/${generatingMessage.id}`)
+                    );
+                }
+
                 await generatingMessage.edit({ 
                     embeds: [embed], 
                     components: row.components.length > 0 ? [row] : [] 
@@ -495,6 +506,16 @@ module.exports = {
                             .setLabel(i18n.getString("commands.agent.showSearchResults", language))
                             .setStyle(ButtonStyle.Secondary)
                             .setEmoji("🔍")
+                    );
+                }
+
+                // 添加 Open in Web 按钮
+                if (config.webUrl) {
+                    row.addComponents(
+                        new ButtonBuilder()
+                            .setLabel(i18n.getString("commands.agent.openInWeb", language))
+                            .setStyle(ButtonStyle.Link)
+                            .setURL(`${config.webUrl}/chat/${generatingMessage.id}`)
                     );
                 }
 
@@ -542,13 +563,43 @@ module.exports = {
             // 保存对话记录到MongoDB
             try {
                 const sentMessageId = generatingMessage.id;
+                
+                // 准备额外数据
+                const extraData = {
+                    userInfo: {
+                        username: message.author.username,
+                        avatar_url: message.author.displayAvatarURL(),
+                        display_name: message.author.displayName
+                    },
+                    guildInfo: {
+                        name: message.guild.name,
+                        id: message.guild.id,
+                        icon_url: message.guild.iconURL()
+                    },
+                    usage: response.body?.usage || {
+                        prompt_tokens: 0,
+                        completion_tokens: 0,
+                        total_tokens: 0
+                    },
+                    options: {
+                        enable_search: session.enableSearch,
+                        enable_system_prompt: session.enableSystemPrompt
+                    },
+                    processingTime: Date.now() - startTime
+                };
+
                 await memoryService.saveChatLogToMongo(
                     message.author.id,
                     session.model,
                     message.content,
                     outputText,
-                    String(sentMessageId)
+                    String(sentMessageId),
+                    session.lastMessageId || null,
+                    extraData
                 );
+
+                // 更新 session.lastMessageId
+                session.lastMessageId = sentMessageId;
                 
                 logger.info(`保存对话记录到MongoDB，线程: ${message.channel.id}, 消息ID: ${sentMessageId}`);
                 

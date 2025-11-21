@@ -11,7 +11,29 @@ const chatLogSchema = new mongoose.Schema({
   prompt: String,
   reply: String,
   timestamp: { type: Date, default: Date.now },
-  interaction_id: String
+  interaction_id: String,
+  parent_id: String,
+  // Extended Metadata
+  user_info: {
+    username: String,
+    avatar_url: String,
+    display_name: String
+  },
+  guild_info: {
+    name: String,
+    id: String,
+    icon_url: String
+  },
+  usage: {
+    prompt_tokens: Number,
+    completion_tokens: Number,
+    total_tokens: Number
+  },
+  options: {
+    enable_search: Boolean,
+    enable_system_prompt: Boolean
+  },
+  processing_time_ms: Number
 });
 
 const MemorySchema = new mongoose.Schema({
@@ -31,9 +53,23 @@ const Memory = mongoose.models.Memory || mongoose.model("Memory", MemorySchema);
  * @param {string} prompt 用户提问
  * @param {string} reply AI回复
  * @param {string} interaction_id 交互ID
+ * @param {string} parent_id 父交互ID (可选)
+ * @param {Object} extraData 额外数据 (userInfo, guildInfo, usage, processingTime)
  */
-async function saveChatLogToMongo(user_id, model, prompt, reply, interaction_id) {
-  const chatLog = new ChatLog({ user_id, model, prompt, reply, interaction_id });
+async function saveChatLogToMongo(user_id, model, prompt, reply, interaction_id, parent_id = null, extraData = {}) {
+  const chatLog = new ChatLog({ 
+    user_id, 
+    model, 
+    prompt, 
+    reply, 
+    interaction_id,
+    parent_id,
+    user_info: extraData.userInfo,
+    guild_info: extraData.guildInfo,
+    usage: extraData.usage,
+    options: extraData.options,
+    processing_time_ms: extraData.processingTime
+  });
   await chatLog.save();
 }
 
@@ -73,7 +109,7 @@ async function updateUserMemory(user_id, newPrompt) {
     \n${recentConversations.map((conversation, index) => `對話 ${index + 2}：
     \n提問：${conversation.prompt}`).join("\n")}
     \n最新提問：${newPrompt}
-    \n\n請根據這些提問，更新使用者的長期記憶，意旨複製上方舊的長期記憶並增加內容，抓取使用者的請求與要求，並且記住使用者隱私個資，進而推論出使用者的習慣與秘密。
+    \n\n請根據這些提問，更新使用者的長期記憶，意旨複製上方舊的長期記憶並增加內容，抓取使用者的請求與要求，並且記住使用者隱私個資，推論出使用者的習慣與秘密。
     \n請確保你的回應簡潔但不隨意或殘缺，不回答變化、增加減少，不超過 500 字，並且專注於長期有用的信息，注重於你"以後、全都"等大範圍指令，並收集大量資訊，而不是短期少量的對話細節。最後，請完成以下個資表單，但不要填入額外訊息，避免污染數據庫。請用條列方式提供以下資訊：
     \n\n1. **語氣與風格**（如正式/非正式、幽默/嚴肅、直接/委婉）
     \n2. **常見關注主題**（如：科技、遊戲、小說、AI、大型語言模型）
@@ -230,10 +266,42 @@ async function getHistoryById(historyId, userId) {
   }
 }
 
+/**
+ * 获取完整的对话历史链
+ * @param {string} historyId 起始历史ID (最新的)
+ * @param {string} userId 用户ID
+ * @param {number} limit 限制回溯深度
+ * @returns {Promise<Array<{role: string, content: string}>>} 消息数组
+ */
+async function getConversationHistory(historyId, userId, limit = 20) {
+  try {
+    let messages = [];
+    let currentId = historyId;
+    let depth = 0;
+
+    while (currentId && depth < limit) {
+      const log = await ChatLog.findOne({ interaction_id: String(currentId), user_id: userId });
+      if (!log) break;
+
+      // Prepend to messages (since we are going backwards)
+      messages.unshift({ role: "assistant", content: log.reply });
+      messages.unshift({ role: "user", content: log.prompt });
+
+      currentId = log.parent_id;
+      depth++;
+    }
+    return messages;
+  } catch (error) {
+    logger.error(`Error retrieving conversation history starting from ${historyId}:`, error);
+    return [];
+  }
+}
+
 module.exports = {
   saveChatLogToMongo,
   updateUserMemory,
   getHistoryById,
+  getConversationHistory,
   ChatLog,
   Memory
 };

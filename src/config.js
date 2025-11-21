@@ -46,6 +46,7 @@ try {
         oauthTokens: configFile.oauthTokens ?? {},
         showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
         mongoURI: configFile.mongoURI ?? "",
+        webUrl: configFile.webBaseUrl ?? "http://localhost:3000",
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");
