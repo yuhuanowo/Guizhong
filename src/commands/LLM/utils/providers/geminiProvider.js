@@ -6,12 +6,62 @@ const { GoogleGenAI } = require("@google/genai");
 const fetch = require("node-fetch");
 const logger = require("../../../../utils/logger.js");
 
+// API Key 輪流機制
+let apiKeys = [];
+let currentKeyIndex = 0;
+
+/**
+ * 初始化 API Keys
+ * @param {string|string[]} keys 單個 API Key 或 API Key 陣列
+ */
+function initApiKeys(keys) {
+  if (Array.isArray(keys)) {
+    apiKeys = keys.filter(k => k && k.trim() !== "");
+  } else if (typeof keys === "string" && keys.trim() !== "") {
+    // 支援逗號分隔的多個 Key
+    apiKeys = keys.split(",").map(k => k.trim()).filter(k => k !== "");
+  } else {
+    apiKeys = [];
+  }
+  
+  if (apiKeys.length > 1) {
+    logger.info(`Gemini Provider: 已載入 ${apiKeys.length} 個 API Keys，將使用輪流機制`);
+  } else if (apiKeys.length === 1) {
+    logger.info(`Gemini Provider: 使用單一 API Key`);
+  }
+}
+
+/**
+ * 獲取下一個 API Key（輪流機制）
+ * @returns {string} API Key
+ */
+function getNextApiKey() {
+  if (apiKeys.length === 0) {
+    logger.warn("Gemini Provider: 沒有可用的 API Key");
+    return "";
+  }
+  
+  const key = apiKeys[currentKeyIndex];
+  currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+  
+  if (apiKeys.length > 1) {
+    logger.info(`Gemini Provider: 使用 API Key #${currentKeyIndex === 0 ? apiKeys.length : currentKeyIndex}`);
+  }
+  
+  return key;
+}
+
 /**
  * 创建Gemini客户端
- * @param {string} apiKey API令牌
+ * @param {string|string[]} apiKeyOrKeys 單個 API Key、逗號分隔的 Keys 字串、或 API Key 陣列
  * @returns {Object} Gemini客户端
  */
-function createClient(apiKey) {
+function createClient(apiKeyOrKeys) {
+  // 初始化 API Keys（如果尚未初始化或有新的 keys）
+  initApiKeys(apiKeyOrKeys);
+  
+  // 使用輪流機制獲取 API Key
+  const apiKey = getNextApiKey();
   return new GoogleGenAI({ apiKey });
 }
 

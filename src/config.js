@@ -36,6 +36,7 @@ try {
         openaiapikey: configFile.openaiapikey ?? "",
         githubToken: configFile.githubToken ?? "",
         geminiApiKey: configFile.geminiApiKey ?? "",
+        geminiApiKeys: configFile.geminiApiKeys ?? [],  // 支援多個 API Key 輪流
         ollamaEndpoint: configFile.ollamaEndpoint ?? "http://localhost:11434",
         groqApiKey: configFile.groqApiKey ?? "",
         openRouterApiKey: configFile.openRouterApiKey ?? "",

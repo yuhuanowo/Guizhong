@@ -149,7 +149,11 @@ function createLLMClient(modelName) {
     case "github":
       return githubModelProvider.createClient(config.githubToken);
     case "gemini":
-      return geminiProvider.createClient(config.geminiApiKey);
+      // 優先使用 geminiApiKeys 陣列，若無則使用 geminiApiKey（支援逗號分隔的多 Key）
+      const geminiKeys = config.geminiApiKeys && config.geminiApiKeys.length > 0 
+        ? config.geminiApiKeys 
+        : config.geminiApiKey;
+      return geminiProvider.createClient(geminiKeys);
     case "ollama":
       return ollamaProvider.createClient(config.ollamaEndpoint);
     case "groq":

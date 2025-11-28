@@ -114,10 +114,22 @@ oauthTokens: ""
 # GitHub Model API 令牌
 githubToken: ""
 
-# Google Gemini API Key
-# Google Gemini API 密钥
-# Google Gemini API 密鑰
+# Google Gemini API Key (single key)
+# Google Gemini API 密钥（單個）
+# Google Gemini API 密鑰（單個）
 geminiApiKey: ""
+
+# Google Gemini API Keys (multiple keys for rotation/load balancing)
+# Google Gemini API 密钥（多個，用於輪流/負載均衡）
+# Google Gemini API 密鑰（多個，用於輪流/負載均衡）
+# 方式一：使用陣列
+# geminiApiKeys:
+#   - "key1"
+#   - "key2"
+#   - "key3"
+# 方式二：使用逗號分隔的字串（在 geminiApiKey 中）
+# geminiApiKey: "key1,key2,key3"
+geminiApiKeys: []
 
 # Ollama API Endpoint (default: http://localhost:11434)
 # Ollama API 端点（默认: http://localhost:11434）
