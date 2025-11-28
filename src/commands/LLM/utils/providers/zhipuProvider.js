@@ -228,17 +228,26 @@ async function generateImage(prompt, modelName, client) {
  */
 async function generateVideo(prompt, modelName, options = {}, client) {
   const url = `${client.baseURL}/videos/generations`;
+  const lowerModel = modelName.toLowerCase();
+  
+  // cogvideox-flash 模型不支持 quality、size、fps 參數
+  // 只有 cogvideox-2 等模型支持這些參數
+  const isFlashModel = lowerModel === "cogvideox-flash";
   
   const requestBody = {
     model: modelName,
     prompt: prompt,
-    quality: options.quality || "speed",
-    with_audio: options.withAudio !== undefined ? options.withAudio : false,
-    watermark_enabled: true,
-    size: options.size || "1920x1080",
-    fps: options.fps || 30,
-    duration: options.duration || 5,
   };
+  
+  // 只有非 flash 模型才添加這些參數
+  if (!isFlashModel) {
+    requestBody.quality = options.quality || "speed";
+    requestBody.size = options.size || "1920x1080";
+    requestBody.fps = options.fps || 30;
+  }
+  
+  // with_audio 參數所有模型都支持
+  requestBody.with_audio = options.withAudio !== undefined ? options.withAudio : false;
   
   // 如果提供了圖片 URL，添加到請求中
   if (options.imageUrl) {

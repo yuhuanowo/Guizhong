@@ -263,7 +263,8 @@ module.exports = {
         outputText, 
         searchResults, 
         dataURI, 
-        videoUrl, 
+        videoUrl,
+        remoteVideoUrl,
         actuallySearched, 
         usageInfo,
         tokenUsage,
@@ -594,8 +595,9 @@ module.exports = {
         processingTime: processingTime,
         searchResults: searchResults,
         generatedImage: dataURI,
-        generatedVideo: videoUrl,
-        toolUsed: toolUsed
+        generatedVideo: remoteVideoUrl, // 使用遠程 URL 而不是本地路徑，以便網站可以訪問
+        toolUsed: toolUsed,
+        title: generatedTitle
       };
 
       await memoryService.saveChatLogToMongo(

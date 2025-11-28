@@ -871,6 +871,18 @@ export default function ChatView({ chat }: ChatViewProps) {
                             src={msg.generated_video} 
                             controls 
                             className="w-full h-auto"
+                            onError={(e) => {
+                              // 如果視頻加載失敗，顯示錯誤提示
+                              const target = e.target as HTMLVideoElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent && !parent.querySelector('.video-error')) {
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'video-error p-4 text-center text-zinc-400 text-sm';
+                                errorDiv.textContent = 'Video unavailable or expired';
+                                parent.appendChild(errorDiv);
+                              }
+                            }}
                           />
                         </div>
                       </div>

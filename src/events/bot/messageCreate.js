@@ -94,7 +94,8 @@ module.exports = {
                 outputText, 
                 searchResults, 
                 dataURI, 
-                videoUrl, 
+                videoUrl,
+                remoteVideoUrl,
                 usageInfo,
                 actuallySearched,
                 toolUsed
@@ -383,7 +384,7 @@ module.exports = {
                     processingTime: Date.now() - startTime,
                     searchResults: searchResults,
                     generatedImage: dataURI,
-                    generatedVideo: videoUrl,
+                    generatedVideo: remoteVideoUrl, // 使用遠程 URL 而不是本地路徑，以便網站可以訪問
                     toolUsed: toolUsed
                 };
 

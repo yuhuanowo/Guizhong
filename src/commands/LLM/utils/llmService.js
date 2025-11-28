@@ -256,18 +256,19 @@ function getAllAvailableModels() {
  * 处理工具调用
  * @param {Array} calls 工具调用数组
  * @param {string} language 语言代码
- * @returns {Promise<Object>} 处理结果，包含 messages, searchResults, dataURI, videoUrl, actuallySearched
+ * @returns {Promise<Object>} 处理结果，包含 messages, searchResults, dataURI, videoUrl, remoteVideoUrl, actuallySearched
  */
 async function handleToolCalls(calls, language) {
   const messages = [];
   let searchResults = null;
   let dataURI = null;
   let videoUrl = null;
+  let remoteVideoUrl = null; // 遠程視頻 URL，用於保存到數據庫
   let actuallySearched = false;
   let toolUsed = null;
 
   if (!calls || calls.length === 0) {
-    return { messages, searchResults, dataURI, videoUrl, actuallySearched, toolUsed };
+    return { messages, searchResults, dataURI, videoUrl, remoteVideoUrl, actuallySearched, toolUsed };
   }
 
   logger.info(`检测到 ${calls.length} 个工具调用: ${calls.map(t => t.function.name).join(', ')}`);
@@ -450,6 +451,10 @@ async function handleToolCalls(calls, language) {
           const generatedVideoUrl = finalResult.video_result?.[0]?.url || null;
           
           if (generatedVideoUrl) {
+            // 保存遠程視頻 URL 用於數據庫
+            remoteVideoUrl = generatedVideoUrl;
+            
+            // 下載視頻到本地用於 Discord 發送
             const videoResponse = await fetch(generatedVideoUrl);
             const videoBuffer = await videoResponse.buffer();
             const tempVideoPath = `./recordings/${crypto.randomUUID()}.mp4`;
@@ -518,7 +523,7 @@ async function handleToolCalls(calls, language) {
     }
   }
 
-  return { messages, searchResults, dataURI, videoUrl, actuallySearched, toolUsed };
+  return { messages, searchResults, dataURI, videoUrl, remoteVideoUrl, actuallySearched, toolUsed };
 }
 
 /**
@@ -538,11 +543,12 @@ async function processLLMResponseWithTools(initialResponse, messages, modelName,
   let finalSearchResults = [];
   let finalDataURI = null;
   let finalVideoUrl = null;
+  let finalRemoteVideoUrl = null;
   let finalActuallySearched = false;
   let finalToolUsed = null;
   
   // Max depth for tool calls to prevent infinite loops
-  const MAX_DEPTH = 3;
+  const MAX_DEPTH = 5;
   let depth = 0;
 
   while (
@@ -568,6 +574,7 @@ async function processLLMResponseWithTools(initialResponse, messages, modelName,
     
     if (toolResult.dataURI) finalDataURI = toolResult.dataURI;
     if (toolResult.videoUrl) finalVideoUrl = toolResult.videoUrl;
+    if (toolResult.remoteVideoUrl) finalRemoteVideoUrl = toolResult.remoteVideoUrl;
     if (toolResult.actuallySearched) finalActuallySearched = true;
     if (toolResult.toolUsed) finalToolUsed = toolResult.toolUsed;
     
@@ -589,6 +596,7 @@ async function processLLMResponseWithTools(initialResponse, messages, modelName,
     searchResults: finalSearchResults.length > 0 ? finalSearchResults : null,
     dataURI: finalDataURI,
     videoUrl: finalVideoUrl,
+    remoteVideoUrl: finalRemoteVideoUrl,
     actuallySearched: finalActuallySearched,
     toolUsed: finalToolUsed
   };
@@ -676,6 +684,7 @@ async function processUserRequest({
       searchResults: processed.searchResults,
       dataURI: processed.dataURI,
       videoUrl: processed.videoUrl,
+      remoteVideoUrl: processed.remoteVideoUrl,
       actuallySearched: processed.actuallySearched,
       toolUsed: processed.toolUsed,
       tokenUsage: processed.response.body.usage,

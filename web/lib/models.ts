@@ -37,6 +37,7 @@ export interface IChatLogData {
   generated_image?: string;
   generated_video?: string;
   tool_used?: string;
+  title?: string;
 }
 
 export interface IChatLog extends Omit<Document, "model">, IChatLogData {}
@@ -77,7 +78,8 @@ const chatLogSchema = new mongoose.Schema<IChatLog>({
   }],
   generated_image: String,
   generated_video: String,
-  tool_used: String
+  tool_used: String,
+  title: String
 });
 
 // Prevent overwriting the model if it's already compiled

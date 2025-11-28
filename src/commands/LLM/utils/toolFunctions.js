@@ -401,15 +401,11 @@ async function generateImageZhipu(options) {
 /**
  * 使用Zhipu AI 生成視頻 (僅使用免費模型 cogvideox-flash)
  * 注意：這是異步接口，需要使用 queryVideoResultZhipu 查詢結果
+ * 注意：cogvideox-flash 不支持 quality、size、fps 參數
  * @param {Object} options 生成選項
- * @param {string} options.prompt - 視頻描述提示
- * @param {string} [options.quality='speed'] - 質量: 'speed' (快速), 'quality' (高質量)
+ * @param {string} options.prompt - 視頻描述提示 (最多 512 tokens)
  * @param {boolean} [options.withAudio=false] - 是否生成 AI 音效
- * @param {string} [options.size='1920x1080'] - 視頻尺寸
- * @param {number} [options.fps=30] - 幀率: 30 或 60
- * @param {number} [options.duration=5] - 持續時長(秒): 5 或 10
- * @param {string} [options.imageUrl] - 基於圖片生成視頻的圖片 URL
- * @param {boolean} [options.watermark_enabled=true] - 是否添加水印
+ * @param {string} [options.imageUrl] - 基於圖片生成視頻的圖片 URL (可選)
  * @returns {Promise<Object>} 任務信息 { taskId, requestId, taskStatus, model }
  */
 async function generateVideoZhipu(options) {
@@ -420,15 +416,11 @@ async function generateVideoZhipu(options) {
     }
     
     const client = zhipuProvider.createClient(apiKey);
-    // 固定使用免費模型
+    // 固定使用免費模型 (cogvideox-flash 不支持 quality、size、fps 參數)
     const modelName = "cogvideox-flash";
     
     const videoOptions = {
-      quality: options.quality || "speed",
       withAudio: options.withAudio !== undefined ? options.withAudio : false,
-      size: options.size || "1920x1080",
-      fps: parseInt(options.fps) || 30,
-      duration: parseInt(options.duration) || 5,
       imageUrl: options.imageUrl,
     };
     
@@ -766,30 +758,6 @@ function getToolDefinitions(enableSearch = false) {
           prompt: {
             type: "string",
             description: "Detailed description of the video to generate. Can be in Chinese or English. Maximum 512 characters. Required unless imageUrl is provided."
-          },
-          quality: {
-            type: "string",
-            enum: ["speed", "quality"],
-            description: "Generation mode. 'speed': Faster generation (default), 'quality': Higher quality output, takes longer",
-            default: "speed"
-          },
-          size: {
-            type: "string",
-            enum: ["1280x720", "720x1280", "1024x1024", "1920x1080", "1080x1920", "2048x1080", "3840x2160"],
-            description: "Video resolution. Default is based on input image ratio if imageUrl is provided, otherwise uses 1080p for shortest side.",
-            default: "1920x1080"
-          },
-          fps: {
-            type: "string",
-            enum: ["30", "60"],
-            description: "Frame rate (FPS). Options: 30 or 60. Default: 30",
-            default: "30"
-          },
-          duration: {
-            type: "string",
-            enum: ["5", "10"],
-            description: "Video duration in seconds. Options: 5 or 10. Default: 5",
-            default: "5"
           },
           withAudio: {
             type: "boolean",

@@ -77,7 +77,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const title = chat.prompt.length > 50 ? `${chat.prompt.substring(0, 50)}...` : chat.prompt;
+  const title = chat.title || (chat.prompt.length > 50 ? `${chat.prompt.substring(0, 50)}...` : chat.prompt);
 
   return {
     title: title,

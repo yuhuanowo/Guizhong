@@ -34,6 +34,7 @@ const chatLogSchema = new mongoose.Schema({
     enable_system_prompt: Boolean
   },
   processing_time_ms: Number,
+  title: String,
   // Multimodal & Search Data
   search_results: [{
     title: String,
@@ -82,7 +83,8 @@ async function saveChatLogToMongo(user_id, model, prompt, reply, interaction_id,
     search_results: extraData.searchResults,
     generated_image: extraData.generatedImage,
     generated_video: extraData.generatedVideo,
-    tool_used: extraData.toolUsed
+    tool_used: extraData.toolUsed,
+    title: extraData.title
   });
   await chatLog.save();
 }

@@ -42,27 +42,42 @@ function getNextApiKey() {
   }
   
   const key = apiKeys[currentKeyIndex];
+  const keyIndex = currentKeyIndex + 1; // 顯示用的索引（1-based）
   currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
   
   if (apiKeys.length > 1) {
-    logger.info(`Gemini Provider: 使用 API Key #${currentKeyIndex === 0 ? apiKeys.length : currentKeyIndex}`);
+    logger.info(`Gemini Provider: 使用 API Key #${keyIndex}`);
   }
   
   return key;
 }
 
 /**
+ * 建立新的 Gemini 客戶端（使用下一個輪流的 API Key）
+ * @returns {Object} Gemini 客戶端
+ */
+function createFreshClient() {
+  const apiKey = getNextApiKey();
+  if (!apiKey) {
+    throw new Error("沒有可用的 Gemini API Key");
+  }
+  return new GoogleGenAI({ apiKey });
+}
+
+/**
  * 创建Gemini客户端
  * @param {string|string[]} apiKeyOrKeys 單個 API Key、逗號分隔的 Keys 字串、或 API Key 陣列
- * @returns {Object} Gemini客户端
+ * @returns {Object} Gemini客户端（注意：實際發送請求時會使用輪流機制建立新客戶端）
  */
 function createClient(apiKeyOrKeys) {
-  // 初始化 API Keys（如果尚未初始化或有新的 keys）
-  initApiKeys(apiKeyOrKeys);
+  // 初始化 API Keys（只需要初始化一次）
+  if (apiKeys.length === 0) {
+    initApiKeys(apiKeyOrKeys);
+  }
   
-  // 使用輪流機制獲取 API Key
-  const apiKey = getNextApiKey();
-  return new GoogleGenAI({ apiKey });
+  // 返回一個標記物件，實際的 client 會在 sendRequest 時建立
+  // 這樣可以確保每次 API 調用都使用輪流的 Key
+  return { _isGeminiClientPlaceholder: true };
 }
 
 /**
@@ -165,11 +180,14 @@ async function formatUserMessage(prompt, image, audio) {
  * @param {Array} messages 消息数组
  * @param {string} modelName 模型名称
  * @param {Array} tools 工具数组
- * @param {Object} client Gemini客户端
+ * @param {Object} client Gemini客户端（會被忽略，每次請求都會建立新客戶端以使用輪流的 API Key）
  * @returns {Promise<Object>} 响应结果
  */
 async function sendRequest(messages, modelName, tools, client) {
   try {
+    // 每次請求都建立新的客戶端，使用輪流的 API Key
+    const activeClient = createFreshClient();
+    
     // 从消息中提取文本和多模态内容
     const processedMessages = [];
     let systemPrompt = "";
@@ -369,8 +387,8 @@ async function sendRequest(messages, modelName, tools, client) {
         };
     }
 
-    // 发送请求
-    const result = await client.models.generateContent({
+    // 发送请求（使用輪流的 API Key 建立的客戶端）
+    const result = await activeClient.models.generateContent({
         model: modelName,
         contents: processedMessages,
         config: config
