@@ -469,6 +469,380 @@ async function queryVideoResultZhipu(taskId) {
   }
 }
 
+/**
+ * 获取LLM工具定义
+ * @param {boolean} enableSearch 是否启用搜索
+ * @returns {Array} 工具定义数组
+ */
+function getToolDefinitions(enableSearch = false) {
+  const imageTool = {
+    type: "function",
+    function: {
+      name: "generateImage",
+      description: "Generate an image using Cloudflare AI and return Base64 dataURI. Use this when user requests to create, generate, or draw an image.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "Detailed description of the image to generate, in English"
+          }
+        },
+        required: ["prompt"]
+      }
+    }
+  };
+
+  const searchTool = {
+    type: "function",
+    function: {
+      name: "searchDuckDuckGo",
+      description: "Search the web using DuckDuckGo search engine. Returns relevant search results with titles, URLs, and content snippets. Use this for general web searches when Tavily is not available.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query keywords",
+          },
+          numResults: {
+            type: "integer",
+            description: "Number of search results to return",
+            default: 10,
+          },
+        },
+        required: ["query"],
+      },
+    },
+  };
+
+  // Tavily Search - AI-optimized search engine
+  const tavilySearchTool = {
+    type: "function",
+    function: {
+      name: "tavilySearch",
+      description: "Execute intelligent web search using Tavily AI search engine, optimized for AI agents. Automatically filters and extracts the most relevant content with cleaned content snippets. Best for high-quality, structured search results. Use this as the primary search tool when web information is needed.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description: "Search query string"
+          },
+          search_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Search depth. 'basic': Standard search (1 credit), suitable for general queries; 'advanced': Deep search (2 credits), provides more relevant and detailed content chunks. Use 'advanced' for complex or research-oriented queries.",
+            default: "basic"
+          },
+          max_results: {
+            type: "integer",
+            description: "Maximum number of results to return (0-20)",
+            minimum: 0,
+            maximum: 20,
+            default: 5
+          },
+          include_answer: {
+            type: "boolean",
+            description: "Whether to include LLM-generated answer. Set to true when user needs a direct answer to their question (will use 'basic' mode for quick answer). Set to false if only search results are needed.",
+            default: false
+          },
+          include_images: {
+            type: "boolean",
+            description: "Whether to include related images in results",
+            default: false
+          },
+          topic: {
+            type: "string",
+            enum: ["general", "news", "finance"],
+            description: "Search category. 'general': General search, 'news': News (good for current events), 'finance': Financial information",
+            default: "general"
+          },
+          time_range: {
+            type: "string",
+            enum: ["day", "week", "month", "year"],
+            description: "Time range filter based on publish date. Use this to get recent information."
+          }
+        },
+        required: ["query"]
+      }
+    }
+  };
+
+  // Tavily Extract - Extract content from specific URLs
+  const tavilyExtractTool = {
+    type: "function",
+    function: {
+      name: "tavilyExtract",
+      description: "Extract cleaned web page content from one or multiple specified URLs. Automatically processes and cleans HTML, returns structured content. Best for extracting complete content from specific web pages. Use this when you have specific URLs to extract content from.",
+      parameters: {
+        type: "object",
+        properties: {
+          urls: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "List of URLs to extract content from (can also be a single URL string)"
+          },
+          extract_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Extraction depth. 'basic': Basic extraction (1 credit/5 URLs), 'advanced': Advanced extraction (2 credits/5 URLs), includes tables and embedded content",
+            default: "basic"
+          },
+          format: {
+            type: "string",
+            enum: ["markdown", "text"],
+            description: "Content format. 'markdown': Markdown format, 'text': Plain text",
+            default: "markdown"
+          },
+          include_images: {
+            type: "boolean",
+            description: "Whether to include images",
+            default: false
+          }
+        },
+        required: ["urls"]
+      }
+    }
+  };
+
+  // Tavily Crawl - Crawl entire websites
+  const tavilyCrawlTool = {
+    type: "function",
+    function: {
+      name: "tavilyCrawl",
+      description: "Crawl entire websites and extract content, supports deep traversal and intelligent path selection. Best for documentation sites, knowledge bases, blogs where you need to extract content from many pages. Supports regex pattern filtering. Use this when you need to systematically extract content from a whole website or section.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "Root URL to crawl from"
+          },
+          instructions: {
+            type: "string",
+            description: "Natural language instructions to guide what content the crawler should focus on (using this option doubles the cost). Example: 'Find all API reference pages' or 'Extract all tutorial articles'"
+          },
+          max_depth: {
+            type: "integer",
+            description: "Maximum crawl depth, defines how far from root URL to explore",
+            minimum: 1,
+            default: 1
+          },
+          max_breadth: {
+            type: "integer",
+            description: "Maximum number of links to follow per page",
+            minimum: 1,
+            default: 20
+          },
+          limit: {
+            type: "integer",
+            description: "Total maximum number of pages to process",
+            minimum: 1,
+            default: 50
+          },
+          select_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Only select URLs matching these regex path patterns (e.g., ['/docs/.*', '/api/.*'])"
+          },
+          exclude_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Exclude URLs matching these regex path patterns (e.g., ['/private/.*', '/admin/.*'])"
+          },
+          extract_depth: {
+            type: "string",
+            enum: ["basic", "advanced"],
+            description: "Content extraction depth",
+            default: "basic"
+          },
+          format: {
+            type: "string",
+            enum: ["markdown", "text"],
+            description: "Content format",
+            default: "markdown"
+          }
+        },
+        required: ["url"]
+      }
+    }
+  };
+
+  // Tavily Map - Generate website sitemap
+  const tavilyMapTool = {
+    type: "function",
+    function: {
+      name: "tavilyMap",
+      description: "Quickly generate website sitemap, returns only discovered URL list without extracting content. Best for quickly understanding site structure, collecting URLs, or planning crawl strategy before using tavilyCrawl. Fast and low cost. Use this to explore site structure before crawling.",
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "Root URL to map"
+          },
+          instructions: {
+            type: "string",
+            description: "Natural language instructions to guide mapping focus (using this option doubles the cost). Example: 'Find all blog post pages'"
+          },
+          max_depth: {
+            type: "integer",
+            description: "Maximum mapping depth",
+            minimum: 1,
+            default: 1
+          },
+          max_breadth: {
+            type: "integer",
+            description: "Maximum number of links to follow per page",
+            minimum: 1,
+            default: 20
+          },
+          limit: {
+            type: "integer",
+            description: "Total maximum number of pages to process",
+            minimum: 1,
+            default: 50
+          },
+          select_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Only select URLs matching these regex path patterns"
+          },
+          exclude_paths: {
+            type: "array",
+            items: {
+              type: "string"
+            },
+            description: "Exclude URLs matching these regex path patterns"
+          }
+        },
+        required: ["url"]
+      }
+    }
+  };
+
+  // Zhipu AI 圖像生成工具
+  const zhipuImageTool = {
+    type: "function",
+    function: {
+      name: "generateImageZhipu",
+      description: "Generate high-quality images using Zhipu AI's CogView-3-Flash model. Supports text-to-image generation with various sizes. Use this when user requests to create, generate, or draw an image with Zhipu AI, or when high-quality Chinese prompt understanding is needed.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "Detailed description of the image to generate. Can be in Chinese or English. The model excels at understanding Chinese prompts."
+          },
+          size: {
+            type: "string",
+            description: "Image size. Recommended: '1024x1024' (default), '768x1344', '864x1152', '1344x768', '1152x864', '1440x720', '720x1440'. Custom sizes must be 512-2048px, divisible by 16, max 2^21 pixels.",
+            default: "1024x1024"
+          }
+        },
+        required: ["prompt"]
+      }
+    }
+  };
+
+  // Zhipu AI 視頻生成工具
+  const zhipuVideoTool = {
+    type: "function",
+    function: {
+      name: "generateVideoZhipu",
+      description: "Generate videos using Zhipu AI's CogVideoX-Flash model. Supports text-to-video and image-to-video generation. This is an asynchronous operation that returns a task ID. Use queryVideoResultZhipu to check the generation status and get the video file. Suitable for creating short video clips with AI-generated content or animations.",
+      parameters: {
+        type: "object",
+        properties: {
+          prompt: {
+            type: "string",
+            description: "Detailed description of the video to generate. Can be in Chinese or English. Maximum 512 characters. Required unless imageUrl is provided."
+          },
+          quality: {
+            type: "string",
+            enum: ["speed", "quality"],
+            description: "Generation mode. 'speed': Faster generation (default), 'quality': Higher quality output, takes longer",
+            default: "speed"
+          },
+          size: {
+            type: "string",
+            enum: ["1280x720", "720x1280", "1024x1024", "1920x1080", "1080x1920", "2048x1080", "3840x2160"],
+            description: "Video resolution. Default is based on input image ratio if imageUrl is provided, otherwise uses 1080p for shortest side.",
+            default: "1920x1080"
+          },
+          fps: {
+            type: "string",
+            enum: ["30", "60"],
+            description: "Frame rate (FPS). Options: 30 or 60. Default: 30",
+            default: "30"
+          },
+          duration: {
+            type: "string",
+            enum: ["5", "10"],
+            description: "Video duration in seconds. Options: 5 or 10. Default: 5",
+            default: "5"
+          },
+          withAudio: {
+            type: "boolean",
+            description: "Whether to generate AI audio effects. Default: false",
+            default: false
+          },
+          imageUrl: {
+            type: "string",
+            description: "Optional: URL or Base64 encoded image to generate video from. Supports PNG, JPEG, JPG formats, max 5MB. Can be used with or without prompt for image-to-video generation."
+          }
+        },
+        required: []
+      }
+    }
+  };
+
+  // 查詢Zhipu視頻生成結果工具
+  const queryZhipuVideoTool = {
+    type: "function",
+    function: {
+      name: "queryVideoResultZhipu",
+      description: "Query the status and result of a Zhipu AI video generation task. Use this after calling generateVideoZhipu to check if the video is ready and get the download file. The task may be PROCESSING (in progress), SUCCESS (completed), or FAIL (failed).",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: {
+            type: "string",
+            description: "The task ID returned by generateVideoZhipu"
+          }
+        },
+        required: ["taskId"]
+      }
+    }
+  };
+
+  const tools = [imageTool];
+  
+  // 添加Zhipu AI 工具
+  tools.push(zhipuImageTool);
+  tools.push(zhipuVideoTool);
+  tools.push(queryZhipuVideoTool);
+  
+  if (enableSearch) {
+    tools.push(searchTool);
+    tools.push(tavilySearchTool);
+    tools.push(tavilyExtractTool);
+    tools.push(tavilyCrawlTool);
+    tools.push(tavilyMapTool);
+  }
+  
+  return tools;
+}
+
 module.exports = {
   // Tavily APIs
   tavilySearch,
@@ -484,5 +858,7 @@ module.exports = {
   generateVideoZhipu,
   queryVideoResultZhipu,
   // Utils
-  processGeneratedImage
+  processGeneratedImage,
+  // Definitions
+  getToolDefinitions
 };

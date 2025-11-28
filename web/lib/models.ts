@@ -28,6 +28,15 @@ export interface IChatLogData {
     enable_system_prompt: boolean;
   };
   processing_time_ms?: number;
+  search_results?: Array<{
+    title: string;
+    url: string;
+    contentSnippet: string;
+    source: string;
+  }>;
+  generated_image?: string;
+  generated_video?: string;
+  tool_used?: string;
 }
 
 export interface IChatLog extends Omit<Document, "model">, IChatLogData {}
@@ -59,7 +68,16 @@ const chatLogSchema = new mongoose.Schema<IChatLog>({
     enable_search: Boolean,
     enable_system_prompt: Boolean
   },
-  processing_time_ms: Number
+  processing_time_ms: Number,
+  search_results: [{
+    title: String,
+    url: String,
+    contentSnippet: String,
+    source: String
+  }],
+  generated_image: String,
+  generated_video: String,
+  tool_used: String
 });
 
 // Prevent overwriting the model if it's already compiled

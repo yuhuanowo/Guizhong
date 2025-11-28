@@ -98,18 +98,17 @@ module.exports = {
   createSearchResultsFile,
   calculateEmbedSize,
   async execute(interaction) {
+    let language = 'zh-TW';
     try {
-      // console.log('showSearchResults executed with customId:', interaction.customId);
-      // console.log('Message embeds count:', interaction.message.embeds.length);
-      
       // 處理 showSearchResults 和 hideSearchResults 兩種按鈕
       if (!interaction.customId.startsWith("showSearchResults_") && 
           !interaction.customId.startsWith("hideSearchResults_")) {
         return;
       }
 
-  const guildId = interaction.guild.id;
-  let language = i18n.getServerLanguage(guildId);
+      if (interaction.guild) {
+        language = i18n.getServerLanguage(interaction.guild.id);
+      }
       
       // 获取原始消息
       const embed = interaction.message.embeds[0];
@@ -198,9 +197,14 @@ module.exports = {
                 if (seen.has(targetId)) continue;
 
                 const newButton = new ButtonBuilder()
-                  .setCustomId(targetId)
                   .setLabel(component.label)
                   .setStyle(component.style);
+
+                if (component.style === 5) {
+                  newButton.setURL(component.url);
+                } else {
+                  newButton.setCustomId(targetId);
+                }
 
                 if (component.emoji) {
                   if (typeof component.emoji === 'string') {
@@ -278,9 +282,14 @@ module.exports = {
               if (seen.has(targetId)) continue;
 
               const newButton = new ButtonBuilder()
-                .setCustomId(targetId)
                 .setLabel(component.label)
                 .setStyle(component.style);
+
+              if (component.style === 5) {
+                newButton.setURL(component.url);
+              } else {
+                newButton.setCustomId(targetId);
+              }
 
               if (component.emoji) {
                 if (typeof component.emoji === 'string') {
@@ -351,9 +360,14 @@ module.exports = {
               if (seen.has(targetId)) continue;
 
               const newButton = new ButtonBuilder()
-                .setCustomId(targetId)
                 .setLabel(component.label)
                 .setStyle(component.style);
+
+              if (component.style === 5) {
+                newButton.setURL(component.url);
+              } else {
+                newButton.setCustomId(targetId);
+              }
 
               if (component.emoji) {
                 if (typeof component.emoji === 'string') {

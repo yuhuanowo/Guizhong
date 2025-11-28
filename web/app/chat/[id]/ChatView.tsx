@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { 
   Calendar, User, Bot, Sparkles, Clock, Cpu, Timer, Globe, Terminal, Server, 
-  Info, X, ChevronDown, Copy, Check, Download, Hash, Eye, EyeOff, Type, Link as LinkIcon, Menu 
+  Info, X, ChevronDown, Copy, Check, Download, Hash, Eye, EyeOff, Type, Link as LinkIcon, Menu,
+  Maximize2, ZoomIn, ZoomOut, RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -76,6 +78,15 @@ function getModelEmojiUrl(model: string): string | null {
   return null;
 }
 
+const getFaviconUrl = (url: string) => {
+  try {
+    const hostname = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+  } catch {
+    return null;
+  }
+};
+
 const CodeBlock = ({ language, children }: { language: string, children: string }) => {
   const [copied, setCopied] = useState(false);
 
@@ -86,22 +97,25 @@ const CodeBlock = ({ language, children }: { language: string, children: string 
   };
 
   return (
-    <div className="relative group my-4 rounded-lg overflow-hidden border border-white/10 bg-[#1e1e1e]">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-white/5">
-        <span className="text-xs font-medium text-zinc-400 uppercase">{language || 'text'}</span>
+    <div className="relative group my-4 rounded-2xl overflow-hidden border border-white/5 bg-zinc-900/50 shadow-lg shadow-black/10 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-900/30 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <Terminal className="w-3.5 h-3.5 text-zinc-500" />
+          <span className="text-xs font-medium text-zinc-400">{language || 'text'}</span>
+        </div>
         <button 
           onClick={handleCopy}
-          className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 hover:bg-white/10 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors"
           title="Copy Code"
           aria-label="Copy Code"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? <Check className="w-3.5 h-3.5 text-zinc-200" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>
       <SyntaxHighlighter
         language={language}
         style={vscDarkPlus}
-        customStyle={{ margin: 0, padding: '1.5rem', background: 'transparent', fontSize: '0.9rem' }}
+        customStyle={{ margin: 0, padding: '1.25rem', background: 'transparent', fontSize: '0.875rem' }}
         wrapLines={true}
         wrapLongLines={true}
       >
@@ -121,6 +135,67 @@ const preprocessLaTeX = (content: string) => {
   return inlineReplaced;
 };
 
+const MessageContent = ({ content, textSize, viewMode, openImagePreview }: any) => {
+  if (viewMode === 'raw') {
+     return (
+        <pre className="whitespace-pre-wrap font-mono text-zinc-300 leading-relaxed" style={{ fontSize: `${textSize}px` }}>
+          {content}
+        </pre>
+     );
+  }
+
+  return (
+    <div 
+      className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none"
+      style={{ fontSize: `${textSize}px` }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex, rehypeRaw]}
+        components={{
+          pre: ({ children }) => <>{children}</>,
+          code({ node, inline, className, children, ...props }: any) {
+            const match = /language-(\w+)/.exec(className || "");
+            return !inline && match ? (
+              <CodeBlock language={match[1]}>{String(children).replace(/\n$/, "")}</CodeBlock>
+            ) : (
+              <code className="bg-zinc-900/30 border border-white/5 text-zinc-200 px-1.5 py-0.5 rounded-lg text-[0.9em] font-mono" {...props}>
+                {children}
+              </code>
+            );
+          },
+          a: ({ node, ...props }) => (
+            <a target="_blank" rel="noopener noreferrer" className="text-zinc-200 hover:text-zinc-50 underline decoration-zinc-500/50 hover:decoration-zinc-400/50 transition-colors" {...props} />
+          ),
+          table: ({ node, ...props }) => (
+            <div className="overflow-x-auto my-4 rounded-2xl border border-white/5 bg-zinc-900/30 shadow-lg shadow-black/10 backdrop-blur-sm">
+              <table className="w-full text-left border-collapse" {...props} />
+            </div>
+          ),
+          thead: ({ node, ...props }) => (
+            <thead className="bg-zinc-900/20 border-b border-white/5" {...props} />
+          ),
+          th: ({ node, ...props }) => (
+            <th className="px-4 py-3 font-medium text-zinc-300 text-sm" {...props} />
+          ),
+          td: ({ node, ...props }) => (
+            <td className="px-4 py-3 border-b border-white/5 text-zinc-400 text-sm" {...props} />
+          ),
+          img: ({ node, ...props }) => (
+            <img 
+              {...props} 
+              className="rounded-2xl border border-white/5 cursor-zoom-in shadow-lg shadow-black/10 hover:border-white/10 transition-colors"
+              onClick={() => props.src && openImagePreview(props.src as string)}
+            />
+          )
+        }}
+      >
+        {preprocessLaTeX(content)}
+      </ReactMarkdown>
+    </div>
+  );
+};
+
 export default function ChatView({ chat }: ChatViewProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -131,6 +206,25 @@ export default function ChatView({ chat }: ChatViewProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedJson, setCopiedJson] = useState(false);
   const [infoTab, setInfoTab] = useState<'general' | 'json'>('general');
+  
+  const [expandedSearch, setExpandedSearch] = useState<Record<string, boolean>>({});
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [imageScale, setImageScale] = useState(1);
+  const [imageRotation, setImageRotation] = useState(0);
+
+  const toggleSearch = (id: string) => {
+    setExpandedSearch(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const openImagePreview = (src: string) => {
+    setPreviewImage(src);
+    setImageScale(1);
+    setImageRotation(0);
+  };
+
+  const closeImagePreview = () => {
+    setPreviewImage(null);
+  };
 
   const copyToClipboard = (text: string, isPrompt: boolean) => {
     navigator.clipboard.writeText(text);
@@ -171,7 +265,7 @@ export default function ChatView({ chat }: ChatViewProps) {
       {/* Info Modal */}
       <AnimatePresence>
         {showInfoModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -183,7 +277,7 @@ export default function ChatView({ chat }: ChatViewProps) {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-2xl bg-zinc-950 border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="relative w-full max-w-2xl bg-zinc-950 border border-white/10 rounded-4xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-zinc-900/30">
@@ -371,7 +465,12 @@ export default function ChatView({ chat }: ChatViewProps) {
                       {copiedJson ? <Check className="w-4 h-4 text-zinc-50" /> : <Copy className="w-4 h-4" />}
                     </button>
                     <pre className="text-xs font-mono text-zinc-400 whitespace-pre-wrap break-all bg-zinc-950/50 p-4 rounded-3xl border border-white/5 backdrop-blur-md">
-                      {JSON.stringify(chat, null, 2)}
+                      {JSON.stringify(chat, (key, value) => {
+                        if (key === 'generated_image' && typeof value === 'string' && value.length > 100) {
+                          return value.substring(0, 50) + '...' + value.substring(value.length - 20);
+                        }
+                        return value;
+                      }, 2)}
                     </pre>
                   </div>
                 )}
@@ -381,11 +480,41 @@ export default function ChatView({ chat }: ChatViewProps) {
         )}
       </AnimatePresence>
 
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/90 backdrop-blur-md">
+            <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
+               <button onClick={() => setImageScale(s => Math.max(0.5, s - 0.5))} className="p-2 rounded-full bg-zinc-800/50 text-zinc-200 hover:bg-zinc-700"><ZoomOut className="w-5 h-5" /></button>
+               <button onClick={() => setImageScale(s => Math.min(5, s + 0.5))} className="p-2 rounded-full bg-zinc-800/50 text-zinc-200 hover:bg-zinc-700"><ZoomIn className="w-5 h-5" /></button>
+               <button onClick={() => setImageRotation(r => r + 90)} className="p-2 rounded-full bg-zinc-800/50 text-zinc-200 hover:bg-zinc-700"><RotateCcw className="w-5 h-5" /></button>
+               <a href={previewImage} download="generated-image.png" className="p-2 rounded-full bg-zinc-800/50 text-zinc-200 hover:bg-zinc-700"><Download className="w-5 h-5" /></a>
+               <button onClick={closeImagePreview} className="p-2 rounded-full bg-zinc-800/50 text-zinc-200 hover:bg-red-500/20 hover:text-red-400"><X className="w-5 h-5" /></button>
+            </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full h-full flex items-center justify-center p-4 overflow-hidden"
+            >
+               <motion.img 
+                 src={previewImage} 
+                 alt="Preview" 
+                 className="max-w-full max-h-full object-contain transition-transform duration-200"
+                 style={{ transform: `scale(${imageScale}) rotate(${imageRotation}deg)` }}
+                 drag
+                 dragConstraints={{ left: -500, right: 500, top: -500, bottom: 500 }}
+               />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Integrated Navbar */}
       <motion.header 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 w-full border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl supports-[backdrop-filter]:bg-zinc-950/60"
+        className="sticky top-0 z-50 w-full border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl supports-backdrop-filter:bg-zinc-950/60"
       >
         <div className="container max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           
@@ -614,7 +743,7 @@ export default function ChatView({ chat }: ChatViewProps) {
         </AnimatePresence>
       </motion.header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-12 space-y-10">
+      <main className="container max-w-6xl mx-auto px-4 py-12 space-y-12">
         
         {conversation.map((msg, index) => (
           <React.Fragment key={msg.interaction_id || index}>
@@ -644,10 +773,14 @@ export default function ChatView({ chat }: ChatViewProps) {
               
               <div className="max-w-[85%] md:max-w-[80%]">
                 <div 
-                  className="px-6 py-4 bg-zinc-900/80 text-zinc-50 rounded-[2rem] rounded-tr-sm border border-white/5 shadow-sm backdrop-blur-sm"
-                  style={{ fontSize: `${textSize}px` }}
+                  className="px-6 py-4 bg-zinc-900/80 text-zinc-50 rounded-4xl rounded-tr-sm border border-white/5 shadow-lg shadow-black/10 backdrop-blur-sm"
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">{msg.prompt}</p>
+                  <MessageContent 
+                    content={msg.prompt} 
+                    textSize={textSize} 
+                    viewMode="rendered" 
+                    openImagePreview={openImagePreview} 
+                  />
                 </div>
               </div>
             </motion.div>
@@ -689,42 +822,167 @@ export default function ChatView({ chat }: ChatViewProps) {
               
               <div className="w-full max-w-[95%] md:max-w-[90%]">
                 <div 
-                  className="relative px-8 py-8 bg-zinc-950/40 text-zinc-50 rounded-[2rem] rounded-tl-sm border border-white/5 shadow-sm overflow-hidden backdrop-blur-md"
-                  style={{ fontSize: `${textSize}px` }}
+                  className="relative px-8 py-8 bg-zinc-950/40 text-zinc-50 rounded-4xl rounded-tl-sm border border-white/5 shadow-xl shadow-black/10 overflow-hidden backdrop-blur-md"
                 >
-                  {viewMode === 'rendered' ? (
-                    <div className="prose prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-zinc-900/50 prose-pre:border prose-pre:border-white/5 prose-pre:rounded-2xl prose-pre:backdrop-blur-sm">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkMath, remarkGfm]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{
-                          code({ node, inline, className, children, ...props }: any) {
-                            const match = /language-(\w+)/.exec(className || "");
-                            return !inline && match ? (
-                              <CodeBlock language={match[1]}>{String(children).replace(/\n$/, "")}</CodeBlock>
-                            ) : (
-                              <code className="bg-zinc-900/50 border border-white/10 text-zinc-300 px-1.5 py-0.5 rounded-md text-[0.9em] font-mono backdrop-blur-sm" {...props}>
-                                {children}
-                              </code>
-                            );
-                          },
-                          // Custom styling for other elements
-                          a: ({ node, ...props }) => <a className="text-indigo-300 hover:text-indigo-200 underline decoration-indigo-500/30 hover:decoration-indigo-500/50 transition-all" target="_blank" rel="noopener noreferrer" {...props} />,
-                          blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-zinc-700 bg-zinc-900/30 pl-4 py-1 rounded-r-2xl italic text-zinc-400 backdrop-blur-sm" {...props} />,
-                          table: ({ node, ...props }) => <div className="overflow-x-auto my-4 rounded-2xl border border-white/5 bg-zinc-900/20 backdrop-blur-sm"><table className="w-full text-left border-collapse" {...props} /></div>,
-                          th: ({ node, ...props }) => <th className="bg-zinc-900/50 p-3 font-semibold text-zinc-200 border-b border-white/5" {...props} />,
-                          td: ({ node, ...props }) => <td className="p-3 border-b border-white/5 text-zinc-300" {...props} />,
-                          hr: ({ node, ...props }) => <hr className="border-white/5 my-8" {...props} />,
-                          img: ({ node, ...props }) => <img className="rounded-2xl border border-white/5 shadow-sm" loading="lazy" {...props} />,
-                        }}
-                      >
-                        {preprocessLaTeX(msg.reply)}
-                      </ReactMarkdown>
+                  <MessageContent 
+                    content={msg.reply} 
+                    textSize={textSize} 
+                    viewMode={viewMode} 
+                    openImagePreview={openImagePreview} 
+                  />
+
+                  {/* Generated Image */}
+                  {msg.generated_image && (
+                    <div className="mt-6">
+                      <div className="inline-flex flex-col gap-2 max-w-md">
+                        <div className="flex items-center gap-2 px-1">
+                          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                          <span className="text-xs font-medium text-zinc-400">Generated Image</span>
+                        </div>
+                        <div 
+                          className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/50 cursor-zoom-in group/image shadow-lg hover:shadow-violet-500/10 transition-all"
+                          onClick={() => openImagePreview(msg.generated_image)}
+                        >
+                          <img 
+                            src={msg.generated_image} 
+                            alt="Generated Content" 
+                            className="w-full h-auto"
+                          />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
+                             <div className="p-3 rounded-full bg-black/50 backdrop-blur-sm text-white transform scale-90 group-hover/image:scale-100 transition-transform">
+                                <Maximize2 className="w-6 h-6" />
+                             </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <pre className="whitespace-pre-wrap font-mono text-sm text-zinc-300 leading-relaxed">
-                      {msg.reply}
-                    </pre>
+                  )}
+
+                  {/* Generated Video */}
+                  {msg.generated_video && (
+                    <div className="mt-6">
+                      <div className="inline-flex flex-col gap-2 max-w-md">
+                        <div className="flex items-center gap-2 px-1">
+                          <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                          <span className="text-xs font-medium text-zinc-400">Generated Video</span>
+                        </div>
+                        <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-zinc-900/50 shadow-lg">
+                          <video 
+                            src={msg.generated_video} 
+                            controls 
+                            className="w-full h-auto"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Search Results */}
+                  {msg.search_results && msg.search_results.length > 0 && (
+                    <div className="mt-6">
+                      {/* Header */}
+                      <motion.button 
+                        onClick={() => toggleSearch(msg.interaction_id || index.toString())}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-zinc-900/30 hover:bg-zinc-900/50 border border-white/5 hover:border-white/10 backdrop-blur-md transition-all text-xs font-medium text-zinc-400 hover:text-zinc-200 select-none w-fit shadow-sm"
+                      >
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ease-out ${expandedSearch[msg.interaction_id || index.toString()] ? 'rotate-180' : ''}`} />
+                        <span>{msg.search_results.length} Sources</span>
+                        
+                        {!expandedSearch[msg.interaction_id || index.toString()] && (
+                          <motion.div 
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: "auto" }}
+                            exit={{ opacity: 0, width: 0 }}
+                            className="flex items-center overflow-hidden"
+                          >
+                            <div className="w-px h-3 bg-white/10 mx-1 shrink-0" />
+                            <div className="flex -space-x-1.5 opacity-80">
+                              {msg.search_results.slice(0, 5).map((result: any, i: number) => (
+                                <img 
+                                  key={i}
+                                  src={getFaviconUrl(result.url) || result.source} 
+                                  onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                                  alt="" 
+                                  className="w-4 h-4 rounded-full ring-2 ring-zinc-900 bg-zinc-800 object-cover" 
+                                />
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </motion.button>
+
+                      {/* List Content */}
+                      <AnimatePresence initial={false}>
+                        {expandedSearch[msg.interaction_id || index.toString()] && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="flex flex-col gap-1 pl-1 pt-2 pb-1">
+                              {msg.search_results.map((result: any, i: number) => (
+                                <motion.a 
+                                  key={i} 
+                                  href={result.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  initial={{ opacity: 0, y: -10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                                  className="group/link relative flex gap-3 p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-colors"
+                                >
+                                  {/* Number & Icon */}
+                                  <div className="flex flex-col items-center gap-2 pt-0.5">
+                                    <div className="w-4 h-4 rounded-full flex items-center justify-center overflow-hidden opacity-60 group-hover/link:opacity-100 transition-opacity shrink-0 ring-1 ring-white/10 group-hover/link:ring-indigo-500/50">
+                                      <img 
+                                        src={getFaviconUrl(result.url) || result.source} 
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).style.display = 'none';
+                                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                        }}
+                                        alt="" 
+                                        className="w-full h-full object-cover" 
+                                      />
+                                      <Globe className="hidden w-3 h-3 text-zinc-500 absolute" />
+                                    </div>
+                                    {/* Static Line with Hover Effect */}
+                                    <div className="w-px h-full bg-white/10 group-hover/link:bg-indigo-500/30 transition-colors" />
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0 pb-1">
+                                    <div className="flex items-center justify-between gap-2 mb-1">
+                                      <span className="text-[10px] font-mono text-zinc-500 group-hover/link:text-zinc-300 transition-colors truncate">
+                                        {new URL(result.url).hostname.replace(/^www\./, '')}
+                                      </span>
+                                      {result.date && (
+                                        <span className="text-[10px] text-zinc-600 shrink-0">
+                                          {new Date(result.date).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    <h4 className="text-sm font-medium text-zinc-300 group-hover/link:text-indigo-300 transition-colors leading-snug mb-1.5">
+                                      {result.title}
+                                    </h4>
+                                    
+                                    {result.contentSnippet && (
+                                      <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed group-hover/link:text-zinc-400 transition-colors">
+                                        {result.contentSnippet}
+                                      </p>
+                                    )}
+                                  </div>
+                                </motion.a>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   )}
                 </div>
               </div>

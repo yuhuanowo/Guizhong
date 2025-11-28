@@ -31,7 +31,13 @@ const getChat = cache(async (id: string) => {
       history.unshift({
         ...parentChat,
         _id: parentChat._id.toString(),
-        timestamp: parentChat.timestamp.toISOString()
+        timestamp: parentChat.timestamp.toISOString(),
+        search_results: parentChat.search_results?.map((result: any) => ({
+          title: result.title,
+          url: result.url,
+          contentSnippet: result.contentSnippet,
+          source: result.source || result.icon || ''
+        }))
       });
 
       currentParentId = parentChat.parent_id;
@@ -42,6 +48,12 @@ const getChat = cache(async (id: string) => {
       ...chat,
       _id: chat._id.toString(),
       timestamp: chat.timestamp.toISOString(),
+      search_results: chat.search_results?.map((result: any) => ({
+        title: result.title,
+        url: result.url,
+        contentSnippet: result.contentSnippet,
+        source: result.source || result.icon || ''
+      })),
       history
     };
   }

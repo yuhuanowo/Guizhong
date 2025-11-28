@@ -219,605 +219,59 @@ module.exports = {
     // 获取模型使用限制
     const usageLimits = llmService.getModelUsageLimits();
 
-    // 更新用户使用量并获取相关信息
-    const usageInfo = llmService.updateUserUsage(userId, selectedModel, usageLimits);
-    selectedModel = usageInfo.selectedModel;
-
-    // 检查是否超出使用限制
-    if (usageInfo.isExceeded) {
-      const embed = new EmbedBuilder()
-        .setTitle("AI Text Generation")
-        .setDescription(i18n.getString("commands.agent.usageExceeded", language, {
-          limit: usageInfo.limit,
-          usage: usageInfo.usage,
-          model: selectedModel
-        }))
-        .setColor("#ff0000");
-      await interaction.editReply({ embeds: [embed] });
-      return;
-    }
-
-    // 创建LLM客户端（根据模型类型自动选择适当的提供商）
-    const client = llmService.createLLMClient(selectedModel);
-
     try {
-      // 构建消息数组
-      let messages = [];
-      
-      // 如果有历史ID，加载历史对话
+      // 准备历史消息
+      let historyMessages = [];
       if (historyId) {
-        const historyMessages = await memoryService.getConversationHistory(historyId, userId);
-        if (historyMessages && historyMessages.length > 0) {
-          messages = [...messages, ...historyMessages];
+        const history = await memoryService.getConversationHistory(historyId, userId);
+        if (history && history.length > 0) {
+          historyMessages = history;
         } else {
           logger.info(`找不到历史对话: ${historyId}`);
         }
       }
 
-      // 格式化用户消息
-      const userMessage = await llmService.formatUserMessage(prompt, image, audio, selectedModel);
-      messages = [...messages, ...userMessage];
+      // 调用统一的处理函数
+      const result = await llmService.processUserRequest({
+        userId,
+        prompt,
+        image,
+        audio,
+        modelName: selectedModel,
+        historyMessages,
+        enableSearch,
+        enableSystemPrompt,
+        language
+      });
 
-
-      // 添加系统提示（如果启用）
-      if (enableSystemPrompt) {
-        const sysPrompt = llmService.getSystemPrompt(selectedModel, language);
-        if (sysPrompt) messages.unshift(sysPrompt);
+      // 检查使用限制
+      if (!result.success && result.isUsageExceeded) {
+        const embed = new EmbedBuilder()
+          .setTitle("AI Text Generation")
+          .setDescription(i18n.getString("commands.agent.usageExceeded", language, {
+            limit: result.usageInfo.limit,
+            usage: result.usageInfo.usage,
+            model: result.modelName
+          }))
+          .setColor("#ff0000");
+        await interaction.editReply({ embeds: [embed] });
+        return;
       }
 
-      // 获取工具定义
-      const tools = llmService.getToolDefinitions(enableSearch);
-
-      // 发送LLM请求
-      let response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
-      let actuallySearched = false;
-      let searchResults = null;
-
-      // 检查响应状态
-      if (response.status !== "200") {
-        throw response.body.error;
-      }
-
-      // 处理可能的工具调用
-      let dataURI = null;
-      let videoUrl = null; // 添加視頻 URL 變量
-      if (
-        response.body.choices &&
-        response.body.choices[0].finish_reason === "tool_calls"
-      ) {
-        messages.push(response.body.choices[0].message);
-        const calls = response.body.choices[0].message.tool_calls;
-        
-        // 支持多個工具調用
-        if (calls && calls.length > 0) {
-          logger.info(`檢測到 ${calls.length} 個工具調用: ${calls.map(t => t.function.name).join(', ')}`);
-          
-          for (const call of calls) {
-            if (call.type === "function") {
-              const parsed = JSON.parse(call.function.arguments);
-              
-              if (call.function.name === "generateImage") {
-                dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-                messages.push({
-                  tool_call_id: call.id,
-                  role: "tool",
-                  name: call.function.name,
-                  content: JSON.stringify({ generateResult: "已生成提示詞為 " + parsed.prompt + " 的圖片" })
-                });
-              } else if (call.function.name === "searchDuckDuckGo") {
-                actuallySearched = true;
-                
-                const currentSearchResults = await toolFunctions.searchDuckDuckGoLite(parsed.query, parsed.numResults || 10);
-                
-                // 為每個搜尋結果添加搜尋引擎標記
-                const markedResults = currentSearchResults.map(r => ({
-                  ...r,
-                  searchEngine: 'duckduckgo'
-                }));
-                
-                // 合併搜尋結果
-                if (!searchResults) {
-                  searchResults = [];
-                }
-                searchResults = searchResults.concat(markedResults);
-                
-                if (currentSearchResults.length === 0) {
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ searchResults: "No results found for: " + parsed.query })
-                  });
-                } else {
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ searchResults: currentSearchResults })
-                  });
-                }
-              } else if (call.function.name === "tavilySearch") {
-                actuallySearched = true;
-                logger.info(`執行 Tavily Search: ${parsed.query}`);
-                
-                try {
-                  const tavilyResults = await toolFunctions.tavilySearch(parsed);
-                  
-                  // 格式化 Tavily 結果以便顯示，並添加搜尋引擎標記
-                  const formattedResults = tavilyResults.results?.map(r => ({
-                    title: r.title,
-                    url: r.url,
-                    contentSnippet: r.content,
-                    domain: new URL(r.url).hostname,
-                    icon: r.favicon || `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(new URL(r.url).hostname)}`,
-                    searchEngine: 'tavily'
-                  })) || [];
-                  
-                  if (!searchResults) {
-                    searchResults = [];
-                  }
-                  searchResults = searchResults.concat(formattedResults);
-                  
-                  // 構建回應內容
-                  let responseContent = {
-                    searchResults: tavilyResults.results || [],
-                    totalResults: tavilyResults.results?.length || 0
-                  };
-                  
-                  // 如果有 LLM 生成的答案，也包含進去
-                  if (tavilyResults.answer) {
-                    responseContent.answer = tavilyResults.answer;
-                  }
-                  
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify(responseContent)
-                  });
-                  
-                  logger.success(`Tavily Search 完成，找到 ${formattedResults.length} 個結果`);
-                } catch (error) {
-                  logger.error(`Tavily Search 錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: `Tavily 搜尋失敗: ${error.message}`,
-                      searchResults: []
-                    })
-                  });
-                }
-              } else if (call.function.name === "tavilyExtract") {
-                logger.info(`執行 Tavily Extract: ${Array.isArray(parsed.urls) ? parsed.urls.length : 1} 個 URL`);
-                
-                try {
-                  const extractResults = await toolFunctions.tavilyExtract(parsed);
-                  
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({
-                      success: extractResults.results?.length || 0,
-                      failed: extractResults.failed_results?.length || 0,
-                      results: extractResults.results || [],
-                      failed_results: extractResults.failed_results || []
-                    })
-                  });
-                  
-                  logger.success(`Tavily Extract 完成，成功: ${extractResults.results?.length || 0}, 失敗: ${extractResults.failed_results?.length || 0}`);
-                } catch (error) {
-                  logger.error(`Tavily Extract 錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: `Tavily 提取失敗: ${error.message}`,
-                      results: []
-                    })
-                  });
-                }
-              } else if (call.function.name === "tavilyCrawl") {
-                logger.info(`執行 Tavily Crawl: ${parsed.url}`);
-                
-                try {
-                  const crawlResults = await toolFunctions.tavilyCrawl(parsed);
-                  
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({
-                      base_url: crawlResults.base_url,
-                      totalPages: crawlResults.results?.length || 0,
-                      results: crawlResults.results || []
-                    })
-                  });
-                  
-                  logger.success(`Tavily Crawl 完成，爬取 ${crawlResults.results?.length || 0} 個頁面`);
-                } catch (error) {
-                  logger.error(`Tavily Crawl 錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: `Tavily 爬取失敗: ${error.message}`,
-                      results: []
-                    })
-                  });
-                }
-              } else if (call.function.name === "tavilyMap") {
-                logger.info(`執行 Tavily Map: ${parsed.url}`);
-                
-                try {
-                  const mapResults = await toolFunctions.tavilyMap(parsed);
-                  
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({
-                      base_url: mapResults.base_url,
-                      totalUrls: mapResults.results?.length || 0,
-                      urls: mapResults.results || []
-                    })
-                  });
-                  
-                  logger.success(`Tavily Map 完成，發現 ${mapResults.results?.length || 0} 個 URL`);
-                } catch (error) {
-                  logger.error(`Tavily Map 錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: `Tavily 地圖生成失敗: ${error.message}`,
-                      urls: []
-                    })
-                  });
-                }
-              } else if (call.function.name === "generateImageZhipu") {
-                try {
-                  const imageResult = await toolFunctions.generateImageZhipu(parsed);
-                  
-                  // 下載圖片並轉換為 dataURI
-                  const imageResponse = await fetch(imageResult.imageUrl);
-                  const imageBuffer = await imageResponse.buffer();
-                  const base64Image = imageBuffer.toString('base64');
-                  dataURI = `data:image/jpeg;base64,${base64Image}`;
-                  
-                    // 回傳給 LLM 的工具結果：僅回報成功與提示詞，不包含外部圖片 URL
-                    messages.push({
-                      tool_call_id: call.id,
-                      role: "tool",
-                      name: call.function.name,
-                      content: JSON.stringify({ 
-                        generateResult: i18n.getString("commands.agent.zhipuImageGenerated", language),
-                        prompt: parsed.prompt
-                      })
-                    });
-                } catch (error) {
-                  logger.error(`Zhipu AI 圖像生成錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: i18n.getString("commands.agent.zhipuImageFailed", language) + `: ${error.message}`
-                    })
-                  });
-                }
-              } else if (call.function.name === "generateVideoZhipu") {
-                try {
-                  const videoResult = await toolFunctions.generateVideoZhipu(parsed);
-                  
-                  // 自動輪詢查詢結果，最多等待 5 分鐘
-                  const maxAttempts = 30; // 30 次 x 10 秒 = 5 分鐘
-                  let attempts = 0;
-                  let finalResult = null;
-                  
-                  while (attempts < maxAttempts) {
-                    attempts++;
-                    
-                    // 等待 10 秒再查詢
-                    await new Promise(resolve => setTimeout(resolve, 10000));
-                    
-                    try {
-                      const queryResult = await toolFunctions.queryVideoResultZhipu(videoResult.taskId);
-                      
-                      if (queryResult.task_status === "SUCCESS") {
-                        finalResult = queryResult;
-                        break;
-                      } else if (queryResult.task_status === "FAIL") {
-                        throw new Error(queryResult.error?.message || i18n.getString("commands.agent.zhipuVideoFailed", language));
-                      }
-                      // 如果是 PROCESSING，繼續循環
-                    } catch (queryError) {
-                      logger.error(`查詢視頻結果錯誤: ${queryError.message}`);
-                      throw queryError;
-                    }
-                  }
-                  
-                  if (finalResult && finalResult.task_status === "SUCCESS") {
-                    const generatedVideoUrl = finalResult.video_result?.[0]?.url || null;
-                    const coverImageUrl = finalResult.video_result?.[0]?.cover_image_url || null;
-                    
-                    // 下載視頻文件
-                    if (generatedVideoUrl) {
-                      const videoResponse = await fetch(generatedVideoUrl);
-                      const videoBuffer = await videoResponse.buffer();
-                      
-                      // 保存到臨時文件
-                      const tempVideoPath = `./recordings/${crypto.randomUUID()}.mp4`;
-                      fs.writeFileSync(tempVideoPath, videoBuffer);
-                      
-                      // 保存視頻路徑以便後續發送
-                      videoUrl = tempVideoPath;
-                    }
-                    
-                    // 回傳給 LLM 的工具結果：不要包含本地檔案或外部下載連結，只返回 taskId/taskStatus/prompt
-                    messages.push({
-                      tool_call_id: call.id,
-                      role: "tool",
-                      name: call.function.name,
-                      content: JSON.stringify({ 
-                        generateResult: i18n.getString("commands.agent.zhipuVideoGenerated", language),
-                        taskId: videoResult.taskId,
-                        taskStatus: "SUCCESS",
-                        model: finalResult.model,
-                        prompt: parsed.prompt
-                      })
-                    });
-                  } else {
-                    // 超時未完成
-                    messages.push({
-                      tool_call_id: call.id,
-                      role: "tool",
-                      name: call.function.name,
-                      content: JSON.stringify({ 
-                        generateResult: i18n.getString("commands.agent.zhipuVideoTimeout", language),
-                        taskId: videoResult.taskId,
-                        taskStatus: "TIMEOUT",
-                        model: videoResult.model,
-                        prompt: parsed.prompt
-                      })
-                    });
-                  }
-                } catch (error) {
-                  logger.error(`Zhipu AI 視頻生成錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: i18n.getString("commands.agent.zhipuVideoFailed", language) + `: ${error.message}`
-                    })
-                  });
-                }
-              } else if (call.function.name === "queryVideoResultZhipu") {
-                logger.info(`查詢Zhipu AI 視頻任務: ${parsed.taskId}`);
-                
-                try {
-                  const queryResult = await toolFunctions.queryVideoResultZhipu(parsed.taskId);
-                  
-                  let resultMessage = {
-                    taskId: queryResult.id,
-                    taskStatus: queryResult.task_status,
-                    model: queryResult.model
-                  };
-                  
-                  if (queryResult.task_status === "SUCCESS") {
-                    resultMessage.videoUrl = queryResult.video_result?.[0]?.url || null;
-                    resultMessage.coverImageUrl = queryResult.video_result?.[0]?.cover_image_url || null;
-                    resultMessage.message = "Video generated successfully";
-                  } else if (queryResult.task_status === "PROCESSING") {
-                    resultMessage.message = "Video is being generated, please check again later...";
-                  } else if (queryResult.task_status === "FAIL") {
-                    resultMessage.message = "Video generation failed";
-                    resultMessage.error = queryResult.error || "Unknown error";
-                  }
-                  
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify(resultMessage)
-                  });
-                  
-                  logger.success(`Zhipu AI 視頻任務查詢完成: ${queryResult.task_status}`);
-                } catch (error) {
-                  logger.error(`Zhipu AI 視頻任務查詢錯誤: ${error.message}`);
-                  messages.push({
-                    tool_call_id: call.id,
-                    role: "tool",
-                    name: call.function.name,
-                    content: JSON.stringify({ 
-                      error: `Video task query failed: ${error.message}`
-                    })
-                  });
-                }
-              }
-            }
-
-            // 如果上面的邏輯沒有為該 call.id 推送任何 tool 訊息，插入一個預設的錯誤回應以滿足 LLM 的驗證要求
-            if (!messages.some(m => m.tool_call_id === call.id)) {
-              messages.push({
-                tool_call_id: call.id,
-                role: "tool",
-                name: (call.function && call.function.name) || call.name || "unknown",
-                content: JSON.stringify({ error: `No handler implemented for tool call ${call.function ? call.function.name : call.name || call.id}` })
-              });
-            }
-          }
-          
-          logger.info(`所有工具調用完成，合併搜尋結果數: ${searchResults?.length || 0}`);
-          
-          // 工具調用完成後，再次發送請求獲得最終回應
-          llmService.updateUserUsage(userId, selectedModel, usageLimits);
-          response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
-          
-          // 處理第二輪可能的工具調用（例如搜尋後再生成圖片或視頻）
-          if (
-            response.body.choices &&
-            response.body.choices[0].finish_reason === "tool_calls"
-          ) {
-            messages.push(response.body.choices[0].message);
-            const secondCalls = response.body.choices[0].message.tool_calls;
-            
-            if (secondCalls && secondCalls.length > 0) {
-              logger.info(`第二輪檢測到 ${secondCalls.length} 個工具調用: ${secondCalls.map(t => t.function.name).join(', ')}`);
-              
-              for (const call of secondCalls) {
-                if (call.type === "function") {
-                  const parsed = JSON.parse(call.function.arguments);
-                  
-                  if (call.function.name === "generateImage") {
-                    dataURI = await toolFunctions.generateImageCloudflare(parsed.prompt);
-                    messages.push({
-                      tool_call_id: call.id,
-                      role: "tool",
-                      name: call.function.name,
-                      content: JSON.stringify({generateResult: "Image generated with prompt: " + parsed.prompt})
-                    });
-                  } else if (call.function.name === "generateImageZhipu") {
-                    try {
-                      const imageResult = await toolFunctions.generateImageZhipu(parsed);
-                      
-                      // 下載圖片並轉換為 dataURI
-                      const imageResponse = await fetch(imageResult.imageUrl);
-                      const imageBuffer = await imageResponse.buffer();
-                      const base64Image = imageBuffer.toString('base64');
-                      dataURI = `data:image/jpeg;base64,${base64Image}`;
-                      
-                      messages.push({
-                        tool_call_id: call.id,
-                        role: "tool",
-                        name: call.function.name,
-                        content: JSON.stringify({ 
-                          generateResult: i18n.getString("commands.agent.zhipuImageGenerated", language),
-                          imageUrl: imageResult.imageUrl,
-                          created: imageResult.created
-                        })
-                      });
-                    } catch (error) {
-                      logger.error(`Zhipu AI 圖像生成錯誤: ${error.message}`);
-                      messages.push({
-                        tool_call_id: call.id,
-                        role: "tool",
-                        name: call.function.name,
-                        content: JSON.stringify({ 
-                          error: i18n.getString("commands.agent.zhipuImageFailed", language) + `: ${error.message}`
-                        })
-                      });
-                    }
-                  } else if (call.function.name === "generateVideoZhipu") {
-                    try {
-                      const videoResult = await toolFunctions.generateVideoZhipu(parsed);
-                      
-                      // 自動輪詢查詢結果，最多等待 5 分鐘
-                      const maxAttempts = 30;
-                      let attempts = 0;
-                      let finalResult = null;
-                      
-                      while (attempts < maxAttempts) {
-                        attempts++;
-                        await new Promise(resolve => setTimeout(resolve, 10000));
-                        
-                        try {
-                          const queryResult = await toolFunctions.queryVideoResultZhipu(videoResult.taskId);
-                          
-                          if (queryResult.task_status === "SUCCESS") {
-                            finalResult = queryResult;
-                            break;
-                          } else if (queryResult.task_status === "FAIL") {
-                            throw new Error(queryResult.error?.message || i18n.getString("commands.agent.zhipuVideoFailed", language));
-                          }
-                        } catch (queryError) {
-                          logger.error(`查詢視頻結果錯誤: ${queryError.message}`);
-                          throw queryError;
-                        }
-                      }
-                      
-                      if (finalResult && finalResult.task_status === "SUCCESS") {
-                        const generatedVideoUrl = finalResult.video_result?.[0]?.url || null;
-                        
-                        // 下載視頻文件
-                        if (generatedVideoUrl) {
-                          const videoResponse = await fetch(generatedVideoUrl);
-                          const videoBuffer = await videoResponse.buffer();
-                          const tempVideoPath = `./recordings/${crypto.randomUUID()}.mp4`;
-                          fs.writeFileSync(tempVideoPath, videoBuffer);
-                          videoUrl = tempVideoPath;
-                        }
-                        
-                        // 回傳給 LLM 的工具結果：不要包含本地檔案路徑，僅回報 task 信息與提示詞
-                        messages.push({
-                          tool_call_id: call.id,
-                          role: "tool",
-                          name: call.function.name,
-                          content: JSON.stringify({ 
-                            generateResult: i18n.getString("commands.agent.zhipuVideoGenerated", language),
-                            taskId: videoResult.taskId,
-                            taskStatus: "SUCCESS",
-                            model: finalResult.model,
-                            prompt: parsed.prompt
-                          })
-                        });
-                      } else {
-                        messages.push({
-                          tool_call_id: call.id,
-                          role: "tool",
-                          name: call.function.name,
-                          content: JSON.stringify({ 
-                            generateResult: i18n.getString("commands.agent.zhipuVideoTimeout", language),
-                            taskId: videoResult.taskId,
-                            taskStatus: "TIMEOUT"
-                          })
-                        });
-                      }
-                    } catch (error) {
-                      logger.error(`Zhipu AI 視頻生成錯誤: ${error.message}`);
-                      messages.push({
-                        tool_call_id: call.id,
-                        role: "tool",
-                        name: call.function.name,
-                        content: JSON.stringify({ 
-                          error: i18n.getString("commands.agent.zhipuVideoFailed", language) + `: ${error.message}`
-                        })
-                      });
-                    }
-                    }
-
-                    // 第二輪也要保底：若未為該 call.id 推送 tool 訊息，插入預設回應
-                    if (!messages.some(m => m.tool_call_id === call.id)) {
-                      messages.push({
-                        tool_call_id: call.id,
-                        role: "tool",
-                        name: (call.function && call.function.name) || call.name || "unknown",
-                        content: JSON.stringify({ error: `No handler implemented for tool call ${call.function ? call.function.name : call.name || call.id}` })
-                      });
-                    }
-                }
-              }
-              
-              // 第二輪工具調用完成後，再次發送請求獲得最終回應
-              llmService.updateUserUsage(userId, selectedModel, usageLimits);
-              response = await llmService.sendLLMRequest(messages, selectedModel, tools, client);
-            }
-          }
-
-          if (response.status !== "200") {
-            throw response.body.error;
-          }
-        }
-      }
-
-      // 获取最终输出文本
-      const outputText = response.body.choices[0].message.content;
+      // 获取结果数据
+      const { 
+        outputText, 
+        searchResults, 
+        dataURI, 
+        videoUrl, 
+        actuallySearched, 
+        usageInfo,
+        tokenUsage,
+        toolUsed
+      } = result;
+      
+      // 更新 selectedModel (可能在 updateUserUsage 中被修改)
+      selectedModel = usageInfo.selectedModel;
 
       // 记录生成信息
       if (dataURI) {
@@ -848,6 +302,13 @@ module.exports = {
 
       const today = i18n.getString("commands.agent.today", language);
 
+      let footerText = `Powered by ${selectedModel}`;
+      if (toolUsed === "flux") footerText += " with Flux-1";
+      else if (toolUsed === "zhipu-cogview") footerText += " with CogView-3";
+      else if (toolUsed === "zhipu-cogvideo") footerText += " with CogVideoX";
+      
+      footerText += ` | ${today}：${usageInfo.usage}/${usageInfo.limit}`;
+
       // 获取模型类型和 emoji
       const providerType = llmService.getProviderType(selectedModel);
       const modelEmoji = getModelEmoji(selectedModel, providerType);
@@ -867,7 +328,7 @@ module.exports = {
           .setDescription(displayText)
           .setColor("#00ff00")
           .setFooter({
-            text: `Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit}`
+            text: footerText
           });
 
         // 处理生成的图像
@@ -892,7 +353,7 @@ module.exports = {
           // 處理生成的視頻 - 發送文件
           embed.setDescription(displayText || i18n.getString("commands.agent.zhipuVideoGenerated", language));
           const videoAttachment = new AttachmentBuilder(videoUrl);
-          embed.setFooter({text: `Powered by ${selectedModel} with CogVideoX-Flash | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
+          embed.setFooter({text: footerText});
           
           try {
             await interaction.editReply({ embeds: [embed], files: [videoAttachment] });
@@ -987,17 +448,27 @@ module.exports = {
           .setDescription(outputText || i18n.getString("commands.agent.noContent", language) || "無內容")
           .setColor("#00ff00")
           .setFooter({
-            text: `Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit}`
+            text: footerText
           });
 
         // 处理生成的图像
         if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
           const imageResult = toolFunctions.processGeneratedImage(dataURI);
           if (imageResult.path) {
-            const filename = path.basename(imageResult.path);
+            const filename = "generated_image.jpg";
+            imageResult.attachment.setName(filename);
+            
             embed.setDescription(outputText ? outputText : i18n.getString("commands.agent.imageGenerated", language));
             embed.setImage(`attachment://${filename}`);
-            embed.setFooter({text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
+            
+            let footerText = `${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit}`;
+            if (toolUsed === 'flux') {
+                footerText = `${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit}`;
+            } else if (toolUsed === 'zhipu-cogview') {
+                footerText = `${selectedModel} with CogView-3 | ${today}：${usageInfo.usage}/${usageInfo.limit}`;
+            }
+            embed.setFooter({text: footerText});
+
             try {
               await interaction.editReply({ embeds: [embed], files: [imageResult.attachment] });
             } catch (e) {
@@ -1009,7 +480,7 @@ module.exports = {
           // 處理生成的視頻 - 發送文件
           embed.setDescription(outputText || i18n.getString("commands.agent.zhipuVideoGenerated", language));
           const videoAttachment = new AttachmentBuilder(videoUrl);
-          embed.setFooter({text: `Powered by ${selectedModel} with CogVideoX-Flash | ${today}：${usageInfo.usage}/${usageInfo.limit}`});
+          embed.setFooter({text: footerText});
           
           try {
             await interaction.editReply({ embeds: [embed], files: [videoAttachment] });
@@ -1047,39 +518,25 @@ module.exports = {
       const searchnotused = i18n.getString("commands.agent.searchnotused", language);
 
       // 添加联网搜索信息到页脚
+      let searchStatus = "";
       if (enableSearch) {
         if (actuallySearched) {
-          if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
-            embed.setFooter({
-              text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchenable}`
-            });
-          } else {
-            embed.setFooter({
-              text: `Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchenable}`
-            });
-          }
+          searchStatus = ` | 🔍 ${searchenable}`;
         } else {
-          if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
-            embed.setFooter({
-              text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchnotused}`
-            });
-          } else {
-            embed.setFooter({
-              text: `Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchnotused}`
-            });
-          }
+          searchStatus = ` | 🔍 ${searchnotused}`;
         }
       } else {
-        if (dataURI && dataURI.startsWith("data:image/jpeg;base64,")) {
-          embed.setFooter({
-            text: `Powered by ${selectedModel} with Flux-1 | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchdisable}`
-          });
-        } else {
-          embed.setFooter({
-            text: `Powered by ${selectedModel} | ${today}：${usageInfo.usage}/${usageInfo.limit} | 🔍 ${searchdisable}`
-          });
-        }
+        searchStatus = ` | 🔍 ${searchdisable}`;
       }
+      
+      // 移除 footerText 中可能已經包含的用量信息，避免重複
+      // 其實 footerText 已經包含了用量信息，所以我們只需要追加搜索狀態
+      // 但是上面的 footerText 構建邏輯是: Powered by ... | Date: Usage
+      // 所以直接追加是可以的
+      
+      embed.setFooter({
+        text: footerText + searchStatus
+      });
 
       // 添加历史查看按钮
       row.addComponents(
@@ -1126,15 +583,19 @@ module.exports = {
           icon_url: interaction.guild.iconURL({ extension: 'png', size: 256 })
         } : null,
         usage: {
-          prompt_tokens: response.body.usage?.prompt_tokens || 0,
-          completion_tokens: response.body.usage?.completion_tokens || 0,
-          total_tokens: response.body.usage?.total_tokens || 0
+          prompt_tokens: tokenUsage?.prompt_tokens || 0,
+          completion_tokens: tokenUsage?.completion_tokens || 0,
+          total_tokens: tokenUsage?.total_tokens || 0
         },
         options: {
           enable_search: enableSearch,
           enable_system_prompt: enableSystemPrompt
         },
-        processingTime: processingTime
+        processingTime: processingTime,
+        searchResults: searchResults,
+        generatedImage: dataURI,
+        generatedVideo: videoUrl,
+        toolUsed: toolUsed
       };
 
       await memoryService.saveChatLogToMongo(

@@ -33,7 +33,17 @@ const chatLogSchema = new mongoose.Schema({
     enable_search: Boolean,
     enable_system_prompt: Boolean
   },
-  processing_time_ms: Number
+  processing_time_ms: Number,
+  // Multimodal & Search Data
+  search_results: [{
+    title: String,
+    url: String,
+    contentSnippet: String,
+    source: String
+  }],
+  generated_image: String, // Base64 or URL
+  generated_video: String, // URL or Path
+  tool_used: String
 });
 
 const MemorySchema = new mongoose.Schema({
@@ -68,7 +78,11 @@ async function saveChatLogToMongo(user_id, model, prompt, reply, interaction_id,
     guild_info: extraData.guildInfo,
     usage: extraData.usage,
     options: extraData.options,
-    processing_time_ms: extraData.processingTime
+    processing_time_ms: extraData.processingTime,
+    search_results: extraData.searchResults,
+    generated_image: extraData.generatedImage,
+    generated_video: extraData.generatedVideo,
+    tool_used: extraData.toolUsed
   });
   await chatLog.save();
 }
