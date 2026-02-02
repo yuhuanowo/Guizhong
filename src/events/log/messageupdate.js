@@ -1,4 +1,4 @@
-const { EmbedBuilder, Colors } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const config = require("../../config");
 const logger = require("../../utils/logger");
 const moment = require("moment"); //for time
@@ -14,7 +14,7 @@ module.exports = {
         if (message.author.bot) return;
         
         // 檢查訊息內容是否相同
-        if (oldMessage && newMessage && oldMessage.content === newMessage.content) return;
+        if (oldMessage.content === newMessage.content) return;
         
         // 格式化時間
         const dateCreated = moment(message.createdAt).format("YYYY-MM-DD HH:mm:ss");
@@ -37,8 +37,8 @@ module.exports = {
                     const embed = new EmbedBuilder()
                         .setTitle("✏️ 訊息已編輯")
                         .setDescription(
-                            `**原訊息：**\n${oldMessage ? oldMessage.content || '無內容' : '無法獲取'}\n\n` +
-                            `**新訊息：**\n${newMessage ? newMessage.content || '無內容' : '無法獲取'}\n\n` +
+                            `**原訊息：**\n${oldMessage.content}\n\n` +
+                            `**新訊息：**\n${newMessage.content}\n\n` +
                             `(發送於 ${dateCreated}, 頻道 <#${message.channel.id}>)`
                         )
                         .setColor(config.embedColour)
@@ -57,3 +57,4 @@ module.exports = {
         }
     },
 };
+//那么多comments干鸡毛o.o
