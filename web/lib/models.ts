@@ -85,4 +85,21 @@ const chatLogSchema = new mongoose.Schema<IChatLog>({
 // Prevent overwriting the model if it's already compiled
 const ChatLog: Model<IChatLog> = mongoose.models.ChatLog || mongoose.model<IChatLog>("ChatLog", chatLogSchema);
 
+export interface IMemoryData {
+  user_id: string;
+  memory: string;
+  lastUpdate: Date;
+}
+
+export interface IMemory extends Document, IMemoryData {}
+
+const memorySchema = new mongoose.Schema<IMemory>({
+  user_id: String,
+  memory: String,
+  lastUpdate: { type: Date, default: Date.now }
+});
+
+const Memory: Model<IMemory> = mongoose.models.Memory || mongoose.model<IMemory>("Memory", memorySchema);
+
+export { ChatLog, Memory };
 export default ChatLog;

@@ -4,8 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Sparkles, ExternalLink, Activity, Server, Zap, MessageSquare, Clock, Search, ArrowRight } from "lucide-react";
+import { Sparkles, ExternalLink, Activity, Server, Zap, MessageSquare, Clock, Search, ArrowRight, User } from "lucide-react";
 import { motion } from "framer-motion";
+import { Session } from "next-auth";
 
 interface HomeViewProps {
   stats: {
@@ -16,9 +17,10 @@ interface HomeViewProps {
     status: string;
     latency: string;
   };
+  session: Session | null;
 }
 
-export default function HomeView({ stats }: HomeViewProps) {
+export default function HomeView({ stats, session }: HomeViewProps) {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 text-zinc-50 p-4 relative overflow-hidden font-sans selection:bg-indigo-500/30 selection:text-indigo-100">
       {/* Ambient Background */}
@@ -105,6 +107,13 @@ export default function HomeView({ stats }: HomeViewProps) {
           >
             <span>Official Website</span>
             <ExternalLink className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+          </Link>
+          <Link 
+            href={session ? "/dashboard" : "/login"}
+            className="group relative flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-zinc-900/50 backdrop-blur-sm text-zinc-50 font-medium hover:bg-zinc-900 border border-white/10 hover:border-white/20 transition-all active:scale-95 w-full sm:w-auto"
+          >
+            <span>{session ? "Dashboard" : "Login"}</span>
+            <User className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
           </Link>
         </motion.div>
         

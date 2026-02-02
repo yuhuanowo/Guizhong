@@ -61,9 +61,16 @@ const getChat = cache(async (id: string) => {
   return null;
 });
 
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import crypto from "crypto";
+
 interface PageProps {
   params: Promise<{
     id: string;
+  }>;
+  searchParams: Promise<{
+    token?: string;
   }>;
 }
 
@@ -90,13 +97,39 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function ChatPage({ params }: PageProps) {
+export default async function ChatPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const { token } = await searchParams;
   const chat = await getChat(id);
 
   if (!chat) {
     notFound();
   }
 
-  return <ChatView chat={chat} />;
+  const session = await auth();
+  const secret = process.env.CHAT_ACCESS_SECRET || "CHANGE_THIS_TO_A_SECURE_SECRET";
+  const expectedToken = crypto.createHmac('sha256', secret).update(id).digest('hex');
+  
+  const isValidToken = token === expectedToken;
+  const isOwner = session?.user?.id === chat.user_id;
+
+  if (!isOwner && !isValidToken) {
+    if (!session) {
+       redirect(`/login?callbackUrl=/chat/${id}`);
+    }
+    
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-50">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-zinc-400">You do not have permission to view this chat.</p>
+          <Link href="/dashboard" className="text-indigo-400 hover:underline">Go to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
+  const accessMethod = isOwner ? 'owner' : 'token';
+
+  return <ChatView chat={chat} accessMethod={accessMethod} user={session?.user} />;
 }

@@ -2,6 +2,7 @@ import React from "react";
 import dbConnect from "@/lib/db";
 import ChatLog from "@/lib/models";
 import HomeView from "./HomeView";
+import { auth } from "@/auth";
 
 // Force dynamic rendering to ensure stats are up-to-date
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,7 @@ async function getStats() {
 
 export default async function Home() {
   const stats = await getStats();
-  return <HomeView stats={stats} />;
+  const session = await auth();
+  return <HomeView stats={stats} session={session} />;
 }
 

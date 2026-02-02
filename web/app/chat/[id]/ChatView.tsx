@@ -17,65 +17,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { IChatLogData } from "@/lib/models";
+import UserMenu from "@/components/UserMenu";
+import { getModelEmojiUrl } from "@/lib/utils";
 
 interface ChatViewProps {
   chat: Omit<IChatLogData, "timestamp"> & { timestamp: string; _id: string; history?: any[] };
-}
-
-const modelEmojiMap: Record<string, string> = {
-  'gpt-4': '1402509357631017083',
-  'gpt-4o': '1403243749236150435',
-  'gpt-4o-mini': '1425123222902407198',
-  'gpt-4.1': '1403243798536130642',
-  'gpt-4.1-mini': '1425121129093267527',
-  'gpt-4.1-nano': '1425121237142601749',
-  'gpt-5': '1403242839214653603',
-  'gpt-5-chat': '1425121355371905064',
-  'gpt-5-mini': '1425121271242559569',
-  'gpt-5-nano': '1425121335994224670',
-  'gpt-oss': '1425121439773888644',
-  'o1': '1425120921777213500',
-  'o1-preview': '1425120996125446224',
-  'o1-mini': '1425121008754626610',
-  'o3': '1424711069770846321',
-  'o3-mini': '1425121020469317703',
-  'o4': '1403243776214040638',
-  'llama': '1426094287652917353',
-  'microsoft': '1426094300277768284',
-  'qwen': '1427590458611204098',
-  'deepseek': '1427590444497502281',
-  'gemini': '1426093987156066334',
-  'gemma': '1426121930192195627',
-  'google': '1427590471613415474',
-  'grok': '1427590430790254703',
-  'groq': '1427590414566948924',
-  'minimax': '1427590399681368175',
-  'mistral': '1426094310356549632',
-  'openai': '1427590485198770247',
-  'cohere': '1427590384158117959',
-  'github': '1427590369478184991',
-  'openrouter': '1427590357318893669',
-  'ollama': '1427590342751813673',
-  'zhipu': '1426396289913983026',
-};
-
-function getModelEmojiUrl(model: string): string | null {
-  if (!model) return null;
-  const lowerModel = model.toLowerCase();
-  
-  // Exact match
-  if (modelEmojiMap[lowerModel]) {
-    return `https://cdn.discordapp.com/emojis/${modelEmojiMap[lowerModel]}.png`;
-  }
-
-  // Fuzzy match
-  for (const [key, id] of Object.entries(modelEmojiMap)) {
-    if (lowerModel.includes(key)) {
-      return `https://cdn.discordapp.com/emojis/${id}.png`;
-    }
-  }
-  
-  return null;
+  accessMethod?: 'owner' | 'token';
+  user?: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
 }
 
 const getFaviconUrl = (url: string) => {
@@ -196,7 +148,7 @@ const MessageContent = ({ content, textSize, viewMode, openImagePreview }: any) 
   );
 };
 
-export default function ChatView({ chat }: ChatViewProps) {
+export default function ChatView({ chat, accessMethod, user }: ChatViewProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
@@ -566,8 +518,18 @@ export default function ChatView({ chat }: ChatViewProps) {
               </button>
 
               {/* Feature Badges (Redesigned) */}
-              {(chat.options?.enable_search || chat.options?.enable_system_prompt) && (
+              {(chat.options?.enable_search || chat.options?.enable_system_prompt || accessMethod) && (
                 <div className="flex items-center gap-2">
+                  {accessMethod && (
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium ${
+                      accessMethod === 'owner' 
+                        ? 'bg-amber-500/5 border-amber-500/10 text-amber-400/90' 
+                        : 'bg-blue-500/5 border-blue-500/10 text-blue-400/90'
+                    }`} title={accessMethod === 'owner' ? "You are viewing this as the owner" : "You are viewing this via a secure token"}>
+                      {accessMethod === 'owner' ? <User className="w-3 h-3" /> : <LinkIcon className="w-3 h-3" />}
+                      <span>{accessMethod === 'owner' ? 'Owner' : 'Token'}</span>
+                    </div>
+                  )}
                   {chat.options?.enable_search && (
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-emerald-400/90 text-xs font-medium">
                       <Globe className="w-3 h-3" />
@@ -602,7 +564,7 @@ export default function ChatView({ chat }: ChatViewProps) {
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             
             {/* Desktop Controls */}
             <div className="hidden md:flex items-center gap-2">
@@ -648,6 +610,22 @@ export default function ChatView({ chat }: ChatViewProps) {
                <button onClick={downloadChat} className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-white/5 transition-colors" title="Download" aria-label="Download Chat Log">
                   <Download className="w-4 h-4" />
                </button>
+            </div>
+
+            {/* User Profile & Actions */}
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="pl-4 border-l border-white/5">
+                  <UserMenu user={user} />
+                </div>
+              ) : (
+                <Link 
+                  href={`/login?callbackUrl=/chat/${chat._id}`}
+                  className="px-4 py-2 rounded-full bg-zinc-100 text-zinc-950 text-sm font-medium hover:bg-white transition-colors"
+                >
+                  Login
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}

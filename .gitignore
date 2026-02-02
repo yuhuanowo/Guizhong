@@ -11,3 +11,4 @@ recordings
 scripts
 OLDFILE
 web/.next
+web/.env.local

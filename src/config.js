@@ -48,6 +48,7 @@ try {
         showYoutubeJSErrors: configFile.logging?.showYoutubeJSErrors ?? false,
         mongoURI: configFile.mongoURI ?? "",
         webUrl: configFile.webBaseUrl ?? "http://localhost:3000",
+        webSecret: configFile.webSecret ?? "CHANGE_THIS_TO_A_SECURE_SECRET",
     };
 } catch (e) {
     logger.error("Unable to parse config.yml. Please make sure it is valid YAML.");

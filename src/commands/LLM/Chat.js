@@ -293,11 +293,12 @@ module.exports = {
 
       // Add Open in Web button
       if (config.webUrl) {
+        const token = crypto.createHmac('sha256', config.webSecret).update(interaction.id).digest('hex');
         row.addComponents(
           new ButtonBuilder()
             .setLabel(i18n.getString("commands.agent.openInWeb", language))
             .setStyle(ButtonStyle.Link)
-            .setURL(`${config.webUrl}/chat/${interaction.id}`)
+            .setURL(`${config.webUrl}/chat/${interaction.id}?token=${token}`)
         );
       }
 
